@@ -24,22 +24,20 @@
   button.active{ background:#3a2a10; }
   button.small{ padding:4px 9px; font-size:11px; }
   input[type=range]{ accent-color:#b8975a; }
-  select{ background:#0a0810; color:var(--gold); border:1px solid var(--edge); padding:4px 6px; font-family:inherit; font-size:12px; }
+  input[type=text]{ background:#0a0810; color:var(--gold); border:1px solid var(--edge); padding:3px 6px; font-family:inherit; font-size:11.5px; width:100%; }
 
-  #dirPicker{ display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
-  .dirBtn{ border:2px solid var(--edge); background:#0a0810; padding:2px; cursor:pointer; width:64px; height:54px; position:relative; }
-  .dirBtn canvas{ width:100%; height:100%; image-rendering:auto; }
-  .dirBtn.sel{ border-color:var(--gold); box-shadow:0 0 8px #b8975a55; }
-  .dirBtn .lbl{ position:absolute; bottom:1px; right:2px; font-size:9px; color:#e8d8a8; background:rgba(0,0,0,.55); padding:0 3px; }
+  #rowPicker{ display:flex; flex-direction:column; gap:4px; margin-top:10px; }
+  .rowBtn{ display:flex; align-items:center; gap:8px; border:2px solid var(--edge); background:#0a0810; padding:4px; cursor:pointer; }
+  .rowBtn.sel{ border-color:var(--gold); box-shadow:0 0 8px #b8975a55; }
+  .rowBtn canvas{ width:56px; height:55px; flex:none; }
+  .rowBtn .rowLbl{ font-size:11px; color:#e8d8a8; flex:1; }
+  .rowBtn input[type=text]{ font-size:11px; }
 
   #frameStrip{ display:flex; gap:5px; flex-wrap:wrap; margin-top:8px; }
-  .frameThumb{ width:46px; height:39px; border:1px solid var(--edge); cursor:pointer; opacity:.55; }
+  .frameThumb{ width:56px; height:55px; border:1px solid var(--edge); cursor:pointer; opacity:.55; }
   .frameThumb.cur{ border-color:var(--gold); opacity:1; }
   .frameThumb canvas{ width:100%; height:100%; }
 
-  #sceneCanvas{ width:100%; height:260px; display:block; background:linear-gradient(180deg,#1a2412 0%,#0c1208 70%,#080a06 100%); border:1px solid var(--edge); }
-
-  .legendImg{ max-width:100%; border:1px solid var(--edge); }
   .note{ font-size:11.5px; color:#7a6a4a; line-height:1.5; margin-top:8px; }
   .warn{ color:#c08040; }
   code{ color:#e8c890; background:#0a0810; padding:1px 5px; font-size:11.5px; }
@@ -49,19 +47,11 @@
 
 <h1>⚔ Test des sprites — Guerrier Elfe Noir</h1>
 <p class="sub">
-  Banc d'essai pour vérifier les deux feuilles de sprites (marche / mort) avant intégration dans <code>test-combat.html</code>.
-  Chaque feuille est une grille fixe <b>6 colonnes × 4 lignes</b>, cellules de <b>640×540 px</b>. Les colonnes semblent être
-  6 orientations du personnage ; je n'ai pas de certitude sur la correspondance exacte avec les 6/8 directions de la grille
-  isométrique du jeu — utilise le panneau <b>« Repère des orientations »</b> plus bas pour me dire laquelle est laquelle,
-  et je câblerai ça proprement ensuite.
-</p>
-<p class="sub" style="background:#1a1508; border:1px solid #4a3a1a; padding:10px 12px;">
-  <b style="color:#e8c890;">🔧 Correctif appliqué :</b> les fichiers sources n'étaient pas fautifs de ton côté — dans la feuille
-  de marche d'origine, le personnage n'était tout simplement pas centré au même endroit dans sa case selon la colonne
-  (le centre glisse progressivement de ~480px à ~145px de gauche à droite sur les 6 colonnes). Résultat : en jouant
-  l'animation, il « sautait » horizontalement à chaque image. J'ai recentré chaque colonne par script (translation pixel
-  simple, aucune retouche manuelle nécessaire). Utilise l'interrupteur ci-dessous pour comparer avant/après.
-  <label style="display:inline-block; margin-top:6px;"><input type="checkbox" id="useAligned" checked> utiliser les sprites corrigés</label>
+  Banc d'essai câblé sur la planche unique <code>data/images/units/warriorDE.png</code> (grille brute
+  <b>4 colonnes × 8 lignes</b>, cellules ~102×100 px). Le sens exact de chaque ligne (marche ? attaque ?
+  mort ?) n'est pas encore fixé côté code — utilise le panneau de gauche pour jouer chaque ligne comme un
+  clip de 4 images et me dire ce qu'elle représente, en renommant les étiquettes si besoin. Une fois validé,
+  je fige le mapping dans <code>sprites.js</code>.
 </p>
 
 <div class="row">
@@ -72,145 +62,93 @@
       <canvas id="stage" width="420" height="355"></canvas>
     </div>
     <div class="ctrlRow">
-      <button id="btnAnimWalk" class="active">Marche</button>
-      <button id="btnAnimDeath">Mort</button>
-      <span style="flex:1"></span>
       <button id="btnPlay">⏸ Pause</button>
       <button id="btnReplay">↺ Rejouer</button>
+      <label><input type="checkbox" id="loopClip" checked> boucler</label>
     </div>
     <div class="ctrlRow">
       <button id="btnPrev" class="small">◀ image</button>
       <button id="btnNext" class="small">image ▶</button>
       <label>Vitesse</label>
-      <input type="range" id="fps" min="1" max="16" value="8" step="1">
-      <span id="fpsLbl">8 img/s</span>
+      <input type="range" id="fps" min="1" max="16" value="6" step="1">
+      <span id="fpsLbl">6 img/s</span>
     </div>
     <div class="ctrlRow">
-      <label><input type="checkbox" id="loopWalk" checked> boucler la marche</label>
       <label><input type="checkbox" id="flipX"> miroir horizontal</label>
       <label><input type="checkbox" id="showBox"> cadre de la cellule</label>
     </div>
 
-    <h2 style="margin-top:16px;">Direction (colonne)</h2>
-    <div id="dirPicker"></div>
+    <h2 style="margin-top:16px;">Lignes de la planche (clips de 4 images)</h2>
+    <div id="rowPicker"></div>
+  </div>
+
+  <!-- ===================== FULL SHEET ===================== -->
+  <div class="panel" style="flex:1; min-width:420px;">
+    <h2 style="margin-top:0;">Planche complète — <code>warriorDE.png</code></h2>
+    <p class="sub" style="margin-bottom:6px;">
+      Vue brute des 32 cellules (4×8), avec repères de grille, pour vérifier le découpage
+      et repérer d'éventuels décalages de centrage entre colonnes.
+    </p>
+    <canvas id="fullSheet" style="max-width:100%; border:1px solid var(--edge);"></canvas>
 
     <h2>Images de la ligne courante</h2>
     <div id="frameStrip"></div>
   </div>
-
-  <!-- ===================== SCENE DEMO ===================== -->
-  <div class="panel" style="flex:1; min-width:420px;">
-    <h2 style="margin-top:0;">Mise en situation — marche + mort dans une petite scène</h2>
-    <p class="sub" style="margin-bottom:6px;">
-      L'unité fait des allers-retours en marchant (profil), puis meurt sur commande. Sert à juger l'échelle,
-      le rythme de la marche et l'enchaînement marche→mort une fois posé sur un vrai fond.
-    </p>
-    <canvas id="sceneCanvas" width="900" height="260"></canvas>
-    <div class="ctrlRow">
-      <button id="btnSceneWalk" class="active">▶ Marcher (aller-retour)</button>
-      <button id="btnSceneDie">☠ Déclencher la mort</button>
-      <button id="btnSceneReset">↺ Réinitialiser</button>
-      <label>Échelle</label>
-      <input type="range" id="sceneScale" min="0.15" max="0.55" step="0.01" value="0.32">
-    </div>
-    <div class="note">
-      La marche utilise la colonne « profil » sélectionnée à gauche ; le miroir horizontal est appliqué automatiquement
-      au retour. Clique <b>Déclencher la mort</b> à tout moment pour voir l'enchaînement.
-    </div>
-  </div>
 </div>
 
-<h2>Repère des orientations (fourni)</h2>
-<p class="sub">Planche de référence livrée avec les sprites — sert à identifier quelle colonne correspond à quelle orientation.</p>
-<img class="legendImg" src="./data/images/units/dark_elf_reference_02.png" alt="Repère des orientations">
-
-<h2>Vérification de la grille — feuille de marche complète</h2>
-<p class="sub">Contrôle brut : les 24 cellules (6×4) de <code>dark_elf_walk_cycle_02.png</code>, sans retouche, pour repérer tout décalage de découpe.</p>
-<canvas id="fullWalk" style="max-width:100%; border:1px solid var(--edge);"></canvas>
-
-<h2>Vérification de la grille — feuille de mort complète</h2>
-<p class="sub">Idem pour <code>dark_elf_death_cycle_02.png</code>. La ligne 4 (bas) est la pose finale au sol.</p>
-<canvas id="fullDeath" style="max-width:100%; border:1px solid var(--edge);"></canvas>
-
-<p class="note">
-  Détail de la correction : pour la <b>marche</b>, chaque colonne a été recentrée horizontalement sur la moyenne de ses
-  4 images (le personnage revient au même point d'ancrage à chaque cycle, donc pas de dérive dans la boucle). Pour la
-  <b>mort</b>, seule la 1ʳᵉ image (position debout) sert de référence, et le <i>même</i> décalage est appliqué en bloc
-  aux 4 images de la colonne — ça aligne le point de départ sur celui de la marche sans effacer le mouvement naturel
-  de chute. Aucune image n'a été redessinée : uniquement des translations horizontales, rien n'est recadré ni déformé.
-</p>
-<p class="note warn" style="margin-top:10px;">
-  Note technique : les fichiers sources pèsent ~8-9 Mo chacun (3840×2160). Très bien pour ce banc d'essai local,
-  mais avant de les brancher sur la carte de bataille réelle (des dizaines d'unités visibles), il faudra les redimensionner
-  / compresser — je peux le faire dès que le découpage et le mapping de direction sont validés ici.
+<p class="note warn">
+  Le layout observé (4×8, sans direction distincte par colonne) ne correspond pas encore au schéma cible
+  discuté (5 directions × 11 lignes stand/walk/attack/death/hold). C'est normal à ce stade — ce banc d'essai
+  sert justement à identifier ce que contient réellement cette planche avant d'écrire le mapping final.
 </p>
 
 <script>
-const SHEET_SOURCES = {
-  aligned: {
-    walk:  './data/images/units/dark_elf_walk_cycle_02_aligned.png',
-    death: './data/images/units/dark_elf_death_cycle_02_aligned.png'
-  },
-  original: {
-    walk:  './data/images/units/dark_elf_walk_cycle_02.png',
-    death: './data/images/units/dark_elf_death_cycle_02.png'
-  }
-};
-const SHEETS = {
-  walk:  { src:SHEET_SOURCES.aligned.walk,  cols:6, rows:4, cw:640, ch:540, loop:true  },
-  death: { src:SHEET_SOURCES.aligned.death, cols:6, rows:4, cw:640, ch:540, loop:false }
-};
-const DIR_LABELS = ['1','2','3','4','5','6']; // mapping direction inconnu — à confirmer
+const SHEET = { src: './data/images/units/warriorDE.png', cols: 4, rows: 8, cw: 102, ch: 100.375 };
+
+// Étiquettes provisoires, modifiables dans l'UI — à ajuster une fois le contenu de chaque ligne identifié.
+const ROW_LABELS = [
+  'Ligne 1', 'Ligne 2', 'Ligne 3', 'Ligne 4',
+  'Ligne 5', 'Ligne 6', 'Ligne 7', 'Ligne 8'
+];
 
 function loadImg(src){
   return new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.src=src; });
 }
 
-let imgs = {};
-let state = {
-  anim: 'walk',
-  dir: 0,
-  frame: 0,
-  playing: true,
-  fps: 8,
-  acc: 0,
-  flip: false
-};
+let img = null;
+let state = { row:0, frame:0, playing:true, fps:6, acc:0 };
 
 const stage = document.getElementById('stage');
 const sctx = stage.getContext('2d');
 
-function drawFrame(ctx, img, sheet, col, row, dx, dy, dw, dh, flip){
-  const sx = col*sheet.cw, sy = row*sheet.ch;
+function drawFrame(ctx, image, col, row, dx, dy, dw, dh, flip){
+  const sx = col*SHEET.cw, sy = row*SHEET.ch;
   ctx.save();
   if(flip){
     ctx.translate(dx+dw, dy);
     ctx.scale(-1,1);
-    ctx.drawImage(img, sx, sy, sheet.cw, sheet.ch, 0, 0, dw, dh);
+    ctx.drawImage(image, sx, sy, SHEET.cw, SHEET.ch, 0, 0, dw, dh);
   } else {
-    ctx.drawImage(img, sx, sy, sheet.cw, sheet.ch, dx, dy, dw, dh);
+    ctx.drawImage(image, sx, sy, SHEET.cw, SHEET.ch, dx, dy, dw, dh);
   }
   ctx.restore();
 }
 
 function renderStage(){
   sctx.clearRect(0,0,stage.width,stage.height);
-  // sol simple
   sctx.save();
   sctx.beginPath();
-  sctx.ellipse(stage.width/2, stage.height*0.82, 120, 26, 0, 0, Math.PI*2);
+  sctx.ellipse(stage.width/2, stage.height*0.86, 90, 20, 0, 0, Math.PI*2);
   sctx.fillStyle = 'rgba(0,0,0,.45)';
   sctx.fill();
   sctx.restore();
 
-  const sheet = SHEETS[state.anim];
-  const img = imgs[state.anim];
   if(!img) return;
-  const dh = stage.height*0.92;
-  const dw = dh*(sheet.cw/sheet.ch);
+  const dh = stage.height*0.88;
+  const dw = dh*(SHEET.cw/SHEET.ch);
   const dx = stage.width/2 - dw/2;
-  const dy = stage.height*0.90 - dh;
-  drawFrame(sctx, img, sheet, state.dir, state.frame, dx, dy, dw, dh, document.getElementById('flipX').checked);
+  const dy = stage.height*0.92 - dh;
+  drawFrame(sctx, img, state.frame, state.row, dx, dy, dw, dh, document.getElementById('flipX').checked);
 
   if(document.getElementById('showBox').checked){
     sctx.strokeStyle = 'rgba(184,151,90,.5)';
@@ -220,25 +158,28 @@ function renderStage(){
   updateFrameStripHighlight();
 }
 
-function buildDirPicker(){
-  const wrap = document.getElementById('dirPicker');
+function buildRowPicker(){
+  const wrap = document.getElementById('rowPicker');
   wrap.innerHTML = '';
-  for(let c=0;c<6;c++){
+  for(let r=0;r<SHEET.rows;r++){
     const btn = document.createElement('div');
-    btn.className = 'dirBtn' + (c===state.dir?' sel':'');
+    btn.className = 'rowBtn' + (r===state.row?' sel':'');
     const cv = document.createElement('canvas');
-    cv.width = 64; cv.height = 54;
+    cv.width = 56; cv.height = 55;
     btn.appendChild(cv);
-    const lbl = document.createElement('div');
-    lbl.className = 'lbl';
-    lbl.textContent = DIR_LABELS[c];
-    btn.appendChild(lbl);
-    btn.onclick = ()=>{ state.dir=c; state.frame=0; buildDirPicker(); buildFrameStrip(); };
+    const lbl = document.createElement('input');
+    lbl.type = 'text';
+    lbl.value = ROW_LABELS[r];
+    lbl.onclick = (e)=>e.stopPropagation();
+    lbl.onchange = (e)=>{ ROW_LABELS[r] = e.target.value; };
+    const lblWrap = document.createElement('div');
+    lblWrap.className = 'rowLbl';
+    lblWrap.appendChild(lbl);
+    btn.appendChild(lblWrap);
+    btn.onclick = ()=>{ state.row=r; state.frame=0; buildRowPicker(); buildFrameStrip(); };
     wrap.appendChild(btn);
-    const cctx = cv.getContext('2d');
-    const sheet = SHEETS.walk, img = imgs.walk;
     if(img){
-      cctx.drawImage(img, c*sheet.cw, 0, sheet.cw, sheet.ch, 0,0,64,54);
+      btn.querySelector('canvas').getContext('2d').drawImage(img, 0, r*SHEET.ch, SHEET.cw, SHEET.ch, 0,0,56,55);
     }
   }
 }
@@ -246,17 +187,16 @@ function buildDirPicker(){
 function buildFrameStrip(){
   const wrap = document.getElementById('frameStrip');
   wrap.innerHTML = '';
-  const sheet = SHEETS[state.anim], img = imgs[state.anim];
-  for(let r=0;r<sheet.rows;r++){
+  for(let c=0;c<SHEET.cols;c++){
     const div = document.createElement('div');
-    div.className = 'frameThumb' + (r===state.frame?' cur':'');
+    div.className = 'frameThumb' + (c===state.frame?' cur':'');
     const cv = document.createElement('canvas');
-    cv.width=46; cv.height=39;
+    cv.width=56; cv.height=55;
     div.appendChild(cv);
-    div.onclick = ()=>{ state.frame=r; state.playing=false; document.getElementById('btnPlay').textContent='▶ Lecture'; renderStage(); };
+    div.onclick = ()=>{ state.frame=c; state.playing=false; document.getElementById('btnPlay').textContent='▶ Lecture'; renderStage(); };
     wrap.appendChild(div);
     if(img){
-      cv.getContext('2d').drawImage(img, state.dir*sheet.cw, r*sheet.ch, sheet.cw, sheet.ch, 0,0,46,39);
+      cv.getContext('2d').drawImage(img, c*SHEET.cw, state.row*SHEET.ch, SHEET.cw, SHEET.ch, 0,0,56,55);
     }
   }
 }
@@ -266,19 +206,21 @@ function updateFrameStripHighlight(){
   });
 }
 
-function drawFullSheet(canvasId, sheetKey){
-  const cv = document.getElementById(canvasId);
-  const sheet = SHEETS[sheetKey], img = imgs[sheetKey];
-  const scale = 0.16;
-  cv.width = sheet.cw*sheet.cols*scale;
-  cv.height = sheet.ch*sheet.rows*scale;
+function drawFullSheet(){
+  const cv = document.getElementById('fullSheet');
+  const scale = 0.9;
+  cv.width = SHEET.cw*SHEET.cols*scale;
+  cv.height = SHEET.ch*SHEET.rows*scale;
   const c = cv.getContext('2d');
   c.fillStyle = '#12121a';
   c.fillRect(0,0,cv.width,cv.height);
   c.drawImage(img, 0,0,cv.width,cv.height);
   c.strokeStyle = 'rgba(184,151,90,.4)';
-  for(let i=1;i<sheet.cols;i++){ c.beginPath();c.moveTo(i*sheet.cw*scale,0);c.lineTo(i*sheet.cw*scale,cv.height);c.stroke(); }
-  for(let j=1;j<sheet.rows;j++){ c.beginPath();c.moveTo(0,j*sheet.ch*scale);c.lineTo(cv.width,j*sheet.ch*scale);c.stroke(); }
+  for(let i=1;i<SHEET.cols;i++){ c.beginPath();c.moveTo(i*SHEET.cw*scale,0);c.lineTo(i*SHEET.cw*scale,cv.height);c.stroke(); }
+  for(let j=1;j<SHEET.rows;j++){ c.beginPath();c.moveTo(0,j*SHEET.ch*scale);c.lineTo(cv.width,j*SHEET.ch*scale);c.stroke(); }
+  c.fillStyle = '#e8c890';
+  c.font = '10px Georgia';
+  for(let j=0;j<SHEET.rows;j++){ c.fillText('L'+(j+1), 2, j*SHEET.ch*scale+11); }
 }
 
 /* ---------- animation loop ---------- */
@@ -290,11 +232,10 @@ function tick(now){
     const step = 1/state.fps;
     if(state.acc >= step){
       state.acc -= step;
-      const sheet = SHEETS[state.anim];
       state.frame++;
-      if(state.frame >= sheet.rows){
-        if(sheet.loop){ state.frame = 0; }
-        else { state.frame = sheet.rows-1; state.playing=false; document.getElementById('btnPlay').textContent='▶ Lecture'; }
+      if(state.frame >= SHEET.cols){
+        if(document.getElementById('loopClip').checked){ state.frame = 0; }
+        else { state.frame = SHEET.cols-1; state.playing=false; document.getElementById('btnPlay').textContent='▶ Lecture'; }
       }
     }
   }
@@ -302,70 +243,7 @@ function tick(now){
   requestAnimationFrame(tick);
 }
 
-/* ---------- scene demo ---------- */
-const scene = document.getElementById('sceneCanvas');
-const scctx = scene.getContext('2d');
-let sceneUnit = { x:80, dir:1, dying:false, frame:0, acc:0, walking:true, flip:false, deathDone:false };
-const PROFILE_COL = 2; // colonne "profil" par défaut, modifiable via le sélecteur de gauche
-
-function resetScene(){
-  sceneUnit = { x:80, dir:1, dying:false, frame:0, acc:0, walking:true, flip:false, deathDone:false };
-  document.getElementById('btnSceneWalk').classList.add('active');
-}
-function sceneTick(dt){
-  const scaleV = parseFloat(document.getElementById('sceneScale').value);
-  const sheet = sceneUnit.dying ? SHEETS.death : SHEETS.walk;
-  const img = sceneUnit.dying ? imgs.death : imgs.walk;
-  const speed = 70; // px/s
-  if(sceneUnit.walking && !sceneUnit.dying){
-    sceneUnit.x += speed*dt*sceneUnit.dir;
-    if(sceneUnit.x > scene.width-100){ sceneUnit.dir=-1; sceneUnit.flip=true; }
-    if(sceneUnit.x < 60){ sceneUnit.dir=1; sceneUnit.flip=false; }
-  }
-  sceneUnit.acc += dt;
-  const fps = sceneUnit.dying ? 6 : 8;
-  if(sceneUnit.acc >= 1/fps){
-    sceneUnit.acc -= 1/fps;
-    if(!sceneUnit.deathDone){
-      sceneUnit.frame++;
-      if(sceneUnit.frame >= sheet.rows){
-        if(sheet.loop) sceneUnit.frame = 0;
-        else { sceneUnit.frame = sheet.rows-1; sceneUnit.deathDone = true; }
-      }
-    }
-  }
-  scctx.clearRect(0,0,scene.width,scene.height);
-  scctx.save();
-  scctx.beginPath(); scctx.ellipse(sceneUnit.x, scene.height*0.86, 34,9,0,0,Math.PI*2);
-  scctx.fillStyle='rgba(0,0,0,.4)'; scctx.fill(); scctx.restore();
-
-  const dh = scene.height*0.62*(scaleV/0.32);
-  const dw = dh*(sheet.cw/sheet.ch);
-  const dy = scene.height*0.88 - dh;
-  drawFrame(scctx, img, sheet, PROFILE_COL, sceneUnit.frame, sceneUnit.x-dw/2, dy, dw, dh, sceneUnit.flip);
-}
-let sceneLastT = performance.now();
-function sceneLoop(now){
-  const dt = Math.min(0.1,(now-sceneLastT)/1000); sceneLastT = now;
-  sceneTick(dt);
-  requestAnimationFrame(sceneLoop);
-}
-
 /* ---------- wiring ---------- */
-document.getElementById('btnAnimWalk').onclick = ()=>{
-  state.anim='walk'; state.frame=0; state.playing=true;
-  document.getElementById('btnAnimWalk').classList.add('active');
-  document.getElementById('btnAnimDeath').classList.remove('active');
-  document.getElementById('btnPlay').textContent='⏸ Pause';
-  buildFrameStrip();
-};
-document.getElementById('btnAnimDeath').onclick = ()=>{
-  state.anim='death'; state.frame=0; state.playing=true;
-  document.getElementById('btnAnimDeath').classList.add('active');
-  document.getElementById('btnAnimWalk').classList.remove('active');
-  document.getElementById('btnPlay').textContent='⏸ Pause';
-  buildFrameStrip();
-};
 document.getElementById('btnPlay').onclick = (e)=>{
   state.playing = !state.playing;
   e.target.textContent = state.playing ? '⏸ Pause' : '▶ Lecture';
@@ -376,43 +254,23 @@ document.getElementById('btnReplay').onclick = ()=>{
 };
 document.getElementById('btnPrev').onclick = ()=>{
   state.playing=false; document.getElementById('btnPlay').textContent='▶ Lecture';
-  const sheet = SHEETS[state.anim];
-  state.frame = (state.frame-1+sheet.rows)%sheet.rows; renderStage();
+  state.frame = (state.frame-1+SHEET.cols)%SHEET.cols; renderStage(); buildFrameStrip();
 };
 document.getElementById('btnNext').onclick = ()=>{
   state.playing=false; document.getElementById('btnPlay').textContent='▶ Lecture';
-  const sheet = SHEETS[state.anim];
-  state.frame = (state.frame+1)%sheet.rows; renderStage();
+  state.frame = (state.frame+1)%SHEET.cols; renderStage(); buildFrameStrip();
 };
 document.getElementById('fps').oninput = (e)=>{
   state.fps = parseInt(e.target.value);
   document.getElementById('fpsLbl').textContent = state.fps+' img/s';
 };
 
-document.getElementById('btnSceneWalk').onclick = ()=>{ resetScene(); };
-document.getElementById('btnSceneDie').onclick = ()=>{ sceneUnit.dying = true; sceneUnit.frame=-1; sceneUnit.deathDone=false; sceneUnit.acc=0; };
-document.getElementById('btnSceneReset').onclick = ()=>{ resetScene(); };
-
-function loadAllSheets(){
-  return Promise.all([loadImg(SHEETS.walk.src), loadImg(SHEETS.death.src)]).then(([w,d])=>{
-    imgs.walk = w; imgs.death = d;
-    buildDirPicker();
-    buildFrameStrip();
-    drawFullSheet('fullWalk','walk');
-    drawFullSheet('fullDeath','death');
-  });
-}
-
-document.getElementById('useAligned').onchange = (e)=>{
-  const set = e.target.checked ? SHEET_SOURCES.aligned : SHEET_SOURCES.original;
-  SHEETS.walk.src = set.walk;
-  SHEETS.death.src = set.death;
-  loadAllSheets();
-};
-
-loadAllSheets().then(()=>{
+loadImg(SHEET.src).then((image)=>{
+  img = image;
+  buildRowPicker();
+  buildFrameStrip();
+  drawFullSheet();
   requestAnimationFrame(tick);
-  requestAnimationFrame(sceneLoop);
 });
 </script>
 </body>
