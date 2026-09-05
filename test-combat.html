@@ -1151,7 +1151,8 @@ function startDefaultBattle(){
   ];
   spawnDefaultArmy(ally,'ally',10);
   spawnDefaultArmy(foe,'foe',_grid[0].length-10);
-  initScenario();
+  /* Appels au système de scénario retirés pour l'instant (cf. demande) :
+     initScenario(); — plus d'objectifs/points de victoire dans ce test de combat. */
   _battleReady=true;
   setPaused(false);
   renderList();
@@ -1310,11 +1311,7 @@ function drawTerrain(){
     drawGroundTile(type,x,y,1.08);
   }
   if(!_decor.length) _decor=buildDecor(Date.now()&0xffff);
-  for(const d of _decor){
-    const x=d.x+_cam.x,y=d.y+_cam.y;
-    if(x<-220||x>cv.width+220||y<-260||y>cv.height+180)continue;
-    drawAtlasAsset(DVP_ASSETS[d.kind],x,y,d.scale,1);
-  }
+  /* Décor dessiné avec les unités dans drawDepthSortedScene() (tri de profondeur commun). */
   /* Debug-only grid. Never visible in normal play. */
   if(window.DvpTestShowGrid){
     ctx.strokeStyle='rgba(210,185,130,.13)';ctx.lineWidth=1;
@@ -1504,6 +1501,36 @@ function update(dt) {
   updateHint();
 }
 
+/* Tri de profondeur unifié : décor (arbres, ruines, bâtiments...) ET unités sont
+   mélangés dans une seule liste, triée sur la position verticale à l'écran (+ un
+   biais de profondeur pour le décor "haut", type ruines/bâtiments/repères).
+   Ainsi une unité plus haute à l'écran qu'un élément de décor (donc "derrière" lui
+   dans la scène isométrique) est dessinée avant lui et apparaît bien masquée par
+   celui-ci ; une unité plus basse (donc devant) est dessinée après et le recouvre. */
+function drawDepthSortedScene() {
+  if (!_decor.length) _decor = buildDecor(Date.now() & 0xffff);
+  const items = [];
+  for (const d of _decor) {
+    const x = d.x + _cam.x, y = d.y + _cam.y;
+    if (x < -220 || x > cv.width + 220 || y < -260 || y > cv.height + 180) continue;
+    items.push({ key: d.y + d.depth * 100, kind: 'decor', d, x, y });
+  }
+  for (const u of _units) {
+    const key = u.hp <= 0 ? -1e9 : u.py;
+    items.push({ key, kind: 'unit', u, x: u.px + _cam.x, y: u.py + _cam.y });
+  }
+  items.sort((a, b) => a.key - b.key);
+  for (const it of items) {
+    if (it.kind === 'decor') {
+      drawAtlasAsset(DVP_ASSETS[it.d.kind], it.x, it.y, it.d.scale, 1);
+    } else {
+      const u = it.u;
+      if (visibleToAlly(u)) { drawUnit(u, it.x, it.y); }
+      else { ctx.save(); ctx.globalAlpha = .16; drawUnit(u, it.x, it.y); ctx.restore(); }
+    }
+  }
+}
+
 function render() {
   if (cv.width !== cv.clientWidth || cv.height !== cv.clientHeight) resize();
   ctx.clearRect(0, 0, cv.width, cv.height);
@@ -1527,12 +1554,7 @@ function render() {
     }
   }
 
-  const sorted = [..._units].sort((a, b) => {
-    const da = a.hp <= 0 ? -1 : 0, db = b.hp <= 0 ? -1 : 0;
-    if (da !== db) return da - db;
-    return (a.py) - (b.py);
-  });
-  for (const u of sorted) { if (visibleToAlly(u)) drawUnit(u, u.px + _cam.x, u.py + _cam.y); else { ctx.save(); ctx.globalAlpha=.16; drawUnit(u,u.px+_cam.x,u.py+_cam.y); ctx.restore(); } }
+  drawDepthSortedScene();
   drawEffects();
   for (const missile of _missiles) { drawMissile(missile, _cam.x, _cam.y); }
   for (const u of _units) {
@@ -2572,13 +2594,9 @@ setInterval(()=>{
       }
     }
 
-    /* Décor existant, mais seulement comme finition : le terrain reste la structure. */
+    /* Décor : construit ici si besoin, mais désormais dessiné avec les unités dans
+       drawDepthSortedScene() (tri de profondeur commun décor/unités), pas ici. */
     if(!_decor.length)_decor=buildDecor(seed);
-    for(const d of _decor){
-      const x=d.x+_cam.x,y=d.y+_cam.y;
-      if(x<-220||x>cv.width+220||y<-280||y>cv.height+200)continue;
-      drawAtlasAsset(DVP_ASSETS[d.kind],x,y,d.scale,1);
-    }
     ctx.restore();
   }
 
