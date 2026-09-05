@@ -1278,9 +1278,11 @@ function buildDecor(seed){
       if(rnd()<.012)add(rnd()<.5?'grassTuftA':'grassTuftB',c+(rnd()-.5)*.7,r+(rnd()-.5)*.7,.55);
     }
   }
-  /* Deliberate landmarks around the three objectives. */
-  const landmark=[{c:36,r:18,k:'archA'},{c:36,r:30,k:'bridgeA'},{c:36,r:42,k:'tower'}];
-  for(const l of landmark){ add(l.k,l.c,l.r,0.85,2); if(rnd()<.7)add('bushGreenA',l.c-2,l.r+1,.6); }
+  /* Anciens repères visuels des 3 objectifs de scénario (arche/pont/tour posés
+     en dur en (36,18)/(36,30)/(36,42)) : retirés avec le scénario. Ils étaient
+     posés sans tenir compte du terrain généré à cet endroit (bois, eau, pierre),
+     ce qui pouvait faire apparaître un décor (ex: le pont) mélangé/coupé avec
+     un arbre planté au même endroit par la génération de forêt. */
   /* A few battle props around the center, but never part of gameplay collision. */
   for(let i=0;i<22;i++){
     const c=8+Math.floor(rnd()*(w-16)),r=6+Math.floor(rnd()*(h-12));
