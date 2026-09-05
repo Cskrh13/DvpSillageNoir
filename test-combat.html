@@ -1372,13 +1372,18 @@ function drawTerrain(){
 
 function drawUnit(u, x, y) {
   const dead = u.hp <= 0;
-  const color = dead ? "#3a3a3a" : (u.side === "ally" ? "#7a1f1f" : "#1f3a5a");
+  // Rendu sprite (planche dédiée type warriorDE via UNIT_SPRITE) quand disponible ;
+  // sinon on retombe sur le pion coloré ci-dessous (unités sans planche encore fournie).
+  const spriteDrawn = u._spriteUnit && Sprites.drawUnit(ctx, u._spriteUnit, x, y);
   ctx.save();
   ctx.beginPath(); ctx.ellipse(x, y + 6, 14, 5, 0, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(0,0,0,.4)"; ctx.fill();
-  ctx.beginPath(); ctx.arc(x, y - 6, dead ? 8 : 10, 0, Math.PI * 2);
-  ctx.fillStyle = color; ctx.fill();
-  ctx.strokeStyle = dead ? "#555" : "#b8975a"; ctx.lineWidth = u.isHero ? 2 : 1; ctx.stroke();
+  ctx.fillStyle = spriteDrawn ? "rgba(0,0,0,.3)" : "rgba(0,0,0,.4)"; ctx.fill();
+  if (!spriteDrawn) {
+    const color = dead ? "#3a3a3a" : (u.side === "ally" ? "#7a1f1f" : "#1f3a5a");
+    ctx.beginPath(); ctx.arc(x, y - 6, dead ? 8 : 10, 0, Math.PI * 2);
+    ctx.fillStyle = color; ctx.fill();
+    ctx.strokeStyle = dead ? "#555" : "#b8975a"; ctx.lineWidth = u.isHero ? 2 : 1; ctx.stroke();
+  }
   if (u.isHero && !dead) {
     ctx.fillStyle = "#b8975a"; ctx.font = "bold 12px Georgia";
     ctx.textAlign = "center"; ctx.fillText("★", x, y - 12);
