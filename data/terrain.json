@@ -1,0 +1,189 @@
+{
+  "_comment": "Définition des types de terrain pour la carte isométrique. tileW/tileH = dimensions du losange iso.",
+  "tileW": 56,
+  "tileH": 28,
+  "types": {
+    "herbe": {
+      "name": "Herbe",
+      "color": "#3a4a2a",
+      "move": 1.0,
+      "blocks": false,
+      "blocksView": false,
+      "damage": 0,
+      "category": "normal",
+      "height": 0,
+      "cover": 0.0
+    },
+    "sable": {
+      "name": "Sable",
+      "color": "#7a6a3a",
+      "move": 1.0,
+      "blocks": false,
+      "blocksView": false,
+      "damage": 0,
+      "category": "normal",
+      "height": 0,
+      "cover": 0.0
+    },
+    "terre": {
+      "name": "Terre",
+      "color": "#4a3a2a",
+      "move": 1.0,
+      "blocks": false,
+      "blocksView": false,
+      "damage": 0,
+      "category": "normal",
+      "height": 0,
+      "cover": 0.0
+    },
+    "ruines": {
+      "name": "Ruines",
+      "color": "#5a5a4a",
+      "move": 0.5,
+      "blocks": false,
+      "blocksView": false,
+      "damage": 0,
+      "category": "difficult",
+      "height": 1,
+      "cover": 0.35
+    },
+    "colline": {
+      "name": "Colline",
+      "color": "#6a5a3a",
+      "move": 0.5,
+      "blocks": false,
+      "blocksView": false,
+      "damage": 0,
+      "category": "difficult",
+      "height": 2,
+      "cover": 0.2
+    },
+    "bois": {
+      "name": "Bois",
+      "color": "#2a3a1a",
+      "move": 0.5,
+      "blocks": false,
+      "blocksView": true,
+      "damage": 0,
+      "category": "difficult",
+      "height": 0,
+      "cover": 0.55
+    },
+    "decombres": {
+      "name": "Décombres",
+      "color": "#4a2a2a",
+      "move": 0.5,
+      "blocks": false,
+      "blocksView": false,
+      "damage": 1,
+      "category": "dangerous",
+      "height": 0,
+      "cover": 0.2
+    },
+    "rochers": {
+      "name": "Rochers",
+      "color": "#3a3a3a",
+      "move": 0.0,
+      "blocks": true,
+      "blocksView": true,
+      "damage": 0,
+      "category": "impassable",
+      "height": 2,
+      "cover": 0.65
+    },
+    "murs": {
+      "name": "Murs",
+      "color": "#2a2a2a",
+      "move": 0.0,
+      "blocks": true,
+      "blocksView": true,
+      "damage": 0,
+      "category": "impassable",
+      "height": 2,
+      "cover": 0.8
+    },
+    "arbres": {
+      "name": "Arbres",
+      "color": "#1a2a0a",
+      "move": 0.0,
+      "blocks": true,
+      "blocksView": true,
+      "damage": 0,
+      "category": "impassable",
+      "height": 2,
+      "cover": 0.9
+    },
+    "eau": {
+      "name": "Eau peu profonde",
+      "color": "#1a3a5a",
+      "move": 0.0,
+      "blocks": true,
+      "blocksView": false,
+      "damage": 0,
+      "category": "impassable",
+      "height": -1,
+      "cover": 0.0
+    },
+    "profonde": {
+      "name": "Eau profonde",
+      "color": "#0a1a3a",
+      "move": 0.0,
+      "blocks": true,
+      "blocksView": false,
+      "damage": 0,
+      "category": "impassable",
+      "height": -2,
+      "cover": 0.0
+    }
+  },
+  "generators": {
+    "cote-de-naggaroth": {
+      "name": "Côtes de Naggaroth",
+      "size": {
+        "w": 48,
+        "h": 48
+      },
+      "weights": {
+        "herbe": 5,
+        "sable": 4,
+        "terre": 4,
+        "rochers": 2,
+        "arbres": 3,
+        "bois": 2,
+        "colline": 2,
+        "eau": 1,
+        "profonde": 1
+      }
+    },
+    "ruines-anciennes": {
+      "name": "Ruines anciennes",
+      "size": {
+        "w": 48,
+        "h": 48
+      },
+      "weights": {
+        "terre": 5,
+        "ruines": 4,
+        "decombres": 3,
+        "murs": 2,
+        "rochers": 2,
+        "herbe": 2
+      }
+    },
+    "archipel-brumeux": {
+      "name": "Archipel brumeux",
+      "size": {
+        "w": 48,
+        "h": 48
+      },
+      "weights": {
+        "eau": 6,
+        "profonde": 4,
+        "sable": 3,
+        "rochers": 2,
+        "arbres": 2,
+        "herbe": 2
+      }
+    }
+  }
+}

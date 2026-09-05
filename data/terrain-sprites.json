@@ -1,0 +1,43 @@
+{
+  "_comment": "Manifeste du système de terrain 'V2' par grands aplats (stamps) qui se chevauchent, plutôt qu'une génération tuile par tuile. Chaque catégorie liste jusqu'à 4 variantes (images PNG à fond transparent, formes irrégulières).",
+
+  "base": {
+    "_comment": "Terrains de fond : posés en couche continue sur toute la carte, en se chevauchant largement (blend par transparence) pour éviter toute frontière géométrique.",
+    "grass": [
+      "./data/images/sprites/terrain/base/grass/grass_01.png",
+      "./data/images/sprites/terrain/base/grass/grass_02.png",
+      "./data/images/sprites/terrain/base/grass/grass_04.png"
+    ],
+    "soil": [
+      "./data/images/sprites/terrain/base/soil/soil_01.png",
+      "./data/images/sprites/terrain/base/soil/soil_02.png",
+      "./data/images/sprites/terrain/base/soil/soil_03.png",
+      "./data/images/sprites/terrain/base/soil/soil_04.png"
+    ],
+    "mud": [
+      "./data/images/sprites/terrain/base/mud/mud_01.png",
+      "./data/images/sprites/terrain/base/mud/mud_02.png",
+      "./data/images/sprites/terrain/base/mud/mud_03.png",
+      "./data/images/sprites/terrain/base/mud/mud_04.png"
+    ]
+  },
+
+  "features": {
+    "_comment": "Éléments uniques ajoutés par-dessus le fond : peu d'exemplaires par carte (1 à 2), jamais répétés en mosaïque.",
+    "forest": [
+      "./data/images/sprites/terrain/features/forest/forest_01.png",
+      "./data/images/sprites/terrain/features/forest/forest_02.png",
+      "./data/images/sprites/terrain/features/forest/forest_04.png"
+    ],
+    "river": [
+      "./data/images/sprites/terrain/features/river/river_02.png",
+      "./data/images/sprites/terrain/features/river/river_03.png",
+      "./data/images/sprites/terrain/features/river/river_04.png"
+    ],
+    "rock": [
+      "./data/images/sprites/terrain/features/rock/rock_01.png",
+      "./data/images/sprites/terrain/features/rock/rock_03.png",
+      "./data/images/sprites/terrain/features/rock/rock_04.png"
+    ]
+  }
+}

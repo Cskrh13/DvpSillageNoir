@@ -1,0 +1,2802 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>La Marée de Sang — Le Sillage Noir</title>
+<style>
+  :root{
+    --bg:#08080c; --panel:#12121a; --ink:#c8b890; --gold:#b8975a;
+    --blood:#7a1f1f; --edge:#3a2a1a; font-family:'Georgia','Times New Roman',serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; }
+  html,body{height:100%; }
+  body{ background:var(--bg); color:var(--ink); overflow:hidden; user-select:none; }
+  #app{ position:fixed; inset:0; }
+  canvas{ display:block; width:100%; height:100%; cursor:default; }
+
+  /* ---- Couches de fond ---- */
+  #bg-layer{ position:absolute; inset:0; background-size:cover; background-position:center; z-index:0; }
+  #bg-darken{ position:absolute; inset:0; z-index:1; pointer-events:none; }
+  .bg-title{ background:linear-gradient(180deg, rgba(8,8,12,.4) 0%, rgba(8,8,12,.85) 100%); }
+  .bg-hero{  background:linear-gradient(180deg, rgba(8,8,12,.55) 0%, rgba(8,8,12,.9) 100%); }
+  .bg-battle{background:linear-gradient(180deg, rgba(8,8,12,.35) 0%, rgba(8,8,12,.6) 100%); }
+  .bg-end{   background:linear-gradient(180deg, rgba(8,8,12,.5) 0%, rgba(8,8,12,.9) 100%); }
+
+  /* ---- Overlays ---- */
+  .overlay{ position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; z-index:10; padding:20px; }
+  .hidden{ display:none!important; }
+  h1{ font-size:38px; letter-spacing:4px; color:var(--gold);
+    text-shadow:0 0 20px #b8975a55, 0 2px 0 #000; margin-bottom:6px; font-weight:normal; }
+  .subtitle{ color:#7a6a4a; letter-spacing:6px; font-size:12px; margin-bottom:30px; text-transform:uppercase; }
+  .btn{ background:linear-gradient(180deg,#1a1520,#0c0a12); color:var(--gold);
+    border:1px solid var(--gold); padding:13px 38px; font-family:inherit; font-size:16px;
+    letter-spacing:3px; cursor:pointer; text-transform:uppercase; transition:.2s; }
+  .btn:hover{ background:linear-gradient(180deg,#2a1f30,#14101a); box-shadow:0 0 24px #b8975a44; }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn.sm{ padding:8px 22px; font-size:13px; }
+
+  /* ---- Sélection de héros ---- */
+  .hero-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:880px; width:100%; }
+  .hero-card{ background:linear-gradient(160deg,#16121e,#0c0a12); border:1px solid #2a2018;
+    padding:14px; cursor:pointer; transition:.2s; position:relative; min-height:195px; }
+  .hero-card:hover{ border-color:var(--gold); transform:translateY(-4px);
+    box-shadow:0 8px 30px #000a, 0 0 18px #b8975a22; }
+  .hero-card.selected{ border-color:var(--gold); box-shadow:0 0 24px #b8975a44; }
+  .hero-card h3{ color:var(--gold); font-size:16px; margin-bottom:3px; letter-spacing:1px; }
+  .hero-card .house{ color:#8a6a4a; font-size:11px; font-style:italic; margin-bottom:8px; }
+  .hero-card .desc{ font-size:12px; line-height:1.45; color:#a89878; margin-bottom:8px; }
+  .hero-card .sigil{ position:absolute; top:10px; right:14px; font-size:22px; opacity:.4; }
+  .prof{ display:grid; grid-template-columns:repeat(9,1fr); gap:2px; margin-bottom:7px; }
+  .prof span{ font-size:9px; text-align:center; padding:2px 0; background:#0a0810; border:1px solid #2a2018; }
+  .prof span b{ display:block; color:var(--gold); font-size:11px; }
+  .prof span i{ display:block; color:#6a5a3a; font-size:8px; font-style:normal; }
+
+  /* ---- HUD de bataille ---- */
+  #hud{ position:absolute; top:0; left:0; right:0; pointer-events:none; z-index:5; padding:8px 12px;
+    display:flex; justify-content:space-between; align-items:flex-start; }
+  #hud .panel{ background:rgba(12,10,18,.8); border:1px solid #2a2018; padding:8px 12px; font-size:12px; }
+  #marée{ color:#a03030; font-weight:bold; letter-spacing:2px; }
+  #units-list{ display:flex; gap:8px; flex-wrap:wrap; max-width:60%; }
+  .unit-chip{ background:#0a0810; border:1px solid #3a2a1a; padding:3px 8px; font-size:11px; }
+  .unit-chip .hpbar{ height:3px; background:#3a1a1a; margin-top:3px; }
+  .unit-chip .hpbar > i{ display:block; height:100%; background:#a03030; }
+
+  /* ---- Barre d'capacités ---- */
+  #abilities{ position:absolute; bottom:0; left:0; right:0; z-index:5; padding:10px;
+    display:flex; justify-content:center; gap:12px; pointer-events:none; }
+  .ability{ background:rgba(12,10,18,.85); border:1px solid var(--gold); width:84px; height:84px;
+    position:relative; cursor:pointer; pointer-events:auto; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; }
+  .ability .key{ position:absolute; top:3px; left:5px; color:var(--gold); font-size:12px; font-weight:bold; }
+  .ability .name{ font-size:9px; text-align:center; color:var(--ink); padding:0 4px; line-height:1.1; }
+  .ability .cd{ position:absolute; inset:0; background:rgba(0,0,0,.6); display:flex;
+    align-items:center; justify-content:center; color:#a03030; font-size:18px; }
+  .ability.ready{ box-shadow:0 0 12px #b8975a44; }
+
+  /* ---- Fin ---- */
+  #end-screen h1{ font-size:44px; }
+  .end-win{ color:var(--gold); } .end-lose{ color:#a03030; }
+
+  /* ---- Mode test combat (bac à sable tactique) ---- */
+  #test-screen{ position:absolute; inset:0; z-index:20; background:var(--bg); display:flex; flex-direction:column; }
+  #test-bar{ background:#12121a; border-bottom:1px solid #3a2a1a; padding:8px 12px;
+    display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:13px; }
+  #test-bar label{ color:#8a6a4a; }
+  #test-bar select, #test-bar input[type=number]{ background:#0a0810; color:var(--gold);
+    border:1px solid #3a2a1a; padding:4px 6px; font-family:inherit; max-width:180px; }
+  #test-bar .sep{ width:1px; height:24px; background:#3a2a1a; }
+  #test-bar .info{ color:#6a5a4a; font-size:11px; }
+  #test-log{ height:140px; overflow-y:auto; background:#050508; padding:6px 10px;
+    font-size:12px; line-height:1.5; border-top:1px solid #2a2018; }
+  #test-log .row{ display:grid; grid-template-columns:40px 1fr 60px 60px 60px; gap:8px; padding:1px 0; }
+  #test-log .row:nth-child(odd){ background:rgba(255,255,255,.02); }
+  #test-log .h{ color:#6a5a4a; font-weight:bold; position:sticky; top:0; background:#050508; }
+  #test-cv{ flex:1; cursor:crosshair; display:block; }
+  #test-side{ position:absolute; right:0; top:41px; bottom:0; width:220px; background:#0c0a12;
+    border-left:1px solid #3a2a1a; padding:10px; overflow-y:auto; z-index:21; }
+  #test-side h3{ color:var(--gold); font-size:13px; letter-spacing:2px; margin-bottom:8px; }
+  #test-side .unit-entry{ display:flex; align-items:center; gap:6px; padding:4px 6px; border:1px solid #2a2018;
+    margin-bottom:4px; cursor:pointer; font-size:12px; }
+  #test-side .unit-entry:hover{ border-color:var(--gold); }
+  #test-side .unit-entry.sel{ border-color:var(--gold); background:#1a1520; }
+  #test-side .unit-entry .dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  #test-side .unit-entry .nm{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #test-side .unit-entry .rm{ color:#a03030; cursor:pointer; font-weight:bold; }
+  #test-side .unit-entry .rm:hover{ color:#e04040; }
+  #test-side .hpbar{ height:3px; background:#3a1a1a; margin-top:2px; }
+  #test-side .hpbar i{ display:block; height:100%; background:#a03030; }
+  #formation-bar{ display:flex; gap:6px; margin-bottom:8px; }
+  #formation-bar .btn{ flex:1; padding:7px 8px; font-size:11px; letter-spacing:1px; }
+  .tab-btn{ background:#0a0810; color:#8a6a4a; border:1px solid #3a2a1a; padding:6px 9px; cursor:pointer; font-family:inherit; font-size:11px; }
+  .tab-btn.active{ color:var(--gold); border-color:var(--gold); background:#1a1520; }
+  #dead-list{ display:none; }
+  #dead-list.visible{ display:block; }
+  .unit-entry.dead{ opacity:.55; cursor:default; }
+  .formation-badge{ color:var(--gold); font-size:9px; margin-left:4px; }
+  #selection-box{ position:absolute; border:1px dashed var(--gold); background:rgba(184,151,90,.08); pointer-events:none; display:none; z-index:23; }
+  #test-hint{ position:absolute; bottom:145px; left:10px; z-index:22; background:rgba(8,8,12,.85);
+    border:1px solid #3a2a1a; padding:6px 10px; font-size:11px; color:#7a6a4a; border-radius:3px;
+    pointer-events:none; max-width:340px; line-height:1.5; }
+
+/* ---- Correctif couches bataille V10 ----
+   Le décor/image de fond doit rester derrière le plateau canvas.
+   Le canvas reçoit explicitement une couche supérieure.
+*/
+#app{position:fixed;inset:0;isolation:isolate}
+#bg-layer{position:absolute;inset:0;z-index:0!important;pointer-events:none}
+#bg-darken{position:absolute;inset:0;z-index:1!important;pointer-events:none}
+#cv{position:absolute;inset:0;z-index:2!important;display:block;width:100%;height:100%;pointer-events:auto}
+.overlay{z-index:10!important}
+#hud,#abilities,#gameplay-v3-ui,#terrain-info-v1,#ai-v6-status{z-index:11!important}
+
+</style>
+
+<style id="formation-tactical-v2">
+.formation-toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+.formation-toolbar button.active{outline:2px solid currentColor}
+.formation-badge{font-size:11px;opacity:.85;margin-left:4px}
+.formation-overlay{pointer-events:none;position:absolute;inset:0}
+</style>
+
+<style id="gameplay-v3-objectives-synergy-postures">
+.gp3-panel{font:12px/1.35 sans-serif;display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:7px 0;padding:7px;border:1px solid #555;border-radius:6px}
+.gp3-panel button{cursor:pointer}
+.gp3-panel .gp3-active{outline:2px solid currentColor}
+.gp3-status{opacity:.85}
+.gp3-objective{position:absolute;pointer-events:none;border:2px dashed currentColor;border-radius:50%;display:none}
+</style>
+
+<style id="hero-actions-v4-css">
+#hero-actions-v4{
+  display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+  padding:8px 10px; margin:8px 0; border:1px solid #555;
+  border-radius:8px; background:rgba(0,0,0,.18); font:12px/1.2 sans-serif;
+  user-select:none;
+}
+#hero-actions-v4 .ha-title{font-weight:700;margin-right:3px}
+#hero-actions-v4 .ha-slot{
+  position:relative; min-width:58px; height:58px; padding:4px;
+  border:1px solid #777; border-radius:7px; background:rgba(255,255,255,.06);
+  cursor:pointer; display:flex; flex-direction:column; justify-content:center; align-items:center;
+}
+#hero-actions-v4 .ha-slot:hover{background:rgba(255,255,255,.13)}
+#hero-actions-v4 .ha-slot.ha-disabled{opacity:.42;cursor:not-allowed}
+#hero-actions-v4 .ha-slot.ha-selected{outline:2px solid currentColor}
+#hero-actions-v4 .ha-icon{font-size:23px;line-height:25px}
+#hero-actions-v4 .ha-key{
+  position:absolute;left:4px;top:3px;font-weight:700;font-size:10px;opacity:.8
+}
+#hero-actions-v4 .ha-name{font-size:9px;max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#hero-actions-v4 .ha-cd{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;text-shadow:0 1px 3px #000;
+}
+#hero-actions-v4 .ha-meta{display:flex;flex-direction:column;gap:2px;margin-left:5px;min-width:130px}
+#hero-actions-v4 .ha-range{opacity:.85}
+#hero-actions-v4 .ha-hint{opacity:.65}
+</style>
+<script src="programmation/ia-old-world.js"></script>
+
+<script id="dvp-image-loader-v9">
+(() => {
+  "use strict";
+  const ROOTS = [
+    "",
+    "assets/",
+    "images/",
+    "img/",
+    "sprites/",
+    "data/images/",
+    "data/sprites/",
+    "programmation/images/"
+  ];
+
+  function candidates(src) {
+    if (!src || /^(data:|blob:|https?:|\/\/)/i.test(src)) return [src];
+    const clean = src.replace(/^\.?\//,"").replace(/^\/+/,"");
+    const out = [clean];
+    for (const root of ROOTS) {
+      const c = root + clean.split("/").pop();
+      if (!out.includes(c)) out.push(c);
+    }
+    return out;
+  }
+
+  function resolve(img) {
+    const original = img.dataset.dvpOriginalSrc || img.getAttribute("src");
+    if (!original || img.dataset.dvpResolved === "1") return;
+    img.dataset.dvpOriginalSrc = original;
+
+    const list = candidates(original);
+    let i = 0;
+    const tryNext = () => {
+      if (i >= list.length) {
+        img.dataset.dvpImageError = "1";
+        img.alt = img.alt || "Image introuvable";
+        console.warn("[DvpSillageNoir] Image introuvable:", original, list);
+        return;
+      }
+      const test = new Image();
+      const candidate = list[i++];
+      test.onload = () => {
+        img.src = candidate;
+        img.dataset.dvpResolved = "1";
+      };
+      test.onerror = tryNext;
+      test.src = candidate;
+    };
+    tryNext();
+  }
+
+  function scan() {
+    document.querySelectorAll("img[src]").forEach(resolve);
+    document.querySelectorAll("[data-src]").forEach(el => {
+      if (!el.getAttribute("src")) el.setAttribute("src", el.dataset.src);
+      resolve(el);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", scan);
+  } else scan();
+
+  new MutationObserver(scan).observe(document.documentElement, {
+    subtree: true, childList: true, attributes: true, attributeFilter: ["src","data-src"]
+  });
+
+  window.DvpImageLoader = { scan, candidates };
+})();
+</script>
+
+</head>
+<body>
+<div id="app">
+  <div id="bg-layer"></div>
+  <div id="bg-darken"></div>
+  <canvas id="cv"></canvas>
+
+  <!-- Écran titre -->
+  <div id="title-screen" class="overlay">
+    <h1>LA MARÉE DE SANG</h1>
+    <div class="subtitle">Le Sillage Noir</div>
+    <div style="display:flex; gap:14px; margin-top:10px;">
+      <button class="btn" id="start-btn">Commencer la campagne</button>
+    </div>
+  </div>
+
+  <!-- Écran sélection héros -->
+  <div id="hero-screen" class="overlay hidden">
+    <h1>CHOISIS TON HÉROS</h1>
+    <div class="hero-grid" id="hero-grid"></div>
+    <div style="margin-top:24px; display:flex; gap:14px;">
+      <button class="btn" id="hero-back">Retour</button>
+      <button class="btn" id="hero-go" disabled>Engager la bataille</button>
+    </div>
+  </div>
+
+  <!-- HUD de bataille -->
+  <div id="hud" class="hidden">
+    <div class="panel">
+      <div id="marée">MARÉE DE SANG : 0%</div>
+      <div id="scenario-name"></div>
+    </div>
+    <div class="panel" id="units-list"></div>
+  </div>
+  <div id="abilities" class="hidden"></div>
+
+  <!-- Écran de fin -->
+  <div id="end-screen" class="overlay hidden">
+    <h1 id="end-title"></h1>
+    <div class="subtitle" id="end-sub"></div>
+    <button class="btn" id="end-restart">Rejouer</button>
+  </div>
+
+  <!-- Écran test combat (bac à sable tactique) -->
+  <div id="test-screen" class="hidden">
+    <div id="test-bar">
+      <button class="btn sm" id="test-back">← Retour</button>
+      <div class="sep"></div>
+      <label>Ajouter :</label>
+      <select id="add-unit-sel"></select>
+      <select id="add-side-sel">
+        <option value="ally">Allié (rouge)</option>
+        <option value="foe">Ennemi (bleu)</option>
+      </select>
+      <button class="btn sm" id="add-btn">+ Ajouter</button>
+      <div class="sep"></div>
+      <label>Tests :</label>
+      <label>Rounds :</label>
+      <input id="rounds" type="number" value="50" min="1" max="1000" style="width:60px"/>
+      <label>Tir ?</label>
+      <input id="ranged" type="checkbox"/>
+      <button class="btn sm" id="run">Test atk sélectionnée → cible clic</button>
+      <div class="sep"></div>
+      <span class="info">ClicG: sélection · ClicD: déplacer · Molette/Flèches: caméra · L: suivi</span>
+    </div>
+    <canvas id="test-cv"></canvas>
+    <div id="test-hint"></div>
+    <div id="test-side">
+      <h3>UNITÉS</h3>
+      <div id="formation-bar">
+        <button class="btn sm" id="form-btn">Former le même type</button>
+      </div>
+      <div style="display:flex;gap:5px;margin-bottom:8px;">
+        <button class="tab-btn active" id="tab-live">En jeu</button>
+        <button class="tab-btn" id="tab-dead">Morts <span id="dead-count">0</span></button>
+      </div>
+      <div id="unit-list"></div>
+      <div id="dead-list"></div>
+    </div>
+    <div id="selection-box"></div>
+    <div id="test-log">
+      <div class="row h"><span>#</span><span>Évènement</span><span>Touchés</span><span>Bless.</span><span>Non-sauv.</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   MODULES : Combat, Movement, Interactions, Sprites, Terrain, Army
+   (tous inline, auto-contenus)
+   ============================================================ */
+
+/* ----- DATA INLINE (JSON embarqués) ----- */
+const DATA = {};
+DATA.elfesNoirs = {"id":"elfes-noirs","name":"Elfes Noirs","language":"fr","version":"1.0","source":"Elfes noirs.pdf â Legacy Army List","description":"DonnÃ©es franÃ§aises de l'armÃ©e gÃ©nÃ©rique des Elfes Noirs pour le crÃ©ateur de listes. Les supplÃ©ments peuvent rÃ©utiliser cette base et appliquer leurs propres restrictions.","composition":{"categories":{"Personnages":{"minPercent":0,"maxPercent":50},"UnitÃ©s de Base":{"minPercent":25,"maxPercent":100},"UnitÃ©s SpÃ©ciales":{"minPercent":0,"maxPercent":50},"UnitÃ©s Rares":{"minPercent":0,"maxPercent":25},"Mercenaires":{"minPercent":0,"maxPercent":20},"AlliÃ©s":{"minPercent":0,"maxPercent":25}},"notes":["Personnages : jusqu'Ã  50 % des points.","Base : au moins 25 % des points.","SpÃ©ciales : jusqu'Ã  50 % des points.","Rares : jusqu'Ã  25 % des points.","Mercenaires : jusqu'Ã  20 % des points.","AlliÃ©s : jusqu'Ã  25 % des points, avec un seul contingent alliÃ©."]},"specialRules":[{"id":"cleaving-blow","name":"Coup de taille","text":"Sur un 6 naturel pour blesser au corps Ã  corps, certaines cibles d'infanterie ou de cavalerie perdent leurs sauvegardes d'armure et de RÃ©gÃ©nÃ©ration."},{"id":"elven-reflexes","name":"RÃ©flexes elfiques","text":"+1 Initiative lors du premier round de chaque combat, sans l'appliquer Ã  la monture."},{"id":"eternal-hatred","name":"Haine Ã©ternelle","text":"Contre les Hauts-Elfes, la Haine s'applique Ã  chaque round de corps Ã  corps."},{"id":"hekarti-blessing","name":"BÃ©nÃ©diction d'Hekarti","text":"Une fois par partie, permet de relancer un test de lancement ratÃ©."},{"id":"martial-prowess","name":"MaÃ®trise martiale","text":"Les unitÃ©s concernÃ©es peuvent effectuer des attaques de soutien sur leurs flancs et leur arriÃ¨re."},{"id":"murderous","name":"Meurtrier","text":"Avec une seule arme de base non magique au corps Ã  corps, relance les 1 naturels pour blesser."},{"id":"sea-dragon-cloak","name":"Cape en peau de Dragon des Mers","text":"AmÃ©liore de 1 la sauvegarde d'armure contre les tirs non magiques, jusqu'Ã  2+."},{"id":"goad-beast","name":"Exciter la bÃªte","text":"Un Grand MaÃ®tre des BÃªtes peut donner +D3 Attaques Ã  un monstre ami Ã  portÃ©e de Commandement, jusqu'Ã  10."},{"id":"hidden","name":"DissimulÃ©","text":"L'Assassin peut commencer cachÃ© dans une unitÃ© d'infanterie amie de Force d'UnitÃ© suffisante et se rÃ©vÃ©ler pendant la partie."},{"id":"dance-of-death","name":"Danse de mort","text":"Une unitÃ© de SÅurs du Massacre qui rÃ©ussit une charge rÃ©duit temporairement le bonus de rang maximal de sa cible."},{"id":"cursed-coven","name":"Coven maudit","text":"Les Conjurateurs de Feu Maudit connaissent un sort liÃ© de Magie Noire ou de DÃ©monologie."},{"id":"dark-runes","name":"Runes sombres","text":"Sauvegarde invulnÃ©rable de 5+ contre les blessures causÃ©es par des attaques ennemies non magiques."},{"id":"wilful-beast","name":"BÃªte indocile","text":"Une Manticore montÃ©e doit tester son Commandement au dÃ©but du tour ; en cas d'Ã©chec, elle gagne FrÃ©nÃ©sie jusqu'au prochain dÃ©but de tour."},{"id":"stony-stare","name":"Regard pÃ©trifiant","text":"Les ennemis au contact doivent tester leur Initiative au dÃ©but de chaque phase de Combat ; en cas d'Ã©chec, ils subissent D3 touches de Force 2 sans sauvegarde d'armure."},{"id":"abyssal-howl","name":"Hurlement abyssal","text":"Les unitÃ©s ennemies Ã  6 pouces subissent -1 Commandement, non cumulatif."}],"units":[{"id":"dark-elf-dreadlord","name":"Seigneur Elfe Noir","category":"Personnages","points":130,"min":0,"max":1,"profile":{"M":5,"CC":7,"CT":7,"F":4,"E":3,"PV":3,"I":6,"A":4,"Cd":10},"type":"Infanterie rÃ©guliÃ¨re (personnage)","base":"25 x 25 mm","unitSize":"1","equipment":["Arme de base","Armure lÃ©gÃ¨re"],"options":["Arme de base additionnelle +3 pts","Arme lourde +4 pts","Hallebarde +3 pts","Lance si montÃ© +4 pts","ArbalÃ¨te Ã  rÃ©pÃ©tition +6 pts","Arme de poing Ã  rÃ©pÃ©tition +5 pts","Paire d'armes de poing Ã  rÃ©pÃ©tition +10 pts","Bouclier +2 pts","Armure lourde +3 pts","Armure intÃ©grale +6 pts","Cape en peau de Dragon des Mers +4 pts","Coursier Noir +14 pts","Sang-Froid +18 pts","Char Ã  Sang-Froid +125 pts","Manticore +130 pts","Dragon Noir +280 pts","Objets magiques jusqu'Ã  100 pts"],"specialRules":["RÃ©flexes elfiques","Haine Ã©ternelle","Haine (Hauts-Elfes)","Meurtrier","Frappe en premier"]},{"id":"dark-elf-master","name":"MaÃ®tre Elfe Noir","category":"Personnages","points":70,"min":0,"max":999,"profile":{"M":5,"CC":6,"CT":6,"F":4,"E":3,"PV":2,"I":5,"A":3,"Cd":9},"type":"Infanterie rÃ©guliÃ¨re (personnage)","base":"25 x 25 mm","unitSize":"1","equipment":["Arme de base","Armure lÃ©gÃ¨re"],"options":["Arme de base additionnelle +3 pts","Arme lourde +4 pts","Hallebarde +3 pts","Lance si montÃ© +4 pts","ArbalÃ¨te Ã  rÃ©pÃ©tition +6 pts","Arme de poing Ã  rÃ©pÃ©tition +5 pts","Paire d'armes de poing Ã  rÃ©pÃ©tition +10 pts","Bouclier +2 pts","Armure lourde +3 pts","Armure intÃ©grale +6 pts","Cape en peau de Dragon des Mers +4 pts","Coursier Noir +14 pts","Sang-Froid +18 pts","Char Ã  Sang-Froid +125 pts","Manticore +130 pts","Grande BanniÃ¨re +25 pts","Objets magiques jusqu'Ã  50 pts"],"specialRules":["RÃ©flexes elfiques","Haine Ã©ternelle","Haine (Hauts-Elfes)","Meurtrier","Frappe en premier"],"grandBannerEligible":true},{"id":"supreme-sorceress","name":"Grande SorciÃ¨re","category":"Personnages","points":150,"min":0,"max":1,"profile":{"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":3,"I":5,"A":2,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re (personnage)","base":"25 x 25 mm","unitSize":"1","equipment":["Arme de base"],"options":["Niveau 4 +30 pts","Coursier Noir +14 pts","Sang-Froid +18 pts","PÃ©gase Noir +35 pts","Dragon Noir +280 pts","Objets magiques jusqu'Ã  100 pts"],"specialRules":["RÃ©flexes elfiques","Haine Ã©ternelle","Haine (Hauts-Elfes)","BÃ©nÃ©diction d'Hekarti","Domaine de Naggaroth","Meurtrier"],"wizard":{"level":3,"upgradeLevel4":30,"lores":["Magie de Bataille","DÃ©monologie","Magie Noire","ÃlÃ©mentalisme","Illusion"]}},{"id":"sorceress","name":"SorciÃ¨re","category":"Personnages","points":75,"min":0,"max":999,"profile":{"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":2,"I":4,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re (personnage)","base":"25 x 25 mm","unitSize":"1","equipment":["Arme de base"],"options":["Niveau 2 +30 pts","Coursier Noir +14 pts","Sang-Froid +18 pts","PÃ©gase Noir +35 pts","Objets magiques jusqu'Ã  50 pts"],"specialRules":["RÃ©flexes elfiques","Haine Ã©ternelle","Haine (Hauts-Elfes)","BÃ©nÃ©diction d'Hekarti","Domaine de Naggaroth","Meurtrier"],"wizard":{"level":1,"upgradeLevel2":30,"lores":["Magie de Bataille","DÃ©monologie","Magie Noire","ÃlÃ©mentalisme","Illusion"]}},{"id":"high-beastmaster","name":"Grand MaÃ®tre des BÃªtes","category":"Personnages","points":75,"min":0,"max":999,"profile":{"M":"-","CC":7,"CT":7,"F":4,"E":3,"PV":3,"I":5,"A":3,"Cd":9},"type":"Infanterie rÃ©guliÃ¨re (personnage)","base":"Selon la monture","unitSize":"1","equipment":["Arme de base","Fouet","Armure lÃ©gÃ¨re"],"options":["Lance de cavalerie +2 pts","ArbalÃ¨te Ã  rÃ©pÃ©tition +6 pts","Bouclier +2 pts","Armure lourde +3 pts","Char Ã  Harpon +85 pts","Manticore +130 pts","Cape en peau de Dragon des Mers +4 pts","Objets magiques jusqu'Ã  75 pts"],"specialRules":["RÃ©flexes elfiques","Haine Ã©ternelle","Haine (Hauts-Elfes)","Exciter la bÃªte","Meurtrier","Frappe en premier"]},{"id":"death-hag","name":"Hag de Khaine","category":"Personnages","points":70,"min":0,"max":999,"profile":{"M":5,"CC":6,"CT":6,"F":4,"E":3,"PV":2,"I":7,"A":3,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re (personnage)","base":"25 x 25 mm","unitSize":"1","equipment":["Deux armes de base"],"options":["Don de Khaine : Cri de guerre +15 pts","Rune de Khaine +10 pts","Breuvage de sorciÃ¨re +20 pts","Chaudron de Sang +150 pts","Objets magiques jusqu'Ã  75 pts"],"specialRules":["Haine Ã©ternelle","FrÃ©nÃ©sie","Haine (tous les ennemis)","Solitaire","Meurtrier","Attaques empoisonnÃ©es","Frappe en premier"]},{"id":"khainite-assassin","name":"Assassin Khainite","category":"Personnages","points":80,"min":0,"max":999,"profile":{"M":5,"CC":8,"CT":7,"F":4,"E":3,"PV":2,"I":7,"A":3,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re (personnage)","base":"25 x 25 mm","unitSize":"1","equipment":["Arme de base","Armes de jet"],"options":["Arme de base additionnelle +3 pts","Arme de poing Ã  rÃ©pÃ©tition +5 pts","Lotus noir +5 pts","Venin noir +15 pts","Manbane +15 pts","Objets magiques jusqu'Ã  50 pts"],"specialRules":["Haine Ã©ternelle","Haine (tous les ennemis)","DissimulÃ©","ImmunitÃ© Ã  la psychologie","Meurtrier","Frappe en premier"]},{"id":"dark-elf-warriors","name":"Guerriers Elfes Noirs","category":"UnitÃ©s de Base","points":8,"min":0,"max":999,"profile":{"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":1,"I":4,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re","base":"25 x 25 mm","unitSize":"10+","equipment":["Armes de base","Armure lÃ©gÃ¨re","Boucliers"],"options":["Champion +5 pts","Porte-Ã©tendard +5 pts","Musicien +5 pts","Lances d'estoc +1 pt/modÃ¨le","VÃ©tÃ©rans +1 pt/modÃ¨le (0-1/1000)","BanniÃ¨re magique jusqu'Ã  50 pts (0-1/1000)"],"specialRules":["RÃ©flexes elfiques","Haine (Hauts-Elfes)","MaÃ®trise martiale"]},{"id":"repeater-crossbowmen","name":"ArbalÃ©triers Ã  rÃ©pÃ©tition","category":"UnitÃ©s de Base","points":11,"min":0,"max":999,"profile":{"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":1,"I":4,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re","base":"25 x 25 mm","unitSize":"10+","equipment":["Armes de base","ArbalÃ¨tes Ã  rÃ©pÃ©tition","Armure lÃ©gÃ¨re"],"options":["Champion +5 pts","Porte-Ã©tendard +5 pts","Musicien +5 pts","Boucliers +1 pt/modÃ¨le","VÃ©tÃ©rans +1 pt/modÃ¨le (0-1/1000)","BanniÃ¨re magique jusqu'Ã  50 pts (0-1/1000)"],"specialRules":["RÃ©flexes elfiques","Haine (Hauts-Elfes)","MaÃ®trise martiale"]},{"id":"black-ark-corsairs","name":"Corsaires de l'Arche Noire","category":"UnitÃ©s de Base","points":11,"min":0,"max":999,"profile":{"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":1,"I":4,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re","base":"25 x 25 mm","unitSize":"10+","equipment":["Armes de base","Armure lÃ©gÃ¨re"],"options":["Armes de base additionnelles gratuites ou armes de poing Ã  rÃ©pÃ©tition gratuites","Reaver +6 pts","Porte-Ã©tendard +6 pts","Musicien +6 pts","BanniÃ¨re magique jusqu'Ã  50 pts"],"specialRules":["RÃ©flexes elfiques","Haine (Hauts-Elfes)","Progression Ã  travers les terrains","Ordre ouvert","Cape en peau de Dragon des Mers"]},{"id":"dark-riders","name":"Cavaliers Noirs","category":"UnitÃ©s de Base","points":16,"min":0,"max":999,"profile":{"M":"-","CC":4,"CT":4,"F":3,"E":3,"PV":1,"I":4,"A":1,"Cd":8},"type":"Cavalerie lÃ©gÃ¨re","base":"30 x 60 mm","unitSize":"5+","equipment":["Armes de base","Lances de cavalerie","Armure lÃ©gÃ¨re","Coursiers Noirs"],"options":["ArbalÃ¨tes Ã  rÃ©pÃ©tition +2 pts/modÃ¨le","Boucliers +1 pt/modÃ¨le","HÃ©raut +6 pts","Porte-Ã©tendard +6 pts","Musicien +6 pts","Feu et fuite +1 pt/modÃ¨le (0-1/1000)","Ãclaireurs +1 pt/modÃ¨le (0-1/1000)"],"specialRules":["RÃ©flexes elfiques","Cavalerie lÃ©gÃ¨re","Haine (Hauts-Elfes)","Ordre ouvert","Tirailleurs","RapiditÃ©"]},{"id":"witch-elves","name":"Furies","category":"UnitÃ©s de Base","points":11,"min":0,"max":999,"profile":{"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":1,"I":5,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re","base":"25 x 25 mm","unitSize":"10+","equipment":["Deux armes de base"],"options":["Hag +7 pts","Porte-Ã©tendard +7 pts","Musicien +7 pts","BanniÃ¨re magique jusqu'Ã  50 pts"],"specialRules":["Ordre serrÃ©","RÃ©flexes elfiques","FrÃ©nÃ©sie","Haine (Hauts-Elfes)","Horde","Solitaire","Meurtrier","Attaques empoisonnÃ©es"],"restriction":"0-1 unitÃ© si l'armÃ©e contient au moins une Hag de Khaine ; elle est alors une unitÃ© de Base."},{"id":"black-guard","name":"Garde Noire de Naggarond","category":"UnitÃ©s SpÃ©ciales","points":15,"min":0,"max":999,"profile":{"M":5,"CC":5,"CT":4,"F":3,"E":3,"PV":1,"I":5,"A":1,"Cd":9},"type":"Infanterie rÃ©guliÃ¨re","base":"25 x 25 mm","unitSize":"10+","equipment":["Armes de base","Hallebardes sinistres","Armure intÃ©grale"],"options":["MaÃ®tre de la Tour +7 pts","Porte-Ã©tendard +7 pts","Musicien +7 pts","DrillÃ©s +1 pt/modÃ¨le","BanniÃ¨re magique jusqu'Ã  100 pts","MaÃ®tre de la Tour : objets magiques jusqu'Ã  50 pts"],"specialRules":["Ordre serrÃ©","RÃ©flexes elfiques","Haine Ã©ternelle","Haine (Hauts-Elfes)","ImmunitÃ© Ã  la psychologie","MaÃ®trise martiale","Tenace"],"restriction":"0-1 unitÃ© par Noble Elfe Noir prÃ©sent dans l'armÃ©e."},{"id":"executioners","name":"ExÃ©cuteurs de Har Ganeth","category":"UnitÃ©s SpÃ©ciales","points":15,"min":0,"max":999,"profile":{"M":5,"CC":5,"CT":4,"F":4,"E":3,"PV":1,"I":5,"A":1,"Cd":9},"type":"Infanterie rÃ©guliÃ¨re","base":"25 x 25 mm","unitSize":"10+","equipment":["Armes de base","Grandes Ã©pÃ©es de Har Ganeth","Armure lourde"],"options":["MaÃ®tre Draich +6 pts","Porte-Ã©tendard +6 pts","Musicien +6 pts","DrillÃ©s +2 pts/modÃ¨le","BanniÃ¨re magique jusqu'Ã  50 pts","MaÃ®tre Draich : objets magiques jusqu'Ã  25 pts"],"specialRules":["Ordre serrÃ©","RÃ©flexes elfiques","Haine (Hauts-Elfes)","Meurtrier","VÃ©tÃ©ran"]},{"id":"shades","name":"Ombres Elfes Noirs","category":"UnitÃ©s SpÃ©ciales","points":15,"min":0,"max":999,"profile":{"M":5,"CC":5,"CT":5,"F":3,"E":3,"PV":1,"I":5,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re","base":"25 x 25 mm","unitSize":"5+","equipment":["Armes de base","ArbalÃ¨tes Ã  rÃ©pÃ©tition"],"options":["Armes de base additionnelles +1 pt/modÃ¨le","Armes lourdes +2 pts/modÃ¨le","Armure lÃ©gÃ¨re +1 pt/modÃ¨le","Bloodshade +6 pts","Bloodshade : objets magiques jusqu'Ã  25 pts","Embuscade +1 pt/modÃ¨le (0-1)","Coureurs de chars +1 pt/modÃ¨le (0-1)","VÃ©tÃ©rans +1 pt/modÃ¨le (0-1)"],"specialRules":["RÃ©flexes elfiques","Ãvasifs","Haine (Hauts-Elfes)","Progression Ã  travers les terrains","Ãclaireurs","Tirailleurs"]},{"id":"sisters-of-slaughter","name":"SÅurs du Massacre","category":"UnitÃ©s SpÃ©ciales","points":17,"min":0,"max":999,"profile":{"M":5,"CC":5,"CT":4,"F":3,"E":3,"PV":1,"I":6,"A":2,"Cd":9},"type":"Infanterie rÃ©guliÃ¨re","base":"25 x 25 mm","unitSize":"10+","equipment":["Armes de base","Fouet et bouclier"],"options":["Hag +7 pts","Porte-Ã©tendard +7 pts","Musicien +7 pts","BanniÃ¨re magique jusqu'Ã  50 pts"],"specialRules":["Danse de mort","RÃ©flexes elfiques","Haine (Hauts-Elfes)","ImpÃ©tueuses","Solitaire","MeurtriÃ¨res","Ordre ouvert"]},{"id":"harpies","name":"Harpies","category":"UnitÃ©s SpÃ©ciales","points":11,"min":0,"max":999,"profile":{"M":5,"CC":3,"CT":0,"F":3,"E":3,"PV":1,"I":5,"A":2,"Cd":6},"type":"Infanterie rÃ©guliÃ¨re","base":"25 x 25 mm","unitSize":"5+","equipment":["Serres (armes de base)"],"specialRules":["Vol (10)","Progression Ã  travers les terrains","Ãclaireurs","Tirailleurs","RapiditÃ©"]},{"id":"cold-one-knights","name":"Chevaliers sur Sang-Froid","category":"UnitÃ©s SpÃ©ciales","points":31,"min":0,"max":999,"profile":{"M":"-","CC":4,"CT":4,"F":4,"E":4,"PV":1,"I":5,"A":1,"Cd":9},"type":"Cavalerie lourde","base":"30 x 60 mm","unitSize":"5+","equipment":["Armes de base","Lances","Armure lourde","Boucliers","Sang-Froids"],"options":["Chevalier Dread +7 pts","Porte-Ã©tendard +7 pts","Musicien +7 pts","BanniÃ¨re magique jusqu'Ã  50 pts","Armure intÃ©grale +4 pts/modÃ¨le","Chevalier Dread : objets magiques jusqu'Ã  50 pts"],"specialRules":["Armure perforante (1, Sang-Froid)","Peau Ã©cailleuse (1)","Ordre serrÃ©","RÃ©flexes elfiques","Peur","PremiÃ¨re charge","Haine (Hauts-Elfes)","StupiditÃ©","RapiditÃ©"],"restriction":"0-1 unitÃ© par tranche de 1 000 points.","mountRef":"cold-one-mount","championProfile":{"name":"Chevalier Dread","M":"-","CC":5,"CT":4,"F":4,"E":4,"PV":1,"I":5,"A":2,"Cd":9}},{"id":"scourgerunner-chariots","name":"Chars Ã  Harpon","category":"UnitÃ©s SpÃ©ciales","points":85,"min":0,"max":999,"profile":{"M":"-","CC":"-","CT":"-","F":4,"E":4,"PV":4,"I":"-","A":"-","Cd":"-"},"type":"Char lÃ©ger","base":"50 x 100 mm","unitSize":"1-3","equipment":["Harpon ravageur","Ãquipage MaÃ®tre des BÃªtes x2","Coursiers Noirs x2"],"specialRules":["RÃ©flexes elfiques","Haine (Hauts-Elfes)","Touches d'impact (D6)","Ordre ouvert","Cape en peau de Dragon des Mers","RapiditÃ©"],"weapon":"Harpon ravageur : 24\", F6, PA -3, Encombrant, Blessures multiples (D3), Ponderous","restriction":"0-2 chars par tranche de 1 000 points, combinÃ©s avec les Chars Ã  Sang-Froid.","mountRef":{"id":"dark-steed","count":2},"crewProfiles":[{"name":"Ãquipage MaÃ®tre des BÃªtes","count":2,"M":"-","CC":4,"CT":4,"F":3,"E":"-","PV":"-","I":4,"A":1,"Cd":8}]},{"id":"cold-one-chariots","name":"Chars Ã  Sang-Froid","category":"UnitÃ©s SpÃ©ciales","points":125,"min":0,"max":999,"profile":{"M":"-","CC":"-","CT":"-","F":5,"E":5,"PV":4,"I":"-","A":"-","Cd":"-"},"type":"Char lourd","base":"50 x 100 mm","unitSize":"1","equipment":["Ãquipage Chevalier x2","Sang-Froids x2"],"specialRules":["Armure perforante (1, Sang-Froid)","Ordre serrÃ©","RÃ©flexes elfiques","Peur","PremiÃ¨re charge","Haine (Hauts-Elfes)","Touches d'impact (D6+1)","StupiditÃ©"],"restriction":"0-2 chars par tranche de 1 000 points, combinÃ©s avec les Chars Ã  Harpon.","mountRef":{"id":"cold-one-mount","count":2},"crewProfiles":[{"name":"Chevalier Charioteer","count":2,"M":"-","CC":5,"CT":4,"F":4,"E":"-","PV":"-","I":5,"A":1,"Cd":9}]},{"id":"war-hydra-special","name":"Hydre de Guerre","category":"UnitÃ©s SpÃ©ciales","points":200,"min":0,"max":1,"profile":{"M":6,"CC":4,"CT":0,"F":5,"E":5,"PV":5,"I":3,"A":2,"Cd":6},"type":"BÃ©hÃ©moth","base":"60 x 100 mm","unitSize":"1","equipment":["Serres vicieuses","MÃ¢choires dentelÃ©es","Souffle ardent","MaÃ®tres des BÃªtes x2"],"specialRules":["Ordre serrÃ©","Attaques supplÃ©mentaires (+PV restants)","ImmunitÃ© Ã  la psychologie","Grande cible","MaÃ®tres des monstres","RÃ©gÃ©nÃ©ration (5+)","PiÃ©tinement (D3)","Terreur"],"restriction":"0-1 si le GÃ©nÃ©ral est un Grand MaÃ®tre des BÃªtes.","crewProfiles":[{"name":"MaÃ®tres des BÃªtes","count":2,"M":6,"CC":4,"CT":"-","F":3,"E":"-","PV":"-","I":4,"A":1,"Cd":8}]},{"id":"kharibdyss-special","name":"Kharibdyss","category":"UnitÃ©s SpÃ©ciales","points":195,"min":0,"max":1,"profile":{"M":6,"CC":5,"CT":0,"F":7,"E":5,"PV":5,"I":3,"A":5,"Cd":6},"type":"BÃ©hÃ©moth","base":"60 x 100 mm","unitSize":"1","equipment":["Gueule cavernale","Tentacules grouillants","MaÃ®tres des BÃªtes x2"],"specialRules":["Hurlement abyssal","Ordre serrÃ©","ImmunitÃ© Ã  la psychologie","Grande cible","MaÃ®tres des monstres","PiÃ©tinement (D3+1)","Terreur"],"restriction":"0-1 si le GÃ©nÃ©ral est un Grand MaÃ®tre des BÃªtes.","crewProfiles":[{"name":"MaÃ®tres des BÃªtes","count":2,"M":6,"CC":4,"CT":"-","F":3,"E":"-","PV":"-","I":4,"A":1,"Cd":8}]},{"id":"doomfire-warlocks","name":"Conjurateurs de Feu Maudit","category":"UnitÃ©s Rares","points":22,"min":0,"max":1,"profile":{"M":"-","CC":4,"CT":4,"F":4,"E":3,"PV":1,"I":5,"A":1,"Cd":8},"type":"Cavalerie lÃ©gÃ¨re","base":"30 x 60 mm","unitSize":"5+","equipment":["Armes de base","Coursiers Noirs"],"options":["MaÃ®tre +6 pts","MaÃ®tre : objets magiques jusqu'Ã  25 pts"],"specialRules":["Coven maudit","Runes sombres","RÃ©flexes elfiques","Cavalerie lÃ©gÃ¨re","Haine (Hauts-Elfes)","Ordre ouvert","Attaques empoisonnÃ©es","RapiditÃ©"],"restriction":"0-1 unitÃ© par tranche de 1 000 points."},{"id":"bloodwrack-shrine","name":"Autel de Sang","category":"UnitÃ©s Rares","points":175,"min":0,"max":999,"profile":{"M":2,"CC":"-","CT":"-","F":5,"E":5,"PV":5,"I":"-","A":"-","Cd":"-"},"type":"Char lourd","base":"60 x 100 mm","unitSize":"1","equipment":["Gardiennes du sanctuaire x2","MÃ©duse Bloodwrack"],"specialRules":["Ordre serrÃ©","TraÃ®nÃ©","RÃ©flexes elfiques","FrÃ©nÃ©sie","Haine (Hauts-Elfes)","Touches d'impact (D6+1)","Grande cible","RÃ©sistance magique (-1)","Meurtrier","Attaques empoisonnÃ©es","Regard pÃ©trifiant","Terreur"],"crewProfiles":[{"name":"Gardiennes du Sanctuaire","count":2,"M":"-","CC":4,"CT":4,"F":3,"E":"-","PV":"-","I":5,"A":1,"Cd":8}]},{"id":"war-hydra-rare","name":"Hydre de Guerre","category":"UnitÃ©s Rares","points":200,"min":0,"max":999,"profile":{"M":6,"CC":4,"CT":0,"F":5,"E":5,"PV":5,"I":3,"A":2,"Cd":6},"type":"BÃ©hÃ©moth","base":"60 x 100 mm","unitSize":"1","equipment":["Serres vicieuses","MÃ¢choires dentelÃ©es","Souffle ardent","MaÃ®tres des BÃªtes x2"],"specialRules":["Ordre serrÃ©","Attaques supplÃ©mentaires (+PV restants)","ImmunitÃ© Ã  la psychologie","Grande cible","MaÃ®tres des monstres","RÃ©gÃ©nÃ©ration (5+)","PiÃ©tinement (D3)","Terreur"],"crewProfiles":[{"name":"MaÃ®tres des BÃªtes","count":2,"M":6,"CC":4,"CT":"-","F":3,"E":"-","PV":"-","I":4,"A":1,"Cd":8}]},{"id":"kharibdyss-rare","name":"Kharibdyss","category":"UnitÃ©s Rares","points":195,"min":0,"max":999,"profile":{"M":6,"CC":5,"CT":0,"F":7,"E":5,"PV":5,"I":3,"A":5,"Cd":6},"type":"BÃ©hÃ©moth","base":"60 x 100 mm","unitSize":"1","equipment":["Gueule cavernale","Tentacules grouillants","MaÃ®tres des BÃªtes x2"],"specialRules":["Hurlement abyssal","Ordre serrÃ©","ImmunitÃ© Ã  la psychologie","Grande cible","MaÃ®tres des monstres","PiÃ©tinement (D3+1)","Terreur"],"crewProfiles":[{"name":"MaÃ®tres des BÃªtes","count":2,"M":6,"CC":4,"CT":"-","F":3,"E":"-","PV":"-","I":4,"A":1,"Cd":8}]},{"id":"bloodwrack-medusa","name":"MÃ©duse Bloodwrack","category":"UnitÃ©s Rares","points":85,"min":0,"max":999,"profile":{"M":7,"CC":5,"CT":5,"F":4,"E":4,"PV":4,"I":5,"A":3,"Cd":7},"type":"CrÃ©ature monstrueuse","base":"40 x 40 mm","unitSize":"1","equipment":["Arme de base","Regard pÃ©trifiant","Armure lÃ©gÃ¨re"],"specialRules":["Ordre serrÃ©","RÃ©flexes elfiques","Peur","FrÃ©nÃ©sie","Haine (Hauts-Elfes)","RÃ©sistance magique (-1)","Meurtrier","Attaques empoisonnÃ©es","Regard pÃ©trifiant"]},{"id":"reaper-bolt-thrower","name":"Baliste Faucheuse","category":"UnitÃ©s Rares","points":80,"min":0,"max":2,"profile":{"M":"-","CC":"-","CT":"-","F":"-","E":6,"PV":2,"I":"-","A":"-","Cd":"-"},"type":"Machine de guerre","base":"50 x 50 mm","unitSize":"1","equipment":["Baliste Ã  rÃ©pÃ©tition","Ãquipage Elfe Noir x2","Armes de base","Armure lÃ©gÃ¨re"],"specialRules":["RÃ©flexes elfiques","Haine (Hauts-Elfes)","Tirailleurs"],"restriction":"0-2 par tranche de 1 000 points.","crewProfiles":[{"name":"Ãquipage Elfe Noir","count":2,"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":2,"I":4,"A":2,"Cd":8}]},{"id":"cauldron-of-blood","name":"Chaudron de Sang","category":"Personnages","points":150,"min":0,"max":1,"profile":{"M":2,"CC":"-","CT":"-","F":5,"E":5,"PV":5,"I":"-","A":"-","Cd":"-"},"type":"Char lourd / monture de personnage","base":"60 x 100 mm","unitSize":"1","equipment":["Ãquipage Furies x2","Deux armes de base"],"specialRules":["Ordre serrÃ©","TraÃ®nÃ©","RÃ©flexes elfiques","FrÃ©nÃ©sie","Haine (Hauts-Elfes)","Touches d'impact (D6+1)","Grande cible","RÃ©sistance magique (-1)","Meurtrier","Attaques empoisonnÃ©es","Terreur"],"restriction":"Uniquement comme monture d'une Hag de Khaine ; 0-1 par tranche de 1 000 points.","crewProfiles":[{"name":"Ãquipage Furies","count":2,"M":"-","CC":4,"CT":4,"F":3,"E":"-","PV":"-","I":5,"A":1,"Cd":9}]}],"mounts":[{"id":"dark-steed","name":"Coursier Noir","points":14,"profile":{"M":9,"CC":3,"CT":"-","F":3,"E":"-","PV":"-","I":4,"A":1,"Cd":"-"},"specialRules":["Cavalerie lÃ©gÃ¨re","RapiditÃ©"]},{"id":"cold-one-mount","name":"Sang-Froid","points":18,"profile":{"M":7,"CC":3,"CT":"-","F":4,"E":"-","PV":"-","I":2,"A":2,"Cd":"-"},"specialRules":["Armure perforante (1)","Peau Ã©cailleuse (1)","Peur","PremiÃ¨re charge","StupiditÃ©","RapiditÃ©"]},{"id":"dark-pegasus","name":"PÃ©gase Noir","points":35,"profile":{"M":8,"CC":3,"CT":"-","F":4,"E":"-","PV":"+1","I":4,"A":3,"Cd":"-"},"specialRules":["Armure perforante (1)","Contre-charge","PremiÃ¨re charge","Vol (10)","RapiditÃ©"]},{"id":"manticore-mount","name":"Manticore","points":130,"profile":{"M":6,"CC":5,"CT":"-","F":5,"E":"+1","PV":"+4","I":5,"A":4,"Cd":"-"},"specialRules":["Ordre serrÃ©","Vol (9)","Grande cible","PiÃ©tinement (D3)","RapiditÃ©","Terreur","BÃªte indocile"],"options":["Queue venimeuse +15 pts"]},{"id":"black-dragon","name":"Dragon Noir","points":280,"profile":{"M":6,"CC":6,"CT":"-","F":7,"E":"+3","PV":"+6","I":4,"A":6,"Cd":"-"},"specialRules":["Ordre serrÃ©","Vol (10)","Haine (Hauts-Elfes)","Grande cible","PiÃ©tinement (D6)","RapiditÃ©","Terreur"]},{"id":"scourgerunner-mount","name":"Char Ã  Harpon","points":85,"profile":{"M":"-","CC":"-","CT":"-","F":4,"E":4,"PV":4,"I":"-","A":"-","Cd":"-"},"equipment":["Coursiers Noirs x2"],"specialRules":["Voir l'entrÃ©e Chars Ã  Harpon"],"mountRef":{"id":"dark-steed","count":2}},{"id":"cold-one-chariot-mount","name":"Char Ã  Sang-Froid","points":125,"profile":{"M":"-","CC":"-","CT":"-","F":5,"E":5,"PV":4,"I":"-","A":"-","Cd":"-"},"equipment":["Sang-Froids x2"],"specialRules":["Armure perforante (1, Sang-Froid)","Ordre serrÃ©","RÃ©flexes elfiques","Peur","PremiÃ¨re charge","Haine (Hauts-Elfes)","Touches d'impact (D6+1)","StupiditÃ©"],"mountRef":{"id":"cold-one-mount","count":2}},{"id":"cauldron-mount","name":"Chaudron de Sang","points":150,"specialRules":["Uniquement pour une Hag de Khaine"]}],"lores":{"Domaine de Naggaroth":[{"name":"Mot de MalÃ©diction","type":"MalÃ©fice","castingValue":"9+","range":"12\""},{"name":"Horreur Noire","type":"Vortex magique","castingValue":"9+","range":"18\""}]},"allies":[{"army":"Guerriers du Chaos","relationship":"MalaisÃ©s","maxPercent":25}],"generatorNotes":["Le gÃ©nÃ©rateur actuel utilise points, min et max pour les restrictions directes.","Les restrictions exprimÃ©es par tranche de 1 000 points, par prÃ©sence d'un personnage ou par pourcentage sont conservÃ©es dans les champs composition/restriction et devront Ãªtre interprÃ©tÃ©es par une version avancÃ©e du gÃ©nÃ©rateur.","Les options sont stockÃ©es dans chaque unitÃ© mais ne sont pas encore comptabilisÃ©es automatiquement par le gÃ©nÃ©rateur actuel.","Les Hydres et Kharibdyss sont prÃ©sentes dans les choix SpÃ©ciaux sous condition de GÃ©nÃ©ral Grand MaÃ®tre des BÃªtes et dans les choix Rares dans la liste gÃ©nÃ©rique.","Le Chaudron de Sang est une monture de Hag de Khaine et ne doit pas Ãªtre ajoutÃ© comme une unitÃ© indÃ©pendante dans une liste finale."],"magicItemsSource":"../objets-magiques/elfes-noirs.json"};
+DATA.hautsElfes = {"id":"hauts-elfes","name":"Hauts-Elfes","language":"fr","version":"1.0","source":"Warhammer: The Old World Online Rules Index â High Elf Realms","sourceUrl":"https://tow.whfb.app/army/high-elf-realms","dataStatus":"Traduction et structuration franÃ§aises pour le gÃ©nÃ©rateur. Les valeurs non confirmÃ©es sont laissÃ©es Ã  null.","composition":{"categories":{"Personnages":{"minPercent":0,"maxPercent":50},"UnitÃ©s de Base":{"minPercent":25,"maxPercent":100},"UnitÃ©s SpÃ©ciales":{"minPercent":0,"maxPercent":50},"UnitÃ©s Rares":{"minPercent":0,"maxPercent":25},"Mercenaires":{"minPercent":0,"maxPercent":20},"AlliÃ©s":{"minPercent":0,"maxPercent":25},"Mounted":{"minPercent":0,"maxPercent":100}}},"specialRules":[{"id":"abyssal-cloak","name":"Cape abyssale"},{"id":"accomplished-archers","name":"Archers accomplis"},{"id":"armies-of-the-sea-lord","name":"ArmÃ©es du Seigneur des Mers"},{"id":"arrows-of-isha","name":"FlÃ¨ches d'Isha"},{"id":"beguiling-aura","name":"Aura envoÃ»tante"},{"id":"blessings-of-asuryan","name":"BÃ©nÃ©dictions d'Asuryan"},{"id":"blizzard-aura","name":"Aura de blizzard"},{"id":"champions-of-chrace","name":"Champions de Chrace"},{"id":"chracian-pride","name":"FiertÃ© de Chrace"},{"id":"chracian-warriors","name":"Guerriers de Chrace"},{"id":"cleaving-blow","name":"Coup de taille"},{"id":"commanding-voice","name":"Voix de commandement"},{"id":"deflect-shots","name":"DÃ©vier les tirs"},{"id":"dragon-armour","name":"Armure de dragon"},{"id":"elven-reflexes","name":"RÃ©flexes elfiques"},{"id":"enfeebling-cold","name":"Froid affaiblissant"},{"id":"from-the-ashes","name":"RenaÃ®tre des cendres"},{"id":"from-the-mists","name":"Depuis les brumes"},{"id":"from-the-storm-clouds","name":"Depuis les nuages d'orage"},{"id":"hidden-trails","name":"Sentiers cachÃ©s"},{"id":"horn-of-isha","name":"Cor de Isha"},{"id":"ithilmar-armour","name":"Armure d'ithilmar / bardage d'ithilmar"},{"id":"ithilmar-weapons","name":"Armes d'ithilmar"},{"id":"kings-guard","name":"Garde du Roi"},{"id":"lileaths-blessing","name":"BÃ©nÃ©diction de Lileath"},{"id":"lion-cloak","name":"Cape de lion"},{"id":"martial-prowess","name":"MaÃ®trise martiale"},{"id":"mighty-constitution","name":"Constitution robuste"},{"id":"naval-discipline","name":"Discipline navale"},{"id":"old-world-rangers","name":"RÃ´deurs de l'Ancien Monde"},{"id":"precision-strikes","name":"Frappes prÃ©cises"},{"id":"pride-of-the-fleet","name":"FiertÃ© de la flotte"},{"id":"sons-of-caledor","name":"Fils de Caledor"},{"id":"valour-of-ages","name":"Valeur des Ã¢ges"},{"id":"wake-of-fire","name":"Sillage de feu"},{"id":"warriors-of-chrace","name":"Guerriers de Chrace"},{"id":"warriors-of-nagarythe","name":"Guerriers de Nagarythe"},{"id":"warriors-of-the-white-tower","name":"Guerriers de la Tour Blanche"},{"id":"warriors-of-the-wilderness","name":"Guerriers de la nature sauvage"},{"id":"witness-to-destiny","name":"TÃ©moin du destin"}],"units":[{"id":"ishaya-vess","name":"Ishaya Vess","category":"Personnages","points":170,"profile":{"M":5,"CC":7,"CT":7,"F":4,"E":3,"PV":3,"I":7,"A":3,"Cd":9},"type":"Infanterie rÃ©guliÃ¨re, personnage nommÃ©","unitSize":"1","base":"25 x 25 mm","equipment":[],"options":[],"specialRules":[],"notes":"CoÃ»t Ã  vÃ©rifier."},{"id":"korhil-lionmane","name":"Korhil Lionmane","category":"Personnages","points":175,"profile":{"M":5,"CC":7,"CT":5,"F":4,"E":3,"PV":3,"I":6,"A":4,"Cd":9},"type":"Infanterie lourde, personnage nommÃ©","unitSize":"1","base":"25 x 25 mm","equipment":["Arme de base","Chayal","Pelt de Charandis","Armure lourde"],"options":["Char de chef de Chrace +105 pts"],"specialRules":["RÃ©flexes elfiques","Charge furieuse","Constitution robuste","DÃ©placement Ã  travers les terrains","Tenace","Valeur des Ã¢ges"],"notes":"","crewProfiles":[{"name":"Cocher du Char de chef de Chrace","count":1,"M":"-","CC":5,"CT":4,"F":4,"E":"-","PV":"-","I":4,"A":1,"Cd":"-"}]},{"id":"archmage","name":"Archimage","category":"Personnages","points":155,"profile":{"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":3,"I":5,"A":2,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re, personnage","unitSize":"1","base":"25 x 25 mm","equipment":["Arme de base"],"options":["Niveau 4 +30 pts","Objets magiques jusqu'Ã  100 pts","Coursier elfe +14 pts","Coursier bardÃ© +18 pts","Dragon lunaire +235 pts","Dragon stellaire +290 pts","Grand Aigle +60 pts"],"specialRules":["RÃ©flexes elfiques","Armes d'ithilmar","BÃ©nÃ©diction de Lileath","Domaine de Saphery","Valeur des Ã¢ges"],"notes":""},{"id":"chracian-chieftain","name":"Chef de Chrace","category":"Personnages","points":105,"profile":{"M":5,"CC":6,"CT":4,"F":4,"E":3,"PV":3,"I":5,"A":3,"Cd":9},"type":"Infanterie lourde, personnage","unitSize":"1","base":"25 x 25 mm","equipment":["Arme de base","Armure lourde"],"options":["Arme additionnelle +4 pts","Grande lame de Chrace +3 pts","Char de chef de Chrace +105 pts","Objets magiques jusqu'Ã  75 pts"],"specialRules":["Charge furieuse","Armes d'ithilmar","Cape de lion","DÃ©placement Ã  travers les terrains","Frappe en premier","Tenace","Valeur des Ã¢ges"],"notes":""},{"id":"dragon-mage","name":"Mage dragon","category":"Personnages","points":275,"profile":{"M":"-","CC":4,"CT":4,"F":3,"E":5,"PV":6,"I":5,"A":2,"Cd":8},"type":"BÃ©hÃ©moth, personnage","unitSize":"1","base":"60 x 100 mm","equipment":["Arme de base"],"options":["Dragon solaire"],"specialRules":["RÃ©flexes elfiques"],"notes":"CoÃ»t Ã  vÃ©rifier."},{"id":"handmaiden-everqueen","name":"Servante de la Reine Ãternelle","category":"Personnages","points":65,"profile":{"M":5,"CC":6,"CT":7,"F":4,"E":3,"PV":2,"I":6,"A":2,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re, personnage","unitSize":"1","base":"25 x 25 mm","equipment":["Arme de base","Lance de la servante","Arc d'Avelorn","Armure lÃ©gÃ¨re"],"options":["Armure lourde +3 pts","Cor de Isha +25 pts","Objets magiques jusqu'Ã  50 pts"],"specialRules":["FlÃ¨ches d'Isha","Evasive","Ignore les couverts","ImmunitÃ© Ã  la psychologie","Armure d'ithilmar","Armes d'ithilmar","Frappe en premier"],"notes":""},{"id":"mage","name":"Mage","category":"Personnages","points":80,"profile":{"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":2,"I":4,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re, personnage","unitSize":"1","base":"25 x 25 mm","equipment":["Arme de base"],"options":["Niveau 2 +30 pts","Objets magiques jusqu'Ã  50 pts","Coursier elfe +14 pts","Coursier bardÃ© +18 pts","Grand Aigle +60 pts"],"specialRules":["RÃ©flexes elfiques","Armes d'ithilmar","BÃ©nÃ©diction de Lileath","Domaine de Saphery","Valeur des Ã¢ges"],"notes":""},{"id":"noble","name":"Noble","category":"Personnages","points":70,"profile":{"M":5,"CC":6,"CT":6,"F":4,"E":3,"PV":2,"I":5,"A":3,"Cd":9},"type":"Infanterie rÃ©guliÃ¨re, personnage","unitSize":"1","base":"25 x 25 mm","equipment":["Arme de base","Armure lÃ©gÃ¨re"],"options":["Arme additionnelle +3 pts","Lance +4 pts","Grande arme +4 pts","Hallebarde +3 pts","Arc long +4 pts","Arc d'Avelorn +12 pts","Bouclier +2 pts","Armure lourde +3 pts","Armure intÃ©grale +6 pts","Grande BanniÃ¨re +25 pts","Objets magiques jusqu'Ã  50 pts"],"specialRules":["Armes d'ithilmar","Frappe en premier","Valeur des Ã¢ges"],"notes":""},{"id":"prince","name":"Prince","category":"Personnages","points":130,"profile":{"M":5,"CC":7,"CT":7,"F":4,"E":3,"PV":3,"I":6,"A":4,"Cd":10},"type":"Infanterie rÃ©guliÃ¨re, personnage","unitSize":"1","base":"25 x 25 mm","equipment":["Arme de base"],"options":["Objets magiques jusqu'Ã  100 pts"],"specialRules":["RÃ©flexes elfiques","Armes d'ithilmar","Valeur des Ã¢ges"],"notes":""},{"id":"sea-guard-garrison-commander","name":"Commandant de garnison de la Garde Maritime","category":"Personnages","points":90,"profile":{"M":5,"CC":6,"CT":7,"F":4,"E":3,"PV":2,"I":5,"A":3,"Cd":9},"type":"Infanterie rÃ©guliÃ¨re, personnage","unitSize":"1","base":"25 x 25 mm","equipment":["Arme de base"],"options":["Objets magiques jusqu'Ã  100 pts"],"specialRules":["RÃ©flexes elfiques","Armes d'ithilmar","Valeur des Ã¢ges"],"notes":""},{"id":"storm-weaver","name":"Tisseur de tempÃªte","category":"Personnages","points":85,"profile":{"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":2,"I":4,"A":2,"Cd":9},"type":"Infanterie rÃ©guliÃ¨re, personnage","unitSize":"1","base":"25 x 25 mm","equipment":["Arme de base"],"options":["Niveau 2 +30 pts","Niveau 3 +60 pts","Licorne +35 pts","Objets magiques jusqu'Ã  75 pts"],"specialRules":["RÃ©flexes elfiques","Armes d'ithilmar","Domaine de Saphery","Valeur des Ã¢ges"],"notes":"0-1 par tranche de 1 000 points."},{"id":"elven-spearmen","name":"Lanciers elfes","category":"UnitÃ©s de Base","points":8,"profile":{"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":1,"I":4,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re","unitSize":"5+","base":"25 x 25 mm","equipment":["Armes de base","Lances d'estoc","Armure lÃ©gÃ¨re","Boucliers"],"options":["Sentinelle +5 pts","Porte-Ã©tendard +5 pts","Musicien +5 pts","Mur de boucliers +10 pts","VÃ©tÃ©ran +1 pt/modÃ¨le","BanniÃ¨re magique jusqu'Ã  50 pts"],"specialRules":["Ordre serrÃ©","RÃ©flexes elfiques","MaÃ®trise martiale","UnitÃ© rÃ©gimentaire","Valeur des Ã¢ges"],"notes":"","championProfile":{"name":"Sentinelle","M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":1,"I":4,"A":2,"Cd":8}},{"id":"elven-archers","name":"Archers elfes","category":"UnitÃ©s de Base","points":9,"profile":{"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":1,"I":4,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re","unitSize":"5+","base":"25 x 25 mm","equipment":["Arme de base","Arcs longs"],"options":["Sentinelle +6 pts","Porte-Ã©tendard +6 pts","Musicien +6 pts","BanniÃ¨re magique jusqu'Ã  25 pts"],"specialRules":["RÃ©flexes elfiques"],"notes":"","championProfile":{"name":"Sentinelle","M":5,"CC":4,"CT":5,"F":3,"E":3,"PV":1,"I":4,"A":1,"Cd":8}},{"id":"lothern-sea-guard","name":"Garde Maritime de Lothern","category":"UnitÃ©s de Base","points":10,"profile":{"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":1,"I":4,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re","unitSize":"5+","base":"25 x 25 mm","equipment":["Armes de base","Lances d'estoc","Arcs de guerre","Armure lÃ©gÃ¨re"],"options":["Boucliers +1 pt/modÃ¨le","MaÃ®tre de la mer +7 pts","Porte-Ã©tendard +5 pts","Musicien +5 pts","VÃ©tÃ©ran +1 pt/modÃ¨le","BanniÃ¨re magique jusqu'Ã  50 pts"],"specialRules":["Ordre serrÃ©","RÃ©flexes elfiques","MaÃ®trise martiale","Discipline navale","Valeur des Ã¢ges"],"notes":"","championProfile":{"name":"MaÃ®tre de la mer","M":5,"CC":4,"CT":5,"F":3,"E":3,"PV":1,"I":4,"A":2,"Cd":8}},{"id":"ellyrian-reavers","name":"Patrouilleurs d'Ellyrion","category":"UnitÃ©s de Base","points":16,"profile":{"M":"-","CC":4,"CT":4,"F":3,"E":3,"PV":1,"I":4,"A":1,"Cd":8},"type":"Cavalerie lÃ©gÃ¨re","unitSize":"5+","base":"30 x 60 mm","equipment":["Armes de base","Lances de cavalerie","Armure lÃ©gÃ¨re"],"options":["Arcs courts +2 pts/modÃ¨le","HÃ©raut +8 pts","Porte-Ã©tendard +6 pts","Musicien +6 pts","Ãclaireurs +2 pts/modÃ¨le","Tirailleurs +1 pt/modÃ¨le","BanniÃ¨re magique jusqu'Ã  25 pts"],"specialRules":["RÃ©flexes elfiques","Cavalerie lÃ©gÃ¨re","Ordre ouvert","RapiditÃ©","Valeur des Ã¢ges"],"notes":"","championProfile":{"name":"HÃ©raut","M":"-","CC":4,"CT":5,"F":3,"E":3,"PV":1,"I":4,"A":2,"Cd":8}},{"id":"silver-helms","name":"Heaumes d'argent","category":"UnitÃ©s de Base","points":23,"profile":{"M":"-","CC":4,"CT":4,"F":3,"E":3,"PV":1,"I":5,"A":1,"Cd":8},"type":"Cavalerie lourde","unitSize":"4+","base":"30 x 60 mm","equipment":["Armes de base","Lances","Armure lourde"],"options":["Boucliers +1 pt/modÃ¨le","Haut Heaume +6 pts","Porte-Ã©tendard +6 pts","Musicien +6 pts","BanniÃ¨re magique jusqu'Ã  25 pts"],"specialRules":["Ordre serrÃ©","RÃ©flexes elfiques","PremiÃ¨re charge","Bardage d'ithilmar","RapiditÃ©","Valeur des Ã¢ges"],"notes":"","championProfile":{"name":"Haut Heaume","M":"-","CC":4,"CT":4,"F":3,"E":3,"PV":1,"I":5,"A":2,"Cd":8}},{"id":"white-lions-of-chrace","name":"Lions Blancs de Chrace","category":"UnitÃ©s SpÃ©ciales","points":14,"profile":{"M":5,"CC":5,"CT":4,"F":4,"E":3,"PV":1,"I":5,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re","unitSize":"5+","base":"25 x 25 mm","equipment":["Armes de base","Grandes lames de Chrace","Armure lourde"],"options":["Gardien +6 pts","Porte-Ã©tendard +6 pts","Musicien +6 pts","VÃ©tÃ©ran +1 pt/modÃ¨le","BanniÃ¨re magique jusqu'Ã  50 pts"],"specialRules":["Guerriers de Chrace","RÃ©flexes elfiques","Charge furieuse","Garde du Roi","Cape de lion","DÃ©placement Ã  travers les terrains","Ordre ouvert","Tenace","Valeur des Ã¢ges"],"notes":"","championProfile":{"name":"Gardien","M":5,"CC":5,"CT":4,"F":4,"E":3,"PV":1,"I":5,"A":2,"Cd":8}},{"id":"swordmasters-of-hoeth","name":"MaÃ®tres des Ã©pÃ©es de Hoeth","category":"UnitÃ©s SpÃ©ciales","points":14,"profile":{"M":5,"CC":6,"CT":4,"F":3,"E":3,"PV":1,"I":6,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re","unitSize":"5+","base":"25 x 25 mm","equipment":["Armes de base","ÃpÃ©es de Hoeth","Armure lourde"],"options":["MaÃ®tre des lames +6 pts","Porte-Ã©tendard +6 pts","Musicien +6 pts","DrillÃ©s +1 pt/modÃ¨le","BanniÃ¨re magique jusqu'Ã  50 pts"],"specialRules":["Coup de taille","Ordre serrÃ©","DÃ©vier les tirs","RÃ©flexes elfiques","Armure d'ithilmar","RÃ©sistance Ã  la magie (-1)","Valeur des Ã¢ges","Guerriers de la Tour Blanche"],"notes":"","championProfile":{"name":"MaÃ®tre des lames","M":5,"CC":6,"CT":4,"F":3,"E":3,"PV":1,"I":6,"A":2,"Cd":8}},{"id":"phoenix-guard","name":"Garde PhÃ©nix","category":"UnitÃ©s SpÃ©ciales","points":16,"profile":{"M":5,"CC":5,"CT":4,"F":3,"E":3,"PV":1,"I":5,"A":1,"Cd":9},"type":"Infanterie lourde","unitSize":"5+","base":"25 x 25 mm","equipment":["Armes de base","Hallebardes cÃ©rÃ©monielles","Armure intÃ©grale"],"options":["Gardien de la Flamme +7 pts","Porte-Ã©tendard +7 pts","Musicien +7 pts","DrillÃ©s +1 pt/modÃ¨le","BanniÃ¨re magique jusqu'Ã  100 pts"],"specialRules":["BÃ©nÃ©dictions d'Asuryan","Ordre serrÃ©","RÃ©flexes elfiques","Peur","MaÃ®trise martiale","VÃ©tÃ©ran","TÃ©moin du destin"],"notes":"","championProfile":{"name":"Gardien de la Flamme","M":5,"CC":5,"CT":4,"F":3,"E":3,"PV":1,"I":5,"A":2,"Cd":9}},{"id":"shadow-warriors","name":"Guerriers FantÃ´mes","category":"UnitÃ©s SpÃ©ciales","points":14,"profile":{"M":5,"CC":5,"CT":5,"F":3,"E":3,"PV":1,"I":5,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re","unitSize":"5+","base":"25 x 25 mm","equipment":["Armes de base","Arcs longs"],"options":["Marcheur de l'Ombre +6 pts","Objets magiques jusqu'Ã  25 pts"],"specialRules":["Guerriers de Nagarythe"],"notes":"CoÃ»t/options Ã  vÃ©rifier.","championProfile":{"name":"Marcheur de l'Ombre","M":5,"CC":5,"CT":6,"F":3,"E":3,"PV":1,"I":5,"A":1,"Cd":8}},{"id":"tiranoc-chariot","name":"Char de Tiranoc","category":"UnitÃ©s SpÃ©ciales","points":75,"profile":{"M":"-","CC":"-","CT":"-","F":5,"E":4,"PV":4,"I":"-","A":"-","Cd":"-"},"type":"Char lÃ©ger","unitSize":"1","base":"50 x 100 mm","equipment":["Ãquipage de Tiranoc","Coursiers elfes"],"options":[],"specialRules":["Ordre ouvert"],"notes":"CoÃ»t/options Ã  vÃ©rifier.","crewProfiles":[{"name":"Ãquipage du Char de Tiranoc","count":2,"M":"-","CC":4,"CT":4,"F":3,"E":"-","PV":"-","I":4,"A":1,"Cd":8}]},{"id":"dragon-princes","name":"Princes Dragons","category":"UnitÃ©s SpÃ©ciales","points":37,"profile":{"M":"-","CC":5,"CT":4,"F":3,"E":3,"PV":1,"I":5,"A":2,"Cd":9},"type":"Cavalerie lourde","unitSize":"3+","base":"30 x 60 mm","equipment":["Armes de base","Lances","Armure intÃ©grale","Boucliers","Coursiers bardÃ©s"],"options":["Drakemaster +7 pts","Porte-Ã©tendard +7 pts","Musicien +7 pts","BanniÃ¨re magique jusqu'Ã  50 pts"],"specialRules":["Ordre serrÃ©","Contre-charge","Armure de dragon","DrillÃ©s","RÃ©flexes elfiques","PremiÃ¨re charge","ImpÃ©tueux","Bardage d'ithilmar","Armes d'ithilmar","Fils de Caledor","RapiditÃ©","Valeur des Ã¢ges"],"notes":"","championProfile":{"name":"Drakemaster","M":"-","CC":5,"CT":4,"F":3,"E":3,"PV":1,"I":5,"A":3,"Cd":9}},{"id":"sisters-of-avelorn","name":"SÅurs d'Avelorn","category":"UnitÃ©s Rares","points":15,"profile":{"M":5,"CC":5,"CT":5,"F":3,"E":3,"PV":1,"I":5,"A":1,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re","unitSize":"5+","base":"25 x 25 mm","equipment":["Armes de base","Arcs d'Avelorn"],"options":["Grande SÅur +7 pts","Objets magiques jusqu'Ã  50 pts"],"specialRules":["FlÃ¨ches d'Isha"],"notes":"CoÃ»t/options Ã  vÃ©rifier.","championProfile":{"name":"Grande SÅur","M":5,"CC":5,"CT":6,"F":3,"E":3,"PV":1,"I":5,"A":1,"Cd":8}},{"id":"lion-chariot-of-chrace","name":"Char Ã  lions de Chrace","category":"UnitÃ©s Rares","points":125,"profile":{"M":"-","CC":"-","CT":"-","F":5,"E":4,"PV":4,"I":"-","A":"-","Cd":"-"},"type":"Char lourd","unitSize":"1","base":"50 x 100 mm","equipment":["2 conducteurs de lions","2 lions de guerre"],"options":[],"specialRules":["Ordre serrÃ©","RÃ©flexes elfiques","Peur","PremiÃ¨re charge","Touches d'impact (D6)","Cape de lion","Tenace","Valeur des Ã¢ges"],"notes":"","crewProfiles":[{"name":"Conducteur de lions","count":2,"M":"-","CC":5,"CT":4,"F":4,"E":"-","PV":"-","I":4,"A":1,"Cd":"-"}]},{"id":"lothern-skycutter","name":"Cotre Volant de Lothern","category":"UnitÃ©s Rares","points":90,"profile":{"M":"-","CC":"-","CT":"-","F":5,"E":4,"PV":4,"I":"-","A":"-","Cd":"-"},"type":"Char lourd","unitSize":"1","base":"50 x 100 mm","equipment":["3 membres d'Ã©quipage de la Garde Maritime","Roc Ã  plumes vÃ©loces"],"options":["Baliste Åil-d'Aigle +25 pts"],"specialRules":["Ordre serrÃ©"],"notes":"CoÃ»t/options Ã  vÃ©rifier.","crewProfiles":[{"name":"Ãquipage de la Garde Maritime","count":3,"M":"-","CC":4,"CT":4,"F":3,"E":"-","PV":"-","I":4,"A":1,"Cd":8},{"name":"Roc Ã  plumes vÃ©loces","count":1,"M":2,"CC":5,"CT":"-","F":4,"E":"-","PV":"-","I":4,"A":2,"Cd":"-"}]},{"id":"flamespyre-phoenix","name":"PhÃ©nix flamboyant","category":"UnitÃ©s Rares","points":170,"profile":{"M":2,"CC":5,"CT":0,"F":5,"E":5,"PV":5,"I":4,"A":3,"Cd":7},"type":"CrÃ©ature monstrueuse","unitSize":"1","base":"50 x 100 mm","equipment":["Griffes cruelles","Plumage flamboyant"],"options":[],"specialRules":["BÃ©nÃ©dictions d'Asuryan","Ordre serrÃ©","Peur","Attaques enflammÃ©es","Vol (10)","RenaÃ®tre des cendres","Grande cible","PiÃ©tinement (2)","RapiditÃ©","Sillage de feu"],"notes":""},{"id":"frostheart-phoenix","name":"PhÃ©nix givrecÅur","category":"UnitÃ©s Rares","points":205,"profile":{"M":2,"CC":6,"CT":0,"F":6,"E":6,"PV":5,"I":3,"A":4,"Cd":8},"type":"CrÃ©ature monstrueuse","unitSize":"1","base":"50 x 100 mm","equipment":["Griffes cruelles","Plumage givrÃ©"],"options":[],"specialRules":["Aura de blizzard","Ordre serrÃ©","Peur","Vol (9)","Grande cible","PiÃ©tinement (2)","RapiditÃ©"],"notes":"CoÃ»t Ã  vÃ©rifier."},{"id":"great-eagle","name":"Grand Aigle","category":"UnitÃ©s Rares","points":60,"profile":{"M":2,"CC":5,"CT":0,"F":4,"E":4,"PV":3,"I":4,"A":3,"Cd":6},"type":"CrÃ©ature monstrueuse","unitSize":"1","base":"50 x 50 mm","equipment":["Griffes cruelles","MÃ¢choire dentelÃ©e"],"options":[],"specialRules":["Ordre serrÃ©","Peur","Vol (10)","PiÃ©tinement (1)","RapiditÃ©"],"notes":""},{"id":"griffon","name":"Griffon","category":"UnitÃ©s Rares","points":130,"profile":{"M":6,"CC":5,"CT":"-","F":5,"E":"(+2)","PV":"(+3)","I":5,"A":4,"Cd":"-"},"type":"CrÃ©ature monstrueuse","unitSize":"1","base":"50 x 50 mm","equipment":["Griffes cruelles","MÃ¢choire dentelÃ©e","Pelage de griffon"],"options":[],"specialRules":["Ordre serrÃ©","Vol (9)","Grande cible","PiÃ©tinement (D3)","RapiditÃ©","Terreur"],"notes":"Le pelage de griffon compte comme une armure lourde. CoÃ»t Ã  vÃ©rifier."},{"id":"merwyrm","name":"Wyrm des mers","category":"UnitÃ©s Rares","points":200,"profile":{"M":6,"CC":6,"CT":0,"F":6,"E":6,"PV":6,"I":3,"A":4,"Cd":8},"type":"BÃ©hÃ©moth","unitSize":"1","base":"60 x 100 mm","equipment":["Serres lacÃ©rantes","Queue serpentine","Souffle saumÃ¢tre","Ãcailles irisÃ©es"],"options":[],"specialRules":["Cape abyssale","Ordre serrÃ©","Froid affaiblissant","Touches d'impact (D3)","Grande cible","PiÃ©tinement (D3+1)","Terreur"],"notes":"Les Ã©cailles irisÃ©es comptent comme une armure lourde."},{"id":"war-lions","name":"Lions de guerre","category":"UnitÃ©s Rares","points":18,"profile":{"M":8,"CC":5,"CT":0,"F":4,"E":4,"PV":1,"I":4,"A":2,"Cd":7},"type":"BÃªte de guerre","unitSize":"2-6","base":"30 x 60 mm","equipment":["Griffes et crocs"],"options":[],"specialRules":["Coup de taille","Peur","DÃ©placement Ã  travers les terrains","Ordre ouvert","RapiditÃ©","Avant-garde"],"notes":"0-1 si l'armÃ©e comprend au moins une unitÃ© de Lions Blancs de Chrace."},{"id":"eagle-claw-bolt-thrower","name":"Baliste Serre d'aigle","category":"UnitÃ©s Rares","points":70,"profile":{"M":"-","CC":"-","CT":"-","F":"-","E":6,"PV":2,"I":"-","A":"-","Cd":"-"},"type":"Machine de guerre","unitSize":"1","base":"50 x 50 mm + Ã©quipage 25 x 25 mm","equipment":["Lance-flÃ¨ches rÃ©pÃ©titif","Armes de base","Armure lÃ©gÃ¨re"],"options":[],"specialRules":["RÃ©flexes elfiques","Tirailleurs","Valeur des Ã¢ges"],"notes":"CoÃ»t Ã  vÃ©rifier.","crewProfiles":[{"name":"Garde Maritime (Ã©quipage)","count":1,"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":2,"I":4,"A":2,"Cd":8}]}],"mounts":[{"id":"elven-steed","name":"Coursier elfe","points":14,"profile":{"M":9,"CC":3,"CT":"-","F":3,"E":"-","PV":"-","I":4,"A":1,"Cd":"-"},"type":"Cavalerie lÃ©gÃ¨re","base":"30 x 60 mm"},{"id":"barded-elven-steed","name":"Coursier elfe bardÃ©","points":18,"profile":{"M":8,"CC":3,"CT":"-","F":3,"E":"-","PV":"-","I":4,"A":1,"Cd":"-"},"type":"Cavalerie lourde","base":"30 x 60 mm"},{"id":"flamespyre-phoenix-mount","name":"PhÃ©nix flamboyant (monture)","points":170,"profile":{"M":2,"CC":5,"CT":"-","F":5,"E":"(+2)","PV":"(+3)","I":4,"A":3,"Cd":"-"},"type":"CrÃ©ature monstrueuse","base":"50 x 100 mm"},{"id":"frostheart-phoenix-mount","name":"PhÃ©nix givrecÅur (monture)","points":205,"profile":{"M":2,"CC":6,"CT":"-","F":6,"E":"(+3)","PV":"(+3)","I":3,"A":4,"Cd":"-"},"type":"CrÃ©ature monstrueuse","base":"50 x 100 mm"},{"id":"great-eagle-mount","name":"Grand Aigle (monture)","points":60,"profile":{"M":2,"CC":5,"CT":"-","F":4,"E":"(+1)","PV":"(+1)","I":4,"A":3,"Cd":"-"},"type":"CrÃ©ature monstrueuse","base":"50 x 50 mm"},{"id":"unicorn","name":"Licorne","points":35,"profile":{"M":10,"CC":4,"CT":"-","F":4,"E":"-","PV":"(+1)","I":5,"A":2,"Cd":"-"},"type":"Cavalerie monstrueuse","base":"50 x 75 mm"},{"id":"moon-dragon","name":"Dragon lunaire","points":235,"profile":{"M":6,"CC":6,"CT":"-","F":6,"E":"(+2)","PV":"(+5)","I":3,"A":5,"Cd":"-"},"type":"BÃ©hÃ©moth","base":"60 x 100 mm"},{"id":"star-dragon","name":"Dragon stellaire","points":290,"profile":{"M":6,"CC":7,"CT":"-","F":7,"E":"(+3)","PV":"(+6)","I":2,"A":6,"Cd":"-"},"type":"BÃ©hÃ©moth","base":"60 x 100 mm"},{"id":"sun-dragon","name":"Dragon solaire","points":180,"profile":{"M":6,"CC":5,"CT":"-","F":5,"E":"(+2)","PV":"(+4)","I":4,"A":4,"Cd":"-"},"type":"BÃ©hÃ©moth","base":"60 x 100 mm"}],"armyLists":{"grande-armee":{"name":"Grande ArmÃ©e des Royaumes Hauts-Elfes","categories":{"Personnages":{"maxPercent":50,"entries":[{"units":["Prince","Archimage"],"limit":"0-1 par tranche de 1 000 points"},{"units":["Mage dragon","Servante de la Reine Ãternelle"],"limit":"0-1 par tranche de 1 000 points"},{"units":["Noble","Mage"],"limit":"sans restriction spÃ©cifique"},{"units":["Tisseur d'orage"],"limit":"0-1 par tranche de 1 000 points"}]},"UnitÃ©s de Base":{"minPercent":25,"entries":[{"units":["Lanciers elfes","Archers elfes","Garde Maritime de Lothern","Patrouilleurs d'Ellyrion","Heaumes d'argent"],"limit":"choix de Base"},{"units":["SÅurs d'Avelorn"],"limit":"0-1 comme Base si le GÃ©nÃ©ral est une Servante de la Reine Ãternelle"}]},"UnitÃ©s SpÃ©ciales":{"maxPercent":50,"entries":[{"units":["Lions Blancs de Chrace","MaÃ®tres des Ã©pÃ©es de Hoeth","Garde PhÃ©nix","Guerriers FantÃ´mes","Char de Tiranoc"],"limit":"choix SpÃ©ciales"},{"units":["Princes Dragons"],"limit":"0-1 par tranche de 1 000 points"},{"units":["Char Ã  lions de Chrace"],"limit":"0-1 par tranche de 1 000 points si le GÃ©nÃ©ral possÃ¨de l'Honneur Chasseur de Chrace"},{"units":["Lothern Skycutter"],"limit":"0-1 si le GÃ©nÃ©ral possÃ¨de l'Honneur Garde Maritime"}]},"UnitÃ©s Rares":{"maxPercent":25,"entries":[{"units":["SÅurs d'Avelorn","Char Ã  lions de Chrace","Lothern Skycutter"],"limit":"choix Rares"},{"units":["PhÃ©nix flamboyant","PhÃ©nix givrecÅur"],"limit":"0-1 par tranche de 1 000 points, hors montures de personnages"},{"units":["Grand Aigle"],"limit":"0-2 par tranche de 1 000 points"},{"units":["Lance-flÃ¨ches Åil d'aigle"],"limit":"0-2 par tranche de 1 000 points"},{"units":["Lions de guerre"],"limit":"0-1 si l'armÃ©e comprend des Lions Blancs de Chrace"},{"units":["Wyrm des mers"],"limit":"0-1 si l'armÃ©e comprend de la Garde Maritime de Lothern"}]},"Mercenaires":{"maxPercent":20,"entries":[{"units":["Ogres de Badlands"],"limit":"mercenaire"}]},"AlliÃ©s":{"maxPercent":25,"entries":[{"units":["Toute ArmÃ©e de l'Infamie Haut-Elfe"],"limit":"un seul contingent"},{"units":["Empire de l'Homme"],"limit":"MÃ©fiant"},{"units":["Grand Cathay"],"limit":"Suspect"},{"units":["Royaume de Bretonnie"],"limit":"autorisÃ©"},{"units":["Royaumes des Elfes Sylvains"],"limit":"autorisÃ©"}]}},"battleStandardBearer":{"unit":"Noble","points":25}}},"magicItems":[],"notes":["Les noms et catÃ©gories sont traduits en franÃ§ais.","Les profils sont structurÃ©s Ã  partir du tableau de rÃ©fÃ©rence du site.","Les coÃ»ts explicitement vÃ©rifiÃ©s ont Ã©tÃ© intÃ©grÃ©s.","Les coÃ»ts non vÃ©rifiÃ©s sont laissÃ©s Ã  null ou signalÃ©s dans les notes afin d'empÃªcher le gÃ©nÃ©rateur de fabriquer une valeur.","Les rÃ¨gles spÃ©ciales sont enregistrÃ©es par nom ; leur texte complet n'est pas recopiÃ© dans cette base.","Les listes d'Infamie Ost de Chrace et Garnison de la Garde Maritime existent sur la source et pourront Ãªtre ajoutÃ©es comme fichiers de listes sÃ©parÃ©s.","La catÃ©gorie Mounted contient uniquement les profils des montures. Aucune propriÃ©tÃ© MountFor n'est utilisÃ©e.","La fonction appelante gÃ¨re les relations entre personnages et montures."],"generator":{"sourceModel":"armÃ©e-de-reference","supportsSupplements":true,"notes":"Catalogue de rÃ©fÃ©rence des Royaumes Hauts-Elfes. Les supplÃ©ments appliquent leurs propres restrictions."}};
+DATA.mareeDeSang = {"id":"sillage-noir","name":"Le Sillage Noir","renown":"armee-infamie-sillage-noir","language":"fr","version":"1.0","source":"Le Sillage Noir.pdf","description":"ArmÃ©e d'Infamie de la Flotte du Sillage Noir. Cette liste utilise l'armÃ©e gÃ©nÃ©rique des Elfes Noirs comme base et applique une composition specific ainsi que des profils et rÃ¨gles propres Ã  la flotte.","armies":["elfes-noirs"],"allowedUnits":["dark-elf-dreadlord","supreme-sorceress","high-beastmaster","dark-elf-master","sorceress","khainite-assassin","esclaves","dark-elf-warriors","repeater-crossbowmen","black-ark-corsairs","dark-riders","executioners","harpies","shades","reaper-bolt-thrower","cold-one-knights","cold-one-chariots","black-guard","maldris-dravelyth","moraveth-dravelyth","kharyx"],"excludedUnits":[],"restrictions":{"categories":{"Personnages":{"maxPercent":33,"notes":"0-1 Despote, SorciÃ¨re suprÃªme ou Haut Belluaire par tranche de 1000 points. MaÃ®tre, SorciÃ¨re et Assassin Elfes Noirs disponibles."},"UnitÃ©s de Base":{"minPercent":33,"notes":"La liste doit comprendre au moins 33 % de sa valeur en points en unitÃ©s de Base."},"UnitÃ©s SpÃ©ciales":{"maxPercent":33},"UnitÃ©s Rares":{"maxPercent":33},"Mercenaires":{"maxPercent":0},"AlliÃ©s":{"maxPercent":20,"maxContingents":1,"notes":"Un seul contingent alliÃ©."}},"units":{"dark-elf-dreadlord":{"group":"lord-archmage-or-prince","maxPer1000":1},"supreme-sorceress":{"group":"lord-archmage-or-prince","maxPer1000":1},"high-beastmaster":{"group":"lord-archmage-or-prince","maxPer1000":1},"maldris-dravelyth":{"max":1},"moraveth-dravelyth":{"max":1},"esclaves":{"maxPerCharacter":2,"maxUnitSize":20},"dark-riders":{"maxPer1000":1},"reaper-bolt-thrower":{"maxPer1000":3},"cold-one-knights":{"maxPer1000":2},"cold-one-chariots":{"maxPer1000":1},"black-guard":{"maxPer1000":1},"kharyx":{"max":1}},"honours":{"allowed":[]},"global":{"battleStandardBearer":{"enabled":true,"max":1,"eligibleCategory":"dark-elf-master","points":25,"magicBannerUnlimited":true},"magicItems":{"enabled":true,"source":["objets-magiques-courants","elfes-noirs","sillage-noir"]}}},"units":[{"id":"khainite-assassin","name":"Assassin Khainite","category":"Personnages","points":80,"min":0,"max":999,"profile":{"M":5,"CC":8,"CT":7,"F":4,"E":3,"PV":2,"I":7,"A":3,"Cd":8},"type":"Infanterie rÃ©guliÃ¨re (personnage)","base":"25 x 25 mm","unitSize":"1","equipment":["Arme de base","Armes de jet"],"options":["Arme de base additionnelle +3 pts","Arme de poing Ã  rÃ©pÃ©tition +5 pts","Lotus noir +5 pts","Venin noir +15 pts","Manbane +15 pts","Poison des Cales Noires +10 pts","Venin de la Mer Rouge +15 pts","Objets magiques jusqu'Ã  50 pts"],"specialRules":["Haine Ã©ternelle","Haine (tous les ennemis)","DissimulÃ©","ImmunitÃ© Ã  la psychologie","Meurtrier","Frappe en premier"]},{"id":"maldris-dravelyth","name":"Maldris Dravelyth","category":"Personnages","type":"Infanterie rÃ©guliÃ¨re","unitSize":"1","baseSize":"25x25 mm","points":120,"profile":{"M":5,"CC":7,"CT":7,"F":4,"E":3,"PV":3,"I":4,"A":4,"Cd":8},"equipment":["Arme de base","Armure lourde","Fouet des Lamentations"],"options":[{"name":"Coursier Noir","points":14,"mountRef":"dark-steed"},{"name":"Sang-Froid","points":18,"mountRef":"cold-one-mount"},{"name":"Manticore","points":130,"mountRef":"manticore-mount"},{"name":"Cape en peau de Dragon des Mers","points":4,"kind":"other"},{"name":"Bouclier","points":2,"kind":"other"}],"rules":["Haine Ã©ternelle","Haine (Hauts-Elfes)","Meurtrier","Frappe en premier","La cargaison va arriver","Inspirer la crainte","MÃ©pris des faibles","La mort du maÃ®tre"]},{"id":"moraveth-dravelyth","name":"Moraveth Dravelyth","category":"Personnages","type":"Infanterie rÃ©guliÃ¨re","unitSize":"1","baseSize":"25x25 mm","points":160,"profile":{"M":5,"CC":4,"CT":4,"F":3,"E":3,"PV":3,"I":5,"A":3,"Cd":9},"equipment":["Arme de base","Arme de base supplÃ©mentaire","Armure lÃ©gÃ¨re"],"options":[{"name":"Coursier Noir","points":14,"mountRef":"dark-steed"},{"name":"Sang-Froid","points":18,"mountRef":"cold-one-mount"},{"name":"PÃ©gase Noir","points":35,"mountRef":"dark-pegasus"}],"rules":["RÃ©flexes Elfiques","Haine Ã©ternelle","Haine (Hauts-Elfes)","BÃ©nÃ©diction d'Hekarti","Domaine de Naggaroth","Domaine de l'Agonie","Meurtriers","Couvent du Sillage Noir","Sacrifice rituel"],"wizard":{"lores":["DÃ©monologie","Magie Noire"]}},{"id":"esclaves","name":"Esclaves","category":"UnitÃ©s de Base","type":"Infanterie rÃ©guliÃ¨re","unitSize":"5-20","baseSize":"25x25 mm","points":5,"profile":{"M":4,"CC":2,"CT":2,"F":3,"E":3,"PV":1,"I":2,"A":1,"Cd":3},"championProfile":{"name":"ContremaÃ®tre","points":3,"profile":{"M":4,"CC":3,"CT":3,"F":3,"E":3,"PV":1,"I":2,"A":1,"Cd":4}},"equipment":["Arme de base"],"options":[{"name":"Boucliers","pointsPerModel":1},{"name":"Promouvoir une figurine en ContremaÃ®tre","points":3},{"name":"Fouet barbelÃ© pour le ContremaÃ®tre","points":2},"ContremaÃ®tre : objets magiques jusqu'Ã  25 pts"],"rules":["Tirailleurs","Peu coÃ»teux","Dispersion","Cibles sacrifiables","VolontÃ© asservie","Foule dÃ©sorganisÃ©e"]},{"id":"kharyx","name":"Kharyx, PrÃ©dateur de la Lune Noire","category":"UnitÃ©s Rares","type":"BÃ©hÃ©moth","unitSize":"1","baseSize":"60x100 mm","points":250,"profile":{"M":6,"CC":5,"CT":"-","F":5,"E":5,"PV":5,"I":4,"A":5,"Cd":5},"equipment":["Griffes et crocs"],"rules":["Grande cible","Terreur","Peau Ã©paisse","Sauvagerie","Aura sanguinaire"]}],"specialRules":[{"id":"maree-de-sang","name":"La MarÃ©e de Sang","text":"Lorsque la MarÃ©e de Sang atteint 25 %, les unitÃ©s gagnent Peur du fouet. Ã 50 %, elles gagnent Mort aux faibles. Ã 75 %, elles gagnent Tuez-les tous. Les effets sont cumulatifs."}],"magicItemsSource":"../objets-magiques/sillage-noir.json"};
+DATA.terrain = {"tileW":56,"tileH":28,"types":{"herbe":{"name":"Herbe","color":"#3a4a2a","move":1,"blocks":false,"blocksView":false,"damage":0,"category":"normal"},"sable":{"name":"Sable","color":"#7a6a3a","move":1,"blocks":false,"blocksView":false,"damage":0,"category":"normal"},"terre":{"name":"Terre","color":"#4a3a2a","move":1,"blocks":false,"blocksView":false,"damage":0,"category":"normal"},"ruines":{"name":"Ruines","color":"#5a5a4a","move":0.5,"blocks":false,"blocksView":false,"damage":0,"category":"difficult"},"colline":{"name":"Colline","color":"#6a5a3a","move":0.5,"blocks":false,"blocksView":false,"damage":0,"category":"difficult"},"bois":{"name":"Bois","color":"#2a3a1a","move":0.5,"blocks":false,"blocksView":true,"damage":0,"category":"difficult"},"decombres":{"name":"Decombres","color":"#4a2a2a","move":0.5,"blocks":false,"blocksView":false,"damage":1,"category":"dangerous"},"rochers":{"name":"Rochers","color":"#3a3a3a","move":0,"blocks":true,"blocksView":true,"damage":0,"category":"impassable"},"murs":{"name":"Murs","color":"#2a2a2a","move":0,"blocks":true,"blocksView":true,"damage":0,"category":"impassable"},"arbres":{"name":"Arbres","color":"#1a2a0a","move":0,"blocks":true,"blocksView":true,"damage":0,"category":"impassable"},"eau":{"name":"Eau","color":"#1a3a5a","move":0.5,"blocks":false,"blocksView":false,"damage":0,"category":"difficult"},"profonde":{"name":"Eau profonde","color":"#0a1a3a","move":0,"blocks":true,"blocksView":false,"damage":0,"category":"impassable"}},"generators":{"cote-de-naggaroth":{"name":"Cotes de Naggaroth","size":{"w":48,"h":48},"weights":{"herbe":5,"sable":4,"terre":4,"rochers":2,"arbres":3,"bois":2,"colline":2,"eau":1,"profonde":1}},"ruines-anciennes":{"name":"Ruines anciennes","size":{"w":48,"h":48},"weights":{"terre":5,"ruines":4,"decombres":3,"murs":2,"rochers":2,"herbe":2}},"archipel-brumeux":{"name":"Archipel brumeux","size":{"w":48,"h":48},"weights":{"eau":6,"profonde":4,"sable":3,"rochers":2,"arbres":2,"herbe":2}}}};
+DATA.scenarios = {"scenarios":[{"id":"debarquement-cotes","name":"Debarquement sur les cotes de Naggaroth","briefing":"L'Arche Noire approche des cotes ennemies. Maldris mene le debarquement.","terrainGenerator":"cote-de-naggaroth","points":1500,"deploy":{"ally":{"x":2,"y":36,"w":12,"h":12},"enemy":{"x":34,"y":2,"w":12,"h":12}},"enemyArmy":{"units":[{"id":"elven-spearmen","size":20},{"id":"elven-archers","size":10},{"id":"lothern-sea-guard","size":15},{"id":"noble","size":1}]},"victory":"Eliminer toutes les unites ennemies.","mareeDeSang":true},{"id":"ruines-rituel","name":"Le rituel des ruines","briefing":"Moraveth a localise un site rituel. Maintenez le rituel et repoussez l'assaut.","terrainGenerator":"ruines-anciennes","points":2000,"deploy":{"ally":{"x":20,"y":20,"w":8,"h":8},"enemy":{"x":34,"y":2,"w":12,"h":12}},"enemyArmy":{"units":[{"id":"swordmasters-of-hoeth","size":15},{"id":"silver-helms","size":8},{"id":"elven-archers","size":12},{"id":"mage","size":1},{"id":"prince","size":1}]},"victory":"Moraveth doit survivre.","mareeDeSang":true},{"id":"chasse-a-la-bete","name":"La traque de Kharyx","briefing":"Kharyx rode dans l'archipel brumeux. Liberez la bete et lancez-la sur vos ennemis.","terrainGenerator":"archipel-brumeux","points":1500,"deploy":{"ally":{"x":2,"y":2,"w":10,"h":10},"enemy":{"x":34,"y":36,"w":12,"h":12}},"enemyArmy":{"units":[{"id":"white-lions-of-chrace","size":15},{"id":"ellyrian-reavers","size":8},{"id":"great-eagle","size":1},{"id":"chracian-chieftain","size":1}]},"victory":"Kharyx doit survivre et les chasseurs detruits.","mareeDeSang":true,"specialUnits":["kharyx"]}]};
+
+/* ----- combat.js ----- */
+/* ----- combat.js (inline) ----- */
+(function () {
+  "use strict";
+  const TO_HIT_MELEE = {"-4":5,"-3":4,"-2":4,"-1":4,"0":4,"1":3,"2":3,"3":2,"4":2};
+  function toHitMelee(ccAtk, ccDef){ const d=clamp(ccAtk-ccDef,-4,4); return TO_HIT_MELEE[String(d)]??4; }
+  const TO_HIT_SHOOT = {1:6,2:5,3:4,4:4,5:3,6:3,7:2,8:2,9:2,10:2};
+  function toHitShoot(ct){ return TO_HIT_SHOOT[clamp(ct,1,10)]??4; }
+  const TO_WOUND = {"-3":6,"-2":5,"-1":4,"0":4,"1":3,"2":3,"3":2,"4":2,"5":2};
+  function toWound(fAtk, eDef){ const d=clamp(fAtk-eDef,-3,5); return TO_WOUND[String(d)]??4; }
+  function armorSave(baseSave, armorPen){ if(baseSave==null||baseSave<=0) return null; let s=baseSave-(armorPen||0); if(s>6) return null; return clamp(s,2,6); }
+  function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
+  function rollD6(){ return 1+Math.floor(Math.random()*6); }
+  function mkProfile(u){ const p=u.profile||{}; const I=num(p.I),M=num(p.M);
+    return { id:u.id, name:u.name, cc:num(p.CC), ct:num(p.CT), f:num(p.F), e:num(p.E), pv:num(p.PV), i:I, a:num(p.A), cd:num(p.Cd),
+      hp:Math.max(1,num(p.PV)*12), speed:Math.max(20,M*14), atkRange:0,
+      atkCooldown:Math.max(300,Math.round(1600/Math.max(0.5,I/4))),
+      armor:armorValueFromEquipment(u.equipment||[]), rules:u.rules||u.specialRules||[],
+      isHero:(u.category==="Personnages"), type:u.type||"Infanterie" };
+  }
+  function num(v){ const n=Number(v); return isNaN(n)?0:n; }
+  function armorValueFromEquipment(eq){ let save=0;
+    if(eq.includes("Armure integrale")) save=4; else if(eq.includes("Armure lourde")) save=4; else if(eq.includes("Armure legere")) save=5;
+    if(eq.includes("Bouclier")||eq.includes("Boucliers")) save=Math.max(2,save-1);
+    if(eq.includes("Cape en peau de Dragon des Mers")) save=Math.max(2,save-1);
+    return save||0;
+  }
+  function resolveAttack(atk, def, ctx){ ctx=ctx||{}; let hits=0,wounds=0,unsaved=0;
+    const attacks=atk.a||1; const ranged=ctx.ranged===true;
+    for(let i=0;i<attacks;i++){ const needHit=ranged?toHitShoot(atk.ct):toHitMelee(atk.cc,def.cc);
+      if(rollD6()>=needHit){ hits++; const needWound=toWound(atk.f,def.e);
+        if(rollD6()>=needWound){ wounds++; const sv=armorSave(def.armor,atk.armorPen||0);
+          if(sv==null||rollD6()<sv) unsaved++; } } }
+    return {hits,wounds,unsaved,dmg:unsaved};
+  }
+  function attackReady(unit, now){ return (unit._lastAtk||0)+unit.atkCooldown<=now; }
+  function inRange(atk, def, distPx){ const r=atk.atkRange||0; if(r===0) return distPx<=36; return distPx<=r; }
+  window.Combat={toHitMelee,toHitShoot,toWound,armorSave,rollD6,mkProfile,resolveAttack,attackReady,inRange,clamp};
+})();
+
+/* ----- movement.js ----- */
+/* ----- movement.js (inline) ----- */
+(function () {
+  "use strict";
+  const TW=56, TH=28;
+  function gridToScreen(col,row){ return {x:(col-row)*(TW/2), y:(col+row)*(TH/2)}; }
+  function screenToGrid(sx,sy,camX,camY){ const x=sx-camX,y=sy-camY;
+    const col=(x/(TW/2)+y/(TH/2))/2, row=(y/(TH/2)-x/(TW/2))/2; return {col:Math.floor(col),row:Math.floor(row)}; }
+  function inBounds(grid,c,r){ return r>=0&&c>=0&&r<grid.length&&c<grid[0].length; }
+  function tilePassable(types,grid,c,r){ if(!inBounds(grid,c,r)) return false; const t=types[grid[r][c]]; return t&&!t.blocks; }
+  function tileMoveMult(types,grid,c,r){ if(!inBounds(grid,c,r)) return 0; const t=types[grid[r][c]]; return t?t.move:0; }
+  function findPath(types,grid,start,goal){
+    const h=grid.length,w=grid[0].length; const key=(c,r)=>r*w+c;
+    const open=new Map(),closed=new Set(),came=new Map(),g=new Map();
+    const s=key(start.col,start.row); g.set(s,0);
+    open.set(s,{col:start.col,row:start.row,f:heuristic(start,goal)});
+    while(open.size){ let curK=null,curF=Infinity;
+      for(const [k,v] of open) if(v.f<curF){curF=v.f;curK=k;}
+      const cur=open.get(curK); open.delete(curK); closed.add(curK);
+      if(cur.col===goal.col&&cur.row===goal.row){ const path=[]; let k=curK;
+        while(k!=null){ const r=Math.floor(k/w),c=k%w; path.unshift({col:c,row:r}); k=came.get(k); } return path; }
+      const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+      for(const [dc,dr] of dirs){ const nc=cur.col+dc,nr=cur.row+dr;
+        if(!tilePassable(types,grid,nc,nr)) continue; const nk=key(nc,nr);
+        if(closed.has(nk)) continue; const moveC=tileMoveMult(types,grid,nc,nr)||1;
+        const tent=g.get(curK)+(1/moveC);
+        if(tent<(g.get(nk)??Infinity)){ came.set(nk,curK); g.set(nk,tent);
+          open.set(nk,{col:nc,row:nr,f:tent+heuristic({col:nc,row:nr},goal)}); } } }
+    return null;
+  }
+  function heuristic(a,b){ return Math.abs(a.col-b.col)+Math.abs(a.row-b.row); }
+  function lineOfSight(types,grid,a,b){ let x0=a.col,y0=a.row,x1=b.col,y1=b.row;
+    const dx=Math.abs(x1-x0),dy=Math.abs(y1-y0); const sx=x0<x1?1:-1,sy=y0<y1?1:-1; let err=dx-dy;
+    while(true){ if(x0===x1&&y0===y1) return true;
+      if(!(x0===a.col&&y0===a.row)&&!(x0===b.col&&y0===b.row)){ const t=types[grid[y0]?.[x0]]; if(t&&t.blocksView) return false; }
+      const e2=2*err; if(e2>-dy){err-=dy;x0+=sx;} if(e2<dx){err+=dx;y0+=sy;} } }
+  function stepUnit(types,grid,unit,dt){
+    if(!unit._path||unit._path.length===0) return true;
+    const next=unit._path[0]; const here=gridToScreen(unit.col,unit.row), there=gridToScreen(next.col,next.row);
+    const dx=there.x-here.x, dy=there.y-here.y; const dist=Math.hypot(dx,dy);
+    if(dist<1){ unit.col=next.col; unit.row=next.row; unit._path.shift(); return unit._path.length===0; }
+    const moveC=tileMoveMult(types,grid,next.col,next.row)||1; const spd=(unit.speed||60)*moveC; const step=spd*dt;
+    if(step>=dist){ unit.col=next.col; unit.row=next.row; unit._path.shift(); }
+    else { unit._ix=here.x+(dx/dist)*step; unit._iy=here.y+(dy/dist)*step; }
+    return false;
+  }
+  function distUnits(a,b){ const pa=(a._ix!=null)?{x:a._ix,y:a._iy}:gridToScreen(a.col,a.row);
+    const pb=(b._ix!=null)?{x:b._ix,y:b._iy}:gridToScreen(b.col,b.row); return Math.hypot(pa.x-pb.x,pa.y-pb.y); }
+  window.Movement={gridToScreen,screenToGrid,inBounds,tilePassable,tileMoveMult,findPath,lineOfSight,stepUnit,distUnits,heuristic,TILE_W:TW,TILE_H:TH};
+})();
+
+/* ----- interactions.js ----- */
+/* ----- interactions.js : IA individuelle ----- */
+(function () {
+  "use strict";
+  const TARGET_STRATEGY={CLOSEST:"closest",LOWEST_HP:"lowest_hp",HIGHEST_CHANCE:"highest_chance"};
+  const DETECT_MELEE=180, DETECT_RANGED=300, MELEE_RANGE=44;
+  const ABILITIES={
+    "maldris-dravelyth":[{key:"a",name:"Fouet des Lamentations",cd:6000,range:60,type:"debuff",desc:"Réduit la CC ennemie 4s."},{key:"z",name:"Charge impitoyable",cd:9000,range:120,type:"dash",desc:"Bond sur la cible, +1 F."},{key:"e",name:"Mépris des faibles",cd:14000,range:0,type:"aura",desc:"Aura de Peur 6s."}],
+    "moraveth-dravelyth":[{key:"a",name:"Sacrifice rituel",cd:8000,range:80,type:"ranged",desc:"Dégâts magiques, soigne Moraveth."},{key:"z",name:"Domaine de l'Agonie",cd:12000,range:100,type:"aoe",desc:"Zone de douleur, -1 I."},{key:"e",name:"Couvent du Sillage Noir",cd:18000,range:0,type:"buff",desc:"+1 Attaque aux alliés 5s."}],
+    "kharyx":[{key:"a",name:"Sauvagerie",cd:5000,range:50,type:"melee",desc:"Frappe en zone, premier."},{key:"z",name:"Aura sanguinaire",cd:10000,range:70,type:"aura",desc:"Frénésie 6s."},{key:"e",name:"Prédateur de la Lune",cd:16000,range:150,type:"dash",desc:"Saute sur la cible, Terreur."}]
+  };
+  function abilitiesFor(id){return ABILITIES[id]||[];}
+  let selected=null;
+  function select(u){if(selected)selected._selected=false;selected=u||null;if(selected)selected._selected=true;}
+  function getSelected(){return selected;}
+  function isAlive(u){return u&&u.hp>0;}
+  function orderMove(unit,types,grid,goal,opts={}){
+    if(!isAlive(unit))return false;
+    const g={col:Math.round(goal.col),row:Math.round(goal.row)};
+    const path=Movement.findPath(types,grid,{col:unit.col,row:unit.row},g);
+    if(!path||!path.length)return false;
+    unit._path=path.slice(1); unit._order="move";
+    if(!opts.ai){unit._manualUntil=performance.now()+2200;unit._manualOrder="move";}
+    return true;
+  }
+  function orderAttack(unit,target,opts={}){if(!isAlive(unit)||!isAlive(target))return false;unit._path=[];unit._target=target;unit._order="attack";if(!opts.ai){unit._manualUntil=performance.now()+2200;unit._manualOrder="attack";}return true;}
+  function orderStop(unit){if(!unit)return;unit._path=[];unit._order="stop";unit._target=null;unit._manualUntil=performance.now()+1200;unit._manualOrder="stop";}
+  function castAbility(unit,idx){const ab=abilitiesFor(unit.id)[idx];if(!ab)return false;const now=performance.now();if((unit._cd?.[idx]||0)>now)return false;unit._cd=unit._cd||{};unit._cd[idx]=now+ab.cd;unit._lastCast={idx,ability:ab,at:now};return true;}
+  function isAbilityReady(unit,idx){return !!abilitiesFor(unit.id)[idx]&&(unit._cd?.[idx]||0)<=performance.now();}
+  function estimateAttackSuccess(a,d){
+    try{const needHit=a.atkRange>0?Combat.toHitShoot(a.ct):Combat.toHitMelee(a.cc,d.cc);const hit=Math.max(0,(7-needHit)/6);const wound=Math.max(0,(7-Combat.toWound(a.f,d.e))/6);const sv=Combat.armorSave(d.armor,a.armorPen||0);const save=sv==null?1:Math.max(0,(sv-1)/6);return hit*wound*save;}catch(e){return 0;}
+  }
+  function isRanged(u){return Number(u.atkRange||0)>0;}
+  function canSee(u,t,types,grid){return Movement.lineOfSight(types,grid,{col:u.col,row:u.row},{col:t.col,row:t.row});}
+  function detectedTargets(unit,foes,types,grid){
+    const max=isRanged(unit)?DETECT_RANGED:DETECT_MELEE;
+    return foes.filter(t=>isAlive(t)&&Movement.distUnits(unit,t)<=max&&canSee(unit,t,types,grid));
+  }
+  function chooseTarget(unit,targets){
+    if(!targets.length)return null;
+    const strategy=unit.targetStrategy||TARGET_STRATEGY.CLOSEST;
+    if(strategy===TARGET_STRATEGY.LOWEST_HP)return targets.reduce((a,b)=>!a||b.hp<a.hp?b:a,null);
+    if(strategy===TARGET_STRATEGY.HIGHEST_CHANCE)return targets.reduce((a,b)=>!a||estimateAttackSuccess(unit,b)>estimateAttackSuccess(unit,a)?b:a,null);
+    return targets.reduce((a,b)=>!a||Movement.distUnits(unit,b)<Movement.distUnits(unit,a)?b:a,null);
+  }
+  function setUnitTargetStrategy(unit,strategy){if(!unit||!TARGET_STRATEGY[strategy])return false;unit.targetStrategy=TARGET_STRATEGY[strategy];return true;}
+  function setSideTargetStrategy(side,strategy,allUnits){if(!TARGET_STRATEGY[strategy])return false;(allUnits||[]).filter(u=>u.side===side&&isAlive(u)).forEach(u=>u.targetStrategy=strategy);return true;}
+  const UNIT_ROLE={AUTO:"auto",SCOUT:"scout",TANK:"tank",SHOOTER:"shooter",ASSASSIN:"assassin",SUPPORT:"support"};
+  function inferRole(u){
+    if(u.role&&UNIT_ROLE[u.role.toUpperCase()]) return u.role;
+    if(u.isHero) return "support";
+    if(isRanged(u)) return "shooter";
+    if((u.hp||0) >= (u.pv||u.hp||1)*8) return "tank";
+    return "assassin";
+  }
+  function effectiveRole(u){ return u.role || inferRole(u); }
+  function roleDetection(u){
+    const role=effectiveRole(u);
+    if(role==="scout") return Math.max(DETECT_RANGED,360);
+    if(role==="assassin") return Math.max(DETECT_MELEE,230);
+    return isRanged(u)?DETECT_RANGED:DETECT_MELEE;
+  }
+  function detectedTargetsByRole(unit,foes,types,grid){
+    const max=roleDetection(unit);
+    return foes.filter(t=>isAlive(t)&&Movement.distUnits(unit,t)<=max&&canSee(unit,t,types,grid));
+  }
+  function scoreTarget(unit,t){
+    const d=Movement.distUnits(unit,t), hp=Math.max(1,t.hp||1);
+    const role=effectiveRole(unit), strategy=unit.targetStrategy||TARGET_STRATEGY.CLOSEST;
+    let score=0;
+    if(strategy===TARGET_STRATEGY.LOWEST_HP) score += 10000/(hp+1);
+    else if(strategy===TARGET_STRATEGY.HIGHEST_CHANCE) score += estimateAttackSuccess(unit,t)*5000;
+    else score += 1000/(d+1);
+    if(role==="assassin") score += (isRanged(t)?180:0) + 700/(d+30);
+    if(role==="shooter") score += (hp<=(t.pv||hp)*5?260:0) - d*.2;
+    if(role==="tank") score += (!isRanged(t)?140:0) - d*.08;
+    if(role==="scout") score += d>80?120:0;
+    return score;
+  }
+  function chooseRoleTarget(unit,targets){
+    if(!targets.length)return null;
+    return targets.reduce((best,t)=>!best||scoreTarget(unit,t)>scoreTarget(unit,best)?t:best,null);
+  }
+  function setUnitRole(unit,role){ if(!unit||!UNIT_ROLE[role.toUpperCase()]) return false; unit.role=UNIT_ROLE[role.toUpperCase()]; unit._target=null; unit._path=[]; unit._order="stop"; return true; }
+  function setSideRole(side,role,allUnits){ if(!UNIT_ROLE[role.toUpperCase()]) return false; (allUnits||[]).filter(u=>u.side===side&&isAlive(u)).forEach(u=>setUnitRole(u,role)); return true; }
+  function aiTick(unit,allies,foes,types,grid,now,allUnits){
+    if(!isAlive(unit))return;
+    if(unit._manualUntil&&now<unit._manualUntil)return;
+    if(unit._formationUntil&&now<unit._formationUntil)return;
+    unit.role=effectiveRole(unit);
+    // Une cible déjà engagée reste prioritaire tant qu'elle est visible et pertinente.
+    if(unit._target&&isAlive(unit._target)&&unit._target.side!==unit.side){
+      const d=Movement.distUnits(unit,unit._target);
+      const visible=canSee(unit,unit._target,types,grid);
+      const keep=(unit.atkRange>0 ? (d<=unit.atkRange&&visible) : d<=MELEE_RANGE);
+      if(keep){unit._path=[];unit._order="attack";return;}
+    }
+    const visible=detectedTargetsByRole(unit,foes,types,grid);
+    const target=chooseRoleTarget(unit,visible);
+    if(!target){ unit._target=null; unit._path=[]; unit._order="stop"; return; }
+    unit._target=target;
+    const d=Movement.distUnits(unit,target);
+    const role=effectiveRole(unit);
+    let desired=isRanged(unit)?Math.min(unit.atkRange||220, role==="shooter"?220:180):MELEE_RANGE;
+    if(role==="assassin") desired=40;
+    if(role==="scout") desired=isRanged(unit)?Math.min(unit.atkRange||220,260):55;
+    if(isRanged(unit)&&d<=desired&&canSee(unit,target,types,grid)){ unit._path=[]; unit._order="attack"; return; }
+    if(!isRanged(unit)&&d<=MELEE_RANGE){ unit._path=[]; unit._order="attack"; return; }
+    if(!unit._path||!unit._path.length){
+      // Viser une case d'approche, pas la case de l'ennemi, pour éviter les blocages de mêlée.
+      let goal={col:target.col,row:target.row};
+      if(isRanged(unit)||role==="tank"){
+        const dx=unit.col-target.col,dy=unit.row-target.row, len=Math.hypot(dx,dy)||1;
+        const cells=Math.max(1,Math.round(desired/55));
+        goal={col:target.col+Math.round(dx/len*cells),row:target.row+Math.round(dy/len*cells)};
+      }
+      goal.col=Math.max(1,Math.min(grid[0].length-2,goal.col));
+      goal.row=Math.max(1,Math.min(grid.length-2,goal.row));
+      const path=Movement.findPath(types,grid,{col:unit.col,row:unit.row},goal);
+      if(path&&path.length>1){unit._path=path.slice(1);unit._order="move";}
+      else {unit._path=[];unit._order="attack";}
+    }
+  }
+  window.Interactions={abilitiesFor,select,getSelected,orderMove,orderAttack,orderStop,castAbility,isAbilityReady,TARGET_STRATEGY,UNIT_ROLE,setUnitTargetStrategy,setSideTargetStrategy,setUnitRole,setSideRole,estimateAttackSuccess,aiTick};
+})();
+
+/* ----- terrain.js ----- */
+/* ----- terrain.js (inline, lit DATA.terrain) ----- */
+(function () {
+  "use strict";
+  function get(){ return DATA.terrain; }
+  function generate(generatorId, seed){
+    const T=DATA.terrain; const gen=T.generators[generatorId]; if(!gen) throw new Error("Generateur inconnu: "+generatorId);
+    const {w,h}=gen.size; const weights=gen.weights; const ids=Object.keys(weights);
+    const total=ids.reduce((s,k)=>s+weights[k],0); const rnd=makeRng(seed||12345);
+    const grid=[];
+    for(let y=0;y<h;y++){ const row=[];
+      for(let x=0;x<w;x++){ let pick=rnd()*total,acc=0,chosen="herbe";
+        for(const id of ids){ acc+=weights[id]; if(pick<acc){chosen=id;break;} } row.push(chosen); } grid.push(row); }
+    for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){ const t=T.types[grid[y][x]]; let imp=0;
+      for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const n=T.types[grid[y+dy][x+dx]]; if(n&&n.blocks) imp++; }
+      if(imp>=3&&!t.blocks) grid[y][x]="rochers"; }
+    return grid;
+  }
+  function draw(ctx,grid,camX,camY,viewW,viewH){
+    const T=DATA.terrain; const tileW=T.tileW, tileH=T.tileH; const h=grid.length,w=grid[0].length;
+    for(let r=0;r<h;r++) for(let c=0;c<w;c++){ const s=Movement.gridToScreen(c,r); const x=s.x+camX,y=s.y+camY;
+      if(x<-tileW||x>viewW+tileW||y<-tileH||y>viewH+tileH) continue;
+      const id=grid[r][c]; const t=T.types[id]; if(!t) continue;
+      drawDiamond(ctx,x,y,tileW,tileH,t.color); }
+  }
+  function drawDiamond(ctx,cx,cy,tw,th,color){ ctx.beginPath();
+    ctx.moveTo(cx,cy); ctx.lineTo(cx+tw/2,cy+th/2); ctx.lineTo(cx,cy+th); ctx.lineTo(cx-tw/2,cy+th/2); ctx.closePath();
+    ctx.fillStyle=color; ctx.fill(); ctx.strokeStyle="rgba(0,0,0,.25)"; ctx.lineWidth=1; ctx.stroke(); }
+  function makeRng(seed){ let s=seed>>>0; return function(){ s=(s*1664525+1013904223)>>>0; return (s&0xffffffff)/0xffffffff; }; }
+  window.Terrain={get,generate,draw};
+})();
+
+/* ----- army.js (adapté : catalogue depuis DATA inline) ----- */
+/* ----- army.js (inline, catalogue depuis DATA) ----- */
+(function () {
+  "use strict";
+  let catalogue=null;
+  function load(){
+    const base=DATA.elfesNoirs, supp=DATA.mareeDeSang, high=DATA.hautsElfes;
+    const units=new Map();
+    for(const u of base.units) units.set(u.id,u);
+    for(const u of high.units) units.set(u.id,u);
+    for(const u of supp.units) units.set(u.id,u);
+    catalogue={ base, supp, high, units,
+      allowed:new Set(supp.allowedUnits||[]), excluded:new Set(supp.excludedUnits||[]),
+      restrictions:supp.restrictions||{} };
+    return catalogue;
+  }
+  function get(){ return catalogue; }
+  function availableUnits(){ if(!catalogue) return []; const out=[];
+    for(const u of catalogue.units.values()){ if(catalogue.excluded.has(u.id)) continue;
+      if(catalogue.allowed.size&&!catalogue.allowed.has(u.id)) continue; out.push(u); } return out; }
+  window.Army={load,get,availableUnits};
+})();
+
+/* ----- sprites.js (adapté : pas de fetch, fallback procédural) ----- */
+/* ----- sprites.js (inline, fallback procedural, pas de fetch) ----- */
+(function () {
+  "use strict";
+  const CONFIG={ sheetUrl:null, tileSheetUrl:null,
+    backgrounds:{ arche:"data/images/ArcheNoire.png", conseil:"data/images/Conseil.png", maree:"data/images/MareeDeSang.png", proue:"data/images/Proue.png" } };
+  let sheetImg=null, tileSheetImg=null; const bgImgs={};
+  function loadImg(url){ return new Promise((res,rej)=>{ const img=new Image(); img.crossOrigin="anonymous";
+    img.onload=()=>res(img); img.onerror=()=>rej(new Error("Image: "+url)); img.src=url; }); }
+  async function init(cfg){ Object.assign(CONFIG,cfg||{}); const tasks=[];
+    for(const [k,url] of Object.entries(CONFIG.backgrounds)){ if(url) tasks.push(loadImg(url).then(i=>bgImgs[k]=i).catch(()=>{})); }
+    await Promise.allSettled(tasks); return {sheet:!!sheetImg,bgs:Object.keys(bgImgs)}; }
+  function drawUnit(ctx,unit,x,y,frame,dir){ return false; }
+  function tile(typeId){ return tileSheetImg?tileSheetImg:null; }
+  function background(id){ return bgImgs[id]||null; }
+  function setBg(el,bgId,darkClass){ el.style.zIndex="0"; el.style.pointerEvents="none"; const img=background(bgId);
+    if(img){ el.style.backgroundImage=`url("${img.src}")`; el.style.backgroundSize="cover"; el.style.backgroundPosition="center"; }
+    else { el.style.backgroundImage="linear-gradient(160deg,#0a0a12,#050508)"; }
+    el.dataset.dark=darkClass||""; }
+  window.Sprites={init,drawUnit,tile,background,setBg,config:CONFIG};
+})();
+
+/* ----- main.js + test-combat.js ----- */
+/* ----- main.js (inline) ----- */
+const C=window.Combat, M=window.Movement, T=window.Terrain, A=window.Army, I=window.Interactions, S=window.Sprites;
+const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+const bgLayer=document.getElementById("bg-layer"), bgDarken=document.getElementById("bg-darken");
+let state="title", scenario=null, terrainTypes=null, grid=null, units=[], allies=[], foes=[];
+let cam={x:0,y:0}, lastT=0, marée=0, heroChoice=null;
+function resize(){ cv.width=innerWidth; cv.height=innerHeight; } addEventListener("resize",resize); resize();
+function show(id){ document.getElementById(id).classList.remove("hidden"); }
+function hide(id){ document.getElementById(id).classList.add("hidden"); }
+function setBg(darkClass,bgId){ S.setBg(bgLayer,bgId,darkClass); bgDarken.className=darkClass; bgDarken.style.display="block"; }
+
+/* --- Ecran titre --- */
+document.getElementById("start-btn").addEventListener("click", async ()=>{
+  setBg("bg-hero","arche"); hide("title-screen"); show("hero-screen"); state="hero"; await renderHeroGrid();
+});
+/* test-btn supprimé de l'écran titre — accès via URL #test */
+
+/* --- Selection heros --- */
+const HERO_DEFS=[
+  {id:"maldris-dravelyth",house:"Maison Dravelyth",sigil:"⚔",desc:"Capitaine de l'Arche Noire. Maitre du fouet, il mene par la crainte et la brutalite."},
+  {id:"moraveth-dravelyth",house:"Maison Dravelyth",sigil:"✦",desc:"Sorciere du Couvent du Sillage Noir. Sacrifices rituels et magie noire de l'Agonie."},
+  {id:"kharyx",house:"Predateur de la Lune Noire",sigil:"☾",desc:"Behemont sauvage. Terreur incarnee, nourrie par le sang verse."}
+];
+async function renderHeroGrid(){
+  if(!A.get()) A.load();
+  const gridEl=document.getElementById("hero-grid"); gridEl.innerHTML="";
+  for(const h of HERO_DEFS){ const u=A.get().units.get(h.id); if(!u) continue; const p=u.profile||{};
+    const card=document.createElement("div"); card.className="hero-card"; card.dataset.id=h.id;
+    card.innerHTML=`<div class="sigil">${h.sigil}</div><h3>${u.name}</h3><div class="house">${h.house}</div><div class="desc">${h.desc}</div>
+      <div class="prof">${profCell("M",p.M)}${profCell("CC",p.CC)}${profCell("CT",p.CT)}${profCell("F",p.F)}${profCell("E",p.E)}${profCell("PV",p.PV)}${profCell("I",p.I)}${profCell("A",p.A)}${profCell("Cd",p.Cd)}</div>`;
+    card.addEventListener("click",()=>{ document.querySelectorAll(".hero-card").forEach(c=>c.classList.remove("selected")); card.classList.add("selected"); heroChoice=h.id; document.getElementById("hero-go").disabled=false; });
+    gridEl.appendChild(card); }
+}
+function profCell(label,val){ return `<span><i>${label}</i><b>${val??"-"}</b></span>`; }
+document.getElementById("hero-back").addEventListener("click",()=>{ show("title-screen"); hide("hero-screen"); state="title"; setBg("bg-title","arche"); });
+document.getElementById("hero-go").addEventListener("click", async ()=>{ await startBattle(); });
+
+/* --- Bataille --- */
+async function startBattle(){
+  if(!A.get()) A.load();
+  scenario=DATA.scenarios.scenarios[0];
+  grid=T.generate(scenario.terrainGenerator, Date.now()&0xffff);
+  terrainTypes=T.get().types;
+  setBg("bg-battle","conseil"); hide("hero-screen"); show("hud"); show("abilities"); state="battle";
+  const mid=M.gridToScreen(grid[0].length/2, grid.length/2); cam.x=cv.width/2-mid.x; cam.y=cv.height/2-mid.y;
+  units=[]; allies=[]; foes=[]; spawnAllies(); spawnEnemies(); renderAbilities(); renderUnitsList();
+  document.getElementById("scenario-name").textContent=scenario.name;
+  lastT=performance.now(); requestAnimationFrame(loop);
+}
+function spawnAllies(){
+  const hero=makeUnit(heroChoice,"ally",scenario.deploy.ally.x+2,scenario.deploy.ally.y+2,true);
+  units.push(hero); allies.push(hero); I.select(hero);
+  ["black-ark-corsairs","repeater-crossbowmen","esclaves"].forEach((id,i)=>{
+    const u=makeUnit(id,"ally",scenario.deploy.ally.x+1+i,scenario.deploy.ally.y+4,false);
+    units.push(u); allies.push(u); });
+}
+function spawnEnemies(){
+  scenario.enemyArmy.units.forEach((eu,i)=>{
+    const u=makeUnit(eu.id,"foe",scenario.deploy.enemy.x+1+(i%3),scenario.deploy.enemy.y+1+Math.floor(i/3),false);
+    units.push(u); foes.push(u); });
+}
+function makeUnit(id,side,col,row,isHero){
+  const raw=A.get().units.get(id)||{id,name:id,profile:{},category:isHero?"Personnages":"Base"};
+  const prof=C.mkProfile(raw);
+  if(raw.equipment&&(raw.equipment.some(e=>e.includes("Arbalete")||e.includes("Arme de poing")||e.includes("tir")))) prof.atkRange=220;
+  return Object.assign({side,col,row,_ix:null,_iy:null,_path:[],_order:"stop",_target:null,_selected:false,_cd:{},_lastAtk:0,_frame:0,_frameT:0,raw,targetStrategy:"closest",role:null,_manualUntil:0,_manualOrder:null,_formationUntil:0},prof);
+}
+function renderAbilities(){
+  const bar=document.getElementById("abilities"); bar.innerHTML="";
+  const abs=I.abilitiesFor(heroChoice);
+  abs.forEach((ab,i)=>{ const el=document.createElement("div"); el.className="ability ready";
+    el.innerHTML=`<span class="key">${ab.key.toUpperCase()}</span><span class="name">${ab.name}</span>`;
+    el.addEventListener("click",()=>castAbility(i)); bar.appendChild(el); });
+}
+function castAbility(i){ const sel=I.getSelected(); if(sel&&I.castAbility(sel,i)) tickAbilities(); }
+function tickAbilities(){
+  const sel=I.getSelected();
+  document.querySelectorAll(".ability").forEach((el,i)=>{ if(!sel){el.classList.remove("ready");return;}
+    const ready=I.isAbilityReady(sel,i); el.classList.toggle("ready",ready);
+    let cdEl=el.querySelector(".cd");
+    if(!ready){ if(!cdEl){cdEl=document.createElement("div");cdEl.className="cd";el.appendChild(cdEl);} const now=performance.now();
+      const left=Math.ceil(((sel._cd[i]||0)-now)/1000); cdEl.textContent=Math.max(0,left)+"s"; }
+    else if(cdEl) cdEl.remove(); });
+}
+addEventListener("keydown",e=>{ if(state!=="battle") return; const map={a:0,z:1,e:2}; if(e.key in map) castAbility(map[e.key]); });
+
+function loop(now){
+  if(state!=="battle") return;
+  const dt=Math.min(0.05,(now-lastT)/1000); lastT=now; update(dt,now); render(); tickAbilities(); requestAnimationFrame(loop);
+}
+function update(dt,now){
+  for(const u of units){ if(u.hp<=0) continue; if(u===I.getSelected()) continue;
+    if(u.side==="ally") I.aiTick(u,allies,foes,terrainTypes,grid,now,units); else I.aiTick(u,foes,allies,terrainTypes,grid,now,units); }
+  for(const u of units){ if(u.hp<=0) continue;
+    M.stepUnit(terrainTypes,grid,u,dt);
+    if(u._path.length>0){ u._frameT+=dt; if(u._frameT>0.12){u._frameT=0;u._frame=(u._frame+1)%8;} }
+    if(u._target&&u._target.hp>0&&C.attackReady(u,now)){ const d=M.distUnits(u,u._target);
+      if(C.inRange(u,u._target,d)){ const r=C.resolveAttack(u,u._target,{ranged:u.atkRange>0});
+        u._target.hp-=r.dmg; u._lastAtk=now; marée=Math.min(100,marée+r.unsaved*0.5); }
+      else if(!u._path.length){ I.orderMove(u,terrainTypes,grid,{col:u._target.col,row:u._target.row}); } }
+    if(u._target&&u._target.hp<=0) u._target=null; }
+  units=units.filter(u=>u.hp>0); allies=allies.filter(u=>u.hp>0); foes=foes.filter(u=>u.hp>0);
+  document.getElementById("marée").textContent="MARÉE DE SANG : "+Math.round(marée)+"%";
+  if(allies.length===0) endBattle(false); else if(foes.length===0) endBattle(true);
+  renderUnitsList();
+}
+function render(){
+  ctx.clearRect(0,0,cv.width,cv.height); T.draw(ctx,grid,cam.x,cam.y,cv.width,cv.height);
+  const sorted=[...units].sort((a,b)=>(a.col+a.row)-(b.col+b.row));
+  for(const u of sorted){ const s=(u._ix!=null)?{x:u._ix,y:u._iy}:M.gridToScreen(u.col,u.row);
+    const x=s.x+cam.x,y=s.y+cam.y; drawUnitSprite(u,x,y); }
+  const sel=I.getSelected();
+  if(sel){ const s=(sel._ix!=null)?{x:sel._ix,y:sel._iy}:M.gridToScreen(sel.col,sel.row);
+    ctx.strokeStyle="#b8975a"; ctx.lineWidth=2; ctx.strokeRect(s.x+cam.x-20,s.y+cam.y-36,40,44); }
+}
+function drawUnitSprite(u,x,y){
+  const color=u.side==="ally"?"#7a1f1f":"#1f3a5a";
+  ctx.save(); ctx.beginPath(); ctx.ellipse(x,y+6,14,5,0,0,Math.PI*2); ctx.fillStyle="rgba(0,0,0,.4)"; ctx.fill();
+  ctx.beginPath(); ctx.arc(x,y-6,10,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+  ctx.strokeStyle="#b8975a"; ctx.lineWidth=u.isHero?2:1; ctx.stroke();
+  if(u.isHero){ ctx.fillStyle="#b8975a"; ctx.font="bold 12px Georgia"; ctx.textAlign="center"; ctx.fillText("★",x,y-12); }
+  ctx.restore();
+  ctx.fillStyle="#3a1a1a"; ctx.fillRect(x-14,y-24,28,3);
+  ctx.fillStyle="#a03030"; ctx.fillRect(x-14,y-24,28*Math.max(0,u.hp/(u.pv*12)),3);
+}
+function renderUnitsList(){
+  const el=document.getElementById("units-list"); el.innerHTML="";
+  for(const u of allies){ const chip=document.createElement("div"); chip.className="unit-chip";
+    chip.innerHTML=`${u.name}<div class="hpbar"><i style="width:${Math.max(0,u.hp/(u.pv*12))*100}%"></i></div>`; el.appendChild(chip); }
+}
+cv.addEventListener("click",e=>{ if(state!=="battle") return;
+  const rect=cv.getBoundingClientRect(); const sx=e.clientX-rect.left, sy=e.clientY-rect.top;
+  const hit=pickUnit(sx,sy);
+  if(hit){ if(hit.side==="ally") I.select(hit); else { const sel=I.getSelected(); if(sel) I.orderAttack(sel,hit); } }
+  else { const sel=I.getSelected(); if(sel){ const g=M.screenToGrid(sx,sy,cam.x,cam.y);
+    if(M.inBounds(grid,g.col,g.row)&&M.tilePassable(terrainTypes,grid,g.col,g.row)) I.orderMove(sel,terrainTypes,grid,g); } }
+});
+cv.addEventListener("contextmenu",e=>{ e.preventDefault(); if(state!=="battle") return;
+  const rect=cv.getBoundingClientRect(); const sx=e.clientX-rect.left, sy=e.clientY-rect.top;
+  const hit=pickUnit(sx,sy); const sel=I.getSelected(); if(hit&&sel) I.orderAttack(sel,hit); });
+function pickUnit(sx,sy){ for(const u of units){ const s=(u._ix!=null)?{x:u._ix,y:u._iy}:M.gridToScreen(u.col,u.row);
+  const x=s.x+cam.x, y=s.y+cam.y; if(Math.abs(sx-x)<14&&Math.abs(sy-y+6)<18) return u; } return null; }
+let dragging=false,dragX0=0,dragY0=0;
+cv.addEventListener("mousedown",e=>{ if(e.button===1){ dragging=true; dragX0=e.clientX-cam.x; dragY0=e.clientY-cam.y; } });
+addEventListener("mousemove",e=>{ if(dragging){ cam.x=e.clientX-dragX0; cam.y=e.clientY-dragY0; } });
+addEventListener("mouseup",()=>dragging=false);
+
+function endBattle(won){ state="end"; hide("hud"); hide("abilities"); show("end-screen");
+  const t=document.getElementById("end-title"), s=document.getElementById("end-sub");
+  if(won){ t.textContent="VICTOIRE"; t.className="end-win"; s.textContent="La maree se retire. La cargaison est en securite."; setBg("bg-end","proue"); }
+  else { t.textContent="DÉFAITE"; t.className="end-lose"; s.textContent="Le Sillage Noir s'echoue. La maree de sang vous engloutit."; setBg("bg-end","maree"); } }
+document.getElementById("end-restart").addEventListener("click",()=>{ hide("end-screen"); show("title-screen"); state="title"; setBg("bg-title","arche"); });
+
+/* --- INIT --- */
+(async function init(){ setBg("bg-title","arche"); await S.init(); A.load();
+  if(location.hash==="#test"){ hide("title-screen"); show("test-screen"); initTest(); }
+})();
+
+/* --- TEST COMBAT : bac à sable tactique (inline) --- */
+let _catalogue=null, _testUnits=[], _testSel=null, _testSelected=new Set(), _testGrid=null, _testCam={x:0,y:0}, _testLastT=0, _testLock=false, _testTargetUnit=null, _testKeys={};
+let _testUid=0, _testFormations=[], _deadTab=false, _boxStart=null;
+async function initTest(){
+  if(!A.get()) A.load();
+  _catalogue=Array.from(A.get().units.values());
+  fillAddSelect();
+  _testGrid=T.generate("cote-de-naggaroth", (Date.now()&0xffff));
+  const mid=M.gridToScreen(_testGrid[0].length/2,_testGrid.length/2);
+  const tcv0=document.getElementById("test-cv");
+  testResize();
+  _testCam.x=tcv0.clientWidth/2-mid.x; _testCam.y=tcv0.clientHeight/2-mid.y;
+  addTestUnit("maldris-dravelyth","ally",12,24);
+  addTestUnit("dark-elf-warriors","ally",10,26);
+  addTestUnit("elven-spearmen","foe",36,22);
+  addTestUnit("elven-archers","foe",38,24);
+  renderUnitList(); updateHint();
+  _testLastT=performance.now();
+  requestAnimationFrame(_testLoop);
+}
+function fillAddSelect(){
+  const sel=document.getElementById("add-unit-sel"); sel.innerHTML="";
+  const cats={};
+  for(const u of _catalogue){ (cats[u.category]=cats[u.category]||[]).push(u); }
+  for(const [cat,us] of Object.entries(cats)){
+    const og=document.createElement("optgroup"); og.label=cat;
+    for(const u of us){ const o=document.createElement("option"); o.value=u.id; o.textContent=u.name; og.appendChild(o); }
+    sel.appendChild(og);
+  }
+}
+function addTestUnit(id,side,col,row){
+  const raw=A.get().units.get(id); if(!raw) return null;
+  const prof=C.mkProfile(raw);
+  const u=Object.assign({_tuid:++_testUid,side,col,row,_ix:null,_iy:null,_path:[],_frame:0,_frameT:0,_dir:0,_state:"walk",_atkFrame:0,_atkT:0},prof);
+  _testUnits.push(u); if(!_testSel) { _testSel=u; _testSelected.add(u); } renderUnitList(); return u;
+}
+function killTestUnit(u){
+  if(!u || u._state === "dead") return;
+  u.hp = 0; u._state = "dead"; u._deadAt = performance.now(); u._path = [];
+  u._target = null; _testSelected.delete(u);
+  if(_testSel===u) _testSel=null;
+  renderUnitList();
+}
+function purgeDeadUnits(now){
+  const before=_testUnits.length;
+  _testUnits=_testUnits.filter(u=>u._state!=="dead" || now-u._deadAt < 15000);
+  if(before!==_testUnits.length) renderUnitList();
+}
+
+function removeTestUnit(tuid){
+  const idx=_testUnits.findIndex(u=>u._tuid===tuid); if(idx<0) return;
+  const removed=_testUnits.splice(idx,1)[0];
+  if(_testSel===removed) _testSel=_testUnits[0]||null;
+  if(_testTargetUnit===removed) _testTargetUnit=null;
+  renderUnitList();
+}
+function renderUnitList(){
+  const live=document.getElementById("unit-list"), dead=document.getElementById("dead-list");
+  live.innerHTML=""; dead.innerHTML="";
+  const makeEntry=(u,isDead)=>{
+    const div=document.createElement("div");
+    div.className="unit-entry"+(u===_testSel?" sel":"")+(isDead?" dead":"");
+    const dc=u.side==="ally"?"#7a1f1f":"#1f3a5a";
+    const selected=_testSelected.has(u)?" ✓":"";
+    const form=u._formationId?`<span class="formation-badge">F${u._formationId}</span>`:"";
+    div.innerHTML=`<span class="dot" style="background:${dc}"></span><span class="nm">${u.name}${selected}</span>${form}${isDead?'<span style="color:#a03030">mort</span>':'<span class="rm" data-uid="'+u._tuid+'">✕</span>'}`;
+    if(!isDead) div.addEventListener("click",(e)=>{
+      if(e.target.classList.contains("rm")){ removeTestUnit(u._tuid); return; }
+      if(e.shiftKey) toggleTestSelection(u); else selectTestUnit(u,false);
+    });
+    return div;
+  };
+  for(const u of _testUnits.filter(u=>u._state!=="dead")) live.appendChild(makeEntry(u,false));
+  for(const u of _testUnits.filter(u=>u._state==="dead")) dead.appendChild(makeEntry(u,true));
+  document.getElementById("dead-count").textContent=_testUnits.filter(u=>u._state==="dead").length;
+  document.getElementById("unit-list").style.display=_deadTab?"none":"block";
+  document.getElementById("dead-list").classList.toggle("visible",_deadTab);
+  document.getElementById("tab-live").classList.toggle("active",!_deadTab);
+  document.getElementById("tab-dead").classList.toggle("active",_deadTab);
+}
+function selectTestUnit(u,add){
+  if(!add) _testSelected.clear();
+  _testSelected.add(u); _testSel=u; _testLock=false; renderUnitList(); updateHint();
+}
+function toggleTestSelection(u){
+  if(_testSelected.has(u)) _testSelected.delete(u); else _testSelected.add(u);
+  _testSel=u; renderUnitList(); updateHint();
+}
+function selectedLiveUnits(){ return [..._testSelected].filter(u=>u._state!=="dead"); }
+function formSameType(){
+  const picked=selectedLiveUnits(); if(!picked.length) return;
+  const type=picked[0].id;
+  const members=_testUnits.filter(u=>u._state!=="dead" && u.id===type && u.side===picked[0].side);
+  if(members.length<2) return;
+  const id=++_testUid;
+  for(const u of members) u._formationId=id;
+  _testFormations.push({id,units:members,type,side:members[0].side});
+  _testSelected=new Set(members); _testSel=members[0]; renderUnitList(); updateHint();
+}
+function moveSelectionTo(gcol,grow){
+  const members=selectedLiveUnits(); if(!members.length) return;
+  if(members.length===1){
+    const u=members[0], path=M.findPath(T.get().types,_testGrid,{col:u.col,row:u.row},{col:gcol,row:grow});
+    if(path&&path.length>1) u._path=path.slice(1);
+    return;
+  }
+  // Formation : le côté le plus long est le front, orienté vers le point d'arrivée.
+  const n=members.length, cols=Math.ceil(Math.sqrt(n)), rows=Math.ceil(n/cols);
+  const angle=Math.atan2(grow-members[0].row,gcol-members[0].col);
+  const dir={x:Math.cos(angle),y:Math.sin(angle)}, perp={x:-dir.y,y:dir.x};
+  const mid=(cols-1)/2;
+  members.forEach((u,i)=>{
+    const c=i%cols, r=Math.floor(i/cols);
+    const lateral=c-mid, depth=r-(rows-1)/2;
+    const tc=Math.round(gcol + perp.x*lateral + dir.x*depth);
+    const tr=Math.round(grow + perp.y*lateral + dir.y*depth);
+    const goal={col:tc,row:tr};
+    const path=M.findPath(T.get().types,_testGrid,{col:u.col,row:u.row},goal);
+    if(path&&path.length>1) u._path=path.slice(1);
+  });
+}
+
+function updateHint(){
+  const h=document.getElementById("test-hint");
+  h.innerHTML=`${_testLock?"[L ON]":"[L OFF]"} Clic gauche: sélection · Clic droit: déplacer · Molette/Flèches: caméra · L: verrouiller suivi · Clic molette: cible test`;
+}
+function testResize(){ const tcv=document.getElementById("test-cv"); tcv.width=tcv.clientWidth; tcv.height=tcv.clientHeight; }
+addEventListener("resize",()=>{ if(!_testGrid) return; testResize(); });
+
+/* --- Input test --- */
+const _tcv=document.getElementById("test-cv");
+_tcv.addEventListener("contextmenu",e=>e.preventDefault());
+_tcv.addEventListener("mousedown",e=>{
+  if(!_testGrid) return;
+  const rect=_tcv.getBoundingClientRect(), sx=e.clientX-rect.left, sy=e.clientY-rect.top;
+  const g=M.screenToGrid(sx,sy,_testCam.x,_testCam.y);
+  if(e.button===0){
+    const u=pickTestUnit(sx,sy);
+    if(u && u._state!=="dead") { if(e.shiftKey) toggleTestSelection(u); else selectTestUnit(u,false); }
+    else if(!u) { _boxStart={x:sx,y:sy,shift:e.shiftKey}; const box=document.getElementById("selection-box"); box.style.display="block"; box.style.left=sx+"px"; box.style.top=sy+"px"; box.style.width="0"; box.style.height="0"; }
+  } else if(e.button===2){ moveSelectionTo(g.col,g.row); }
+  else if(e.button===1){ const u=pickTestUnit(sx,sy); if(u&&u._state!=="dead") _testTargetUnit=u; }
+});
+_tcv.addEventListener("wheel",e=>{ e.preventDefault(); _testCam.x-=e.deltaX; _testCam.y-=e.deltaY; },{passive:false});
+_tcv.addEventListener("mousemove",e=>{
+  if(!_boxStart) return;
+  const r=_tcv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+  const box=document.getElementById("selection-box");
+  box.style.left=Math.min(_boxStart.x,x)+"px"; box.style.top=Math.min(_boxStart.y,y)+"px";
+  box.style.width=Math.abs(x-_boxStart.x)+"px"; box.style.height=Math.abs(y-_boxStart.y)+"px";
+});
+_tcv.addEventListener("mouseup",e=>{
+  if(!_boxStart) return;
+  const r=_tcv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top;
+  const x0=Math.min(_boxStart.x,x), x1=Math.max(_boxStart.x,x), y0=Math.min(_boxStart.y,y), y1=Math.max(_boxStart.y,y);
+  if(!_boxStart.shift) _testSelected.clear();
+  for(const u of _testUnits){ if(u._state==="dead") continue; const s=M.gridToScreen(u.col,u.row), ux=s.x+_testCam.x, uy=s.y+_testCam.y; if(ux>=x0&&ux<=x1&&uy>=y0&&uy<=y1) _testSelected.add(u); }
+  _testSel=[..._testSelected][0]||null; document.getElementById("selection-box").style.display="none"; _boxStart=null; renderUnitList(); updateHint();
+});
+addEventListener("keydown",e=>{
+  if(document.getElementById("test-screen").classList.contains("hidden")) return;
+  _testKeys[e.key]=true;
+  if(e.key==="l"||e.key==="L"){ _testLock=!_testLock; updateHint(); }
+  if(e.key==="Delete"||e.key==="Backspace"){ if(_testSel) removeTestUnit(_testSel._tuid); }
+});
+addEventListener("keyup",e=>{ _testKeys[e.key]=false; });
+document.getElementById("form-btn").addEventListener("click",formSameType);
+document.getElementById("tab-live").addEventListener("click",()=>{ _deadTab=false; renderUnitList(); });
+document.getElementById("tab-dead").addEventListener("click",()=>{ _deadTab=true; renderUnitList(); });
+function pickTestUnit(sx,sy){
+  for(const u of _testUnits){
+    const s=M.gridToScreen(u.col,u.row), x=s.x+_testCam.x, y=s.y+_testCam.y;
+    if(Math.abs(sx-x)<16&&Math.abs(sy-y+6)<20) return u;
+  }
+  return null;
+}
+document.getElementById("add-btn").addEventListener("click",()=>{
+  const id=document.getElementById("add-unit-sel").value, side=document.getElementById("add-side-sel").value;
+  const g=M.screenToGrid(_tcv.clientWidth/2,_tcv.clientHeight/2,_testCam.x,_testCam.y);
+  addTestUnit(id,side,g.col,g.row);
+});
+document.getElementById("test-back").addEventListener("click",()=>{ hide("test-screen"); show("title-screen"); });
+document.getElementById("run").addEventListener("click",()=>{
+  if(!_testSel||!_testTargetUnit) return;
+  const aRaw=_catalogue.find(u=>u.id===_testSel.id), dRaw=_catalogue.find(u=>u.id===_testTargetUnit.id);
+  if(!aRaw||!dRaw) return;
+  const atk=C.mkProfile(aRaw), def=C.mkProfile(dRaw);
+  const ranged=document.getElementById("ranged").checked, useRanged=ranged&&atk.ct>0;
+  const rounds=parseInt(document.getElementById("rounds").value,10)||50;
+  const logEl=document.getElementById("test-log");
+  logEl.innerHTML='<div class="row h"><span>#</span><span>Évènement</span><span>Touchés</span><span>Bless.</span><span>Non-sauv.</span></div>';
+  let th=0,tw=0,tu=0; const defHp0=def.hp;
+  for(let i=1;i<=rounds;i++){ const r=C.resolveAttack(atk,def,{ranged:useRanged});
+    th+=r.hits; tw+=r.wounds; tu+=r.unsaved; def.hp-=r.dmg; logRow(i,`Round ${i}`,r);
+    if(def.hp<=0){ logRow(i,"DÉFENSEUR ÉLIMINÉ",{hits:r.hits,wounds:r.wounds,unsaved:r.unsaved}); break; } }
+  const pct=defHp0>0?Math.round((tu/defHp0)*100):0;
+  logRow("→",`${aRaw.name} vs ${dRaw.name} — ${th} touchés, ${tw} bless., ${tu} non-sauv. (${pct}%) ${def.hp<=0?"ÉLIMINÉ":`(${def.hp}/${defHp0} PV)`}`,{});
+});
+function logRow(n,label,r){
+  const row=document.createElement("div"); row.className="row";
+  row.innerHTML=`<span>${n}</span><span>${label}</span><span>${r.hits||0}</span><span>${r.wounds||0}</span><span>${r.unsaved||0}</span>`;
+  const logEl=document.getElementById("test-log");
+  logEl.appendChild(row); logEl.scrollTop=logEl.scrollHeight;
+}
+/* --- Boucle de rendu test --- */
+function _testLoop(now){
+  if(document.getElementById("test-screen").classList.contains("hidden")) return;
+  const dt=Math.min(0.05,(now-_testLastT)/1000); _testLastT=now;
+  _testUpdate(dt); _testRender();
+  requestAnimationFrame(_testLoop);
+}
+function _testUpdate(dt){
+  const now=performance.now();
+  purgeDeadUnits(now);
+  const cs=400;
+  if(_testKeys["ArrowUp"]) _testCam.y+=cs*dt;
+  if(_testKeys["ArrowDown"]) _testCam.y-=cs*dt;
+  if(_testKeys["ArrowLeft"]) _testCam.x+=cs*dt;
+  if(_testKeys["ArrowRight"]) _testCam.x-=cs*dt;
+  if(_testLock&&_testSel){
+    const s=M.gridToScreen(_testSel.col,_testSel.row);
+    _testCam.x+=(_tcv.clientWidth/2-s.x-_testCam.x)*0.1;
+    _testCam.y+=(_tcv.clientHeight/2-s.y-_testCam.y)*0.1;
+  }
+  for(const u of _testUnits){
+    if(u._state==="dead") continue;
+    // L'IA commande les unités non sélectionnées : chaque unité agit séparément.
+    if(!_testSelected.has(u) && window.DvpTestAI){
+      const enemies=_testUnits.filter(v=>v.side!==u.side&&v._state!=="dead");
+      window.DvpTestAI.tick(u,enemies,now);
+    }
+    if(u._path&&u._path.length){
+      const done=M.stepUnit(T.get().types,_testGrid,u,dt);
+      if(u._moveDx!=null) u._dir=S.dirFromDelta(u._moveDx,u._moveDy);
+      S.advWalk(u,dt);
+      if(done) u._path=[];
+    }
+  }
+}
+function _testRender(){
+  const tctx=_tcv.getContext("2d");
+  if(_tcv.width!==_tcv.clientWidth||_tcv.height!==_tcv.clientHeight) testResize();
+  tctx.clearRect(0,0,_tcv.width,_tcv.height);
+  tctx.fillStyle="#08080c"; tctx.fillRect(0,0,_tcv.width,_tcv.height);
+  T.draw(tctx,_testGrid,_testCam.x,_testCam.y,_tcv.width,_tcv.height);
+  const sorted=[..._testUnits].sort((a,b)=>(a.col+a.row)-(b.col+b.row));
+  for(const u of sorted){
+    const s=(u._ix!=null)?{x:u._ix,y:u._iy}:M.gridToScreen(u.col,u.row);
+    _testDrawUnit(tctx,u,s.x+_testCam.x,s.y+_testCam.y);
+  }
+  for(const u of selectedLiveUnits()){
+    const s=(u._ix!=null)?{x:u._ix,y:u._iy}:M.gridToScreen(u.col,u.row);
+    tctx.strokeStyle=u===_testSel&&_testLock?"#ff4040":"#b8975a"; tctx.lineWidth=2;
+    tctx.strokeRect(s.x+_testCam.x-18,s.y+_testCam.y-36,36,42);
+  }
+  if(_testTargetUnit){
+    const s=(_testTargetUnit._ix!=null)?{x:_testTargetUnit._ix,y:_testTargetUnit._iy}:M.gridToScreen(_testTargetUnit.col,_testTargetUnit.row);
+    tctx.strokeStyle="#ff8030"; tctx.lineWidth=2; tctx.setLineDash([4,3]);
+    tctx.strokeRect(s.x+_testCam.x-18,s.y+_testCam.y-36,36,42); tctx.setLineDash([]);
+  }
+}
+function _testDrawUnit(ctx,u,x,y){
+  if(!S.drawUnit(ctx,u,x,y)){
+    const color=u.side==="ally"?"#7a1f1f":"#1f3a5a";
+    ctx.save();
+    ctx.beginPath(); ctx.ellipse(x,y+6,14,5,0,0,Math.PI*2); ctx.fillStyle="rgba(0,0,0,.4)"; ctx.fill();
+    ctx.beginPath(); ctx.arc(x,y-6,10,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+    ctx.strokeStyle="#b8975a"; ctx.lineWidth=u.isHero?2:1; ctx.stroke();
+    if(u.isHero){ ctx.fillStyle="#b8975a"; ctx.font="bold 12px Georgia"; ctx.textAlign="center"; ctx.fillText("★",x,y-12); }
+    ctx.restore();
+  }
+  ctx.fillStyle="#3a1a1a"; ctx.fillRect(x-14,y-24,28,3);
+  ctx.fillStyle="#a03030"; ctx.fillRect(x-14,y-24,28*Math.max(0,u.hp/(u.pv*12||1)),3);
+  ctx.fillStyle="#c8b890"; ctx.font="10px Georgia"; ctx.textAlign="center"; ctx.fillText(u.name,x,y+18);
+}
+</script>
+
+<script id="unit-strategy-ui-v4">
+(()=>{
+  function install(){
+    if(document.getElementById("unit-strategy-ui"))return;
+    const host=document.querySelector("#hud")||document.body;
+    const p=document.createElement("div");p.id="unit-strategy-ui";p.className="gp3-panel";
+    p.innerHTML='<strong>IA individuelle :</strong><button data-strat="CLOSEST">Plus proche</button><button data-strat="LOWEST_HP">PV faibles</button><button data-strat="HIGHEST_CHANCE">Meilleure chance</button><button data-role="SCOUT">Éclaireur</button><button data-role="TANK">Tank</button><button data-role="SHOOTER">Tireur</button><button data-role="ASSASSIN">Assassin</button><button data-role="SUPPORT">Soutien</button><span id="strategy-status">Chaque unité décide séparément.</span>';
+    host.appendChild(p);
+    p.addEventListener("click",e=>{const sel=window.Interactions.getSelected();if(!sel)return;const b=e.target.closest("[data-strat]");const r=e.target.closest("[data-role]");if(b){window.Interactions.setUnitTargetStrategy(sel,b.dataset.strat);sel._strategyLabel=b.textContent;p.querySelector('#strategy-status').textContent=sel.name+" : "+b.textContent;}else if(r){window.Interactions.setUnitRole(sel,r.dataset.role);p.querySelector('#strategy-status').textContent=sel.name+" : rôle "+r.textContent;}});
+  }
+  install();
+})();
+</script>
+<script id="formation-tactical-v2">
+(() => {
+  // Tactical formations v2:
+  // 1) formation types
+  // 2) obstacle-aware group movement with cohesion
+  // 3) role-aware command: melee engage, ranged maintain optimal distance
+
+  const FT = {
+    enabled: true,
+    formation: "line",
+    spacing: 34,
+    cohesion: 0.72,
+    rangedPreferredDistance: 220,
+    meleeEngageDistance: 48
+  };
+
+  window.DvpFormationTactical = FT;
+
+  const state = window.__formationState || (window.__formationState = {
+    selected: [],
+    formations: new Map(),
+    deadAt: new Map(),
+    nextId: 1
+  });
+
+  function alive(u) {
+    return u && !u.dead && u.hp !== 0 && u.health !== 0;
+  }
+
+  function sameType(a,b) {
+    return (a?.type || a?.unitType || a?.kind) === (b?.type || b?.unitType || b?.kind);
+  }
+
+  function isRanged(u) {
+    const t = String(u?.type || u?.unitType || u?.kind || "").toLowerCase();
+    return !!(u?.ranged || u?.isRanged || t.includes("arch") || t.includes("tir") || t.includes("gun") || t.includes("mage"));
+  }
+
+  function pos(u) {
+    return {
+      x: Number(u.x ?? u.px ?? u.position?.x ?? 0),
+      y: Number(u.y ?? u.py ?? u.position?.y ?? 0)
+    };
+  }
+
+  function dist(a,b) {
+    const A=pos(a), B=pos(b);
+    return Math.hypot(A.x-B.x,A.y-B.y);
+  }
+
+  function formationShape(units, type=FT.formation) {
+    const n = units.length;
+    if (!n) return [];
+    const cols = type==="column" ? 1 :
+                 type==="square" ? Math.ceil(Math.sqrt(n)) :
+                 type==="wedge" ? Math.max(1, Math.ceil(Math.sqrt(n))) :
+                 type==="spread" ? Math.ceil(Math.sqrt(n)*1.6) :
+                 Math.max(1, Math.ceil(Math.sqrt(n)));
+    const rows = Math.ceil(n / cols);
+    const slots=[];
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols && slots.length<n;c++){
+        let x=(c-(cols-1)/2)*FT.spacing;
+        let y=(r-(rows-1)/2)*FT.spacing;
+        if(type==="column") x=0;
+        if(type==="wedge"){
+          const center=(cols-1)/2;
+          x=(c-center)*FT.spacing*(1 + r*.18);
+        }
+        if(type==="spread"){
+          x*=1.35; y*=1.35;
+        }
+        slots.push({x,y});
+      }
+    }
+    return slots;
+  }
+
+  function createFormation(units, type=FT.formation) {
+    units=(units||[]).filter(alive);
+    if(!units.length) return null;
+    const id="F"+(state.nextId++);
+    const f={id,type,members:[...units],heading:0,slots:formationShape(units,type)};
+    state.formations.set(id,f);
+    units.forEach(u=>u.formationId=id);
+    return f;
+  }
+
+  function frontSideLength(f) {
+    // Longest side becomes the front edge: choose the dimension with more spread.
+    const xs=f.slots.map(p=>p.x), ys=f.slots.map(p=>p.y);
+    const xSpan=(Math.max(...xs)-Math.min(...xs));
+    const ySpan=(Math.max(...ys)-Math.min(...ys));
+    return xSpan>=ySpan ? "x" : "y";
+  }
+
+  function orientFormation(f, dx, dy) {
+    const len=Math.hypot(dx,dy)||1;
+    const target=Math.atan2(dy,dx);
+    const front=frontSideLength(f);
+    // Local +Y is the normal forward axis; rotate so the longest side is perpendicular to motion.
+    f.heading = target - (front==="x" ? Math.PI/2 : 0);
+    return f.heading;
+  }
+
+  function slotWorld(f, slot) {
+    const a=f.heading, c=Math.cos(a), s=Math.sin(a);
+    return {
+      x: f.cx + slot.x*c - slot.y*s,
+      y: f.cy + slot.x*s + slot.y*c
+    };
+  }
+
+  function updateFormationAnchor(f) {
+    const live=f.members.filter(alive);
+    if(!live.length){ state.formations.delete(f.id); return; }
+    const P=live.map(pos);
+    f.cx=P.reduce((a,p)=>a+p.x,0)/P.length;
+    f.cy=P.reduce((a,p)=>a+p.y,0)/P.length;
+    f.members=live;
+    f.slots=formationShape(live,f.type);
+  }
+
+  // Public command: move a formation while preserving formation shape.
+  function moveFormation(f, tx, ty, obstacleTest) {
+    if(!f || !f.members.some(alive)) return false;
+    updateFormationAnchor(f);
+    const dx=tx-f.cx, dy=ty-f.cy;
+    orientFormation(f,dx,dy);
+
+    // Simple local obstacle-aware steering: if a candidate slot is blocked,
+    // bias the anchor perpendicular to the movement vector until the formation fits.
+    let ax=tx, ay=ty;
+    if(typeof obstacleTest==="function"){
+      for(let pass=0; pass<8; pass++){
+        const blocked=f.slots.some(slot=>{
+          const p=slotWorld({...f,cx:ax,cy:ay},slot);
+          return obstacleTest(p.x,p.y);
+        });
+        if(!blocked) break;
+        const L=Math.hypot(dx,dy)||1;
+        const px=-dy/L, py=dx/L;
+        const sign=pass%2? -1:1;
+        ax += px*FT.spacing*sign;
+        ay += py*FT.spacing*sign;
+      }
+    }
+    f.destination={x:ax,y:ay};
+    f.members.forEach((u,i)=>{
+      if(!alive(u)) return;
+      const p=slotWorld({...f,cx:ax,cy:ay},f.slots[i]||{x:0,y:0});
+      u.formationDestination=p;
+      u._order="move";
+      u._target=null;
+      if(typeof window.orderMove==="function" && window.grid && window.types){
+        try { window.orderMove(u, window.types, window.grid, {x:p.x,y:p.y}); } catch(e) {}
+      }
+    });
+    return true;
+  }
+
+  // Command 3: role-aware engagement.
+  function tacticalAttack(f, enemy) {
+    if(!f || !enemy || !alive(enemy)) return false;
+    updateFormationAnchor(f);
+    const ranged=f.members.filter(alive).filter(isRanged);
+    const melee=f.members.filter(alive).filter(u=>!isRanged(u));
+
+    melee.forEach(u=>{
+      u._target=enemy;
+      u._order="attack";
+      u.tacticalRole="melee";
+    });
+
+    ranged.forEach((u,i)=>{
+      u._target=enemy;
+      u.tacticalRole="ranged";
+      const d=dist(u,enemy);
+      if(d > FT.rangedPreferredDistance + 25){
+        u._order="move";
+        const e=pos(enemy), p=pos(u);
+        const L=Math.hypot(e.x-p.x,e.y-p.y)||1;
+        u.formationDestination={
+          x:e.x-(e.x-p.x)/L*FT.rangedPreferredDistance,
+          y:e.y-(e.y-p.y)/L*FT.rangedPreferredDistance
+        };
+      } else if(d < FT.rangedPreferredDistance - 35){
+        u._order="move";
+        const e=pos(enemy), p=pos(u);
+        const L=Math.hypot(e.x-p.x,e.y-p.y)||1;
+        u.formationDestination={
+          x:e.x+(p.x-e.x)/L*FT.rangedPreferredDistance,
+          y:e.y+(p.y-e.y)/L*FT.rangedPreferredDistance
+        };
+      } else {
+        u._order="attack";
+      }
+    });
+    return true;
+  }
+
+  function markDead(u) {
+    if(!u) return;
+    u.dead=true;
+    u._order="none";
+    u._target=null;
+    u._path=[];
+    u.formationDestination=null;
+    state.deadAt.set(u,Date.now());
+  }
+
+  function purgeDead(now=Date.now()) {
+    for(const [u,t] of state.deadAt){
+      if(now-t>=15000){
+        if(u.parentNode) u.parentNode.removeChild(u);
+        state.deadAt.delete(u);
+      }
+    }
+  }
+
+  // Expose a compact API for the game's existing selection/command layer.
+  Object.assign(window.DvpFormationTactical, {
+    createFormation, moveFormation, tacticalAttack, markDead, purgeDead,
+    formationShape, orientFormation, isRanged
+  });
+
+  // Formation type toolbar, injected if a selection UI exists.
+  function installToolbar() {
+    const host=document.querySelector("#controls, #toolbar, .toolbar, header, body");
+    if(!host || document.getElementById("formation-tactical-toolbar")) return;
+    const bar=document.createElement("div");
+    bar.id="formation-tactical-toolbar";
+    bar.className="formation-toolbar";
+    bar.innerHTML='<strong>Formation :</strong> ' +
+      ["line","column","square","wedge","spread"].map(t=>`<button data-ft="${t}">${t}</button>`).join("");
+    host.prepend(bar);
+    bar.addEventListener("click",e=>{
+      const b=e.target.closest("[data-ft]");
+      if(!b) return;
+      FT.formation=b.dataset.ft;
+      bar.querySelectorAll("button").forEach(x=>x.classList.toggle("active",x===b));
+      if(state.selected.length){
+        const f=createFormation(state.selected.filter(alive),FT.formation);
+        if(f) updateFormationAnchor(f);
+      }
+    });
+  }
+
+  installToolbar();
+  setInterval(()=>purgeDead(),1000);
+})();
+</script>
+
+<script id="gameplay-v3-objectives-synergy-postures">
+(() => {
+  // Sillage Noir — Gameplay v3
+  // Priority: direct player order > formation order > posture/role > automatic AI.
+  const GP3 = window.DvpGameplayV3 || (window.DvpGameplayV3 = {
+    objectives: [],
+    formations: new Map(),
+    posture: "defensive",
+    directOrders: new WeakMap(),
+    morale: new WeakMap(),
+    lastFormationSupport: new Map()
+  });
+
+  const now = () => Date.now();
+  const alive = u => u && !u.dead && Number(u.hp ?? u.health ?? 1) > 0;
+  const pos = u => ({x:Number(u?.x ?? u?.px ?? u?.position?.x ?? 0), y:Number(u?.y ?? u?.py ?? u?.position?.y ?? 0)});
+  const d2 = (a,b) => { const A=pos(a),B=pos(b); return Math.hypot(A.x-B.x,A.y-B.y); };
+  const typeOf = u => String(u?.type ?? u?.unitType ?? u?.kind ?? "").toLowerCase();
+  const ranged = u => !!(u?.ranged || u?.isRanged || /arch|tir|gun|mage/.test(typeOf(u)));
+
+  // ---------- 2. Objectives ----------
+  function createObjective(type, x, y, radius=140, owner=null) {
+    const o = {id:"O"+(GP3.objectives.length+1), type, x, y, radius, owner, progress:0, active:true};
+    GP3.objectives.push(o);
+    return o;
+  }
+
+  function unitsInObjective(units,o) {
+    return (units||[]).filter(u=>alive(u) && Math.hypot(pos(u).x-o.x,pos(u).y-o.y)<=o.radius);
+  }
+
+  function updateObjectives(allUnits=[]) {
+    GP3.objectives.forEach(o=>{
+      if(!o.active) return;
+      const inside = unitsInObjective(allUnits,o);
+      const camps = {};
+      inside.forEach(u=>{
+        const c=u.team ?? u.camp ?? u.side ?? "neutral";
+        camps[c]=(camps[c]||0)+1;
+      });
+      const entries=Object.entries(camps).sort((a,b)=>b[1]-a[1]);
+      if(entries.length && (!entries[1] || entries[0][1]>entries[1][1])) {
+        o.owner=entries[0][0];
+        o.progress=Math.min(100,o.progress+1);
+      } else if(entries.length) {
+        o.progress=Math.max(0,o.progress-0.5);
+      }
+    });
+  }
+
+  // Objective commands. These deliberately use existing movement hooks when available.
+  function assignObjective(units, objective, mode="defend") {
+    if(!objective) return false;
+    (units||[]).filter(alive).forEach(u=>{
+      GP3.directOrders.set(u,{kind:"objective", objectiveId:objective.id, mode, at:now()});
+      u.objectiveId=objective.id;
+      u.objectiveMode=mode;
+      u._target=null;
+      u._order="move";
+      u.formationDestination={x:objective.x,y:objective.y};
+    });
+    return true;
+  }
+
+  // ---------- 3. Formation synergy ----------
+  function formationMembers(f) {
+    return (f?.members||[]).filter(alive);
+  }
+
+  function formationCenter(f) {
+    const m=formationMembers(f);
+    if(!m.length) return {x:0,y:0};
+    const p=m.map(pos);
+    return {x:p.reduce((a,v)=>a+v.x,0)/p.length,y:p.reduce((a,v)=>a+v.y,0)/p.length};
+  }
+
+  function applyFormationSynergy(formations=[]) {
+    const fs=(formations||[]).filter(f=>formationMembers(f).length);
+    fs.forEach(f=>{
+      const fm=formationMembers(f), fc=formationCenter(f);
+      let supported=false, supportCount=0;
+      fs.forEach(g=>{
+        if(g===f) return;
+        const gm=formationMembers(g);
+        if(!gm.length || d2({x:fc.x,y:fc.y},{x:formationCenter(g).x,y:formationCenter(g).y})>260) return;
+        supported=true;
+        supportCount++;
+      });
+      const synergy = supported ? Math.min(.15, .05*supportCount) : 0;
+      f.synergyBonus=synergy;
+
+      // Front-line protection: melee close to ranged members.
+      const melee=fm.filter(u=>!ranged(u)), back=fm.filter(ranged);
+      if(melee.length && back.length) {
+        back.forEach(u=>u.tacticalSupportBonus=.10);
+        melee.forEach(u=>u.tacticalSupportBonus=.05);
+      }
+      GP3.lastFormationSupport.set(f.id,{supported,synergy,at:now()});
+    });
+  }
+
+  // ---------- 1. Combat postures ----------
+  const POSTURES = {
+    aggressive: {name:"Agressive", pursue:true, hold:false, retreatAt:.15},
+    defensive:  {name:"Défensive", pursue:false, hold:true, retreatAt:.25},
+    cautious:   {name:"Prudente", pursue:false, hold:false, retreatAt:.45},
+    hold:       {name:"Tenir la position", pursue:false, hold:true, retreatAt:0}
+  };
+
+  function setPosture(units, posture) {
+    if(!POSTURES[posture]) return false;
+    GP3.posture=posture;
+    (units||[]).filter(alive).forEach(u=>{
+      u.posture=posture;
+      u._postureSince=now();
+    });
+    return true;
+  }
+
+  function setDirectOrder(unit, order, payload={}) {
+    if(!unit || !alive(unit)) return false;
+    GP3.directOrders.set(unit,{kind:order, payload, at:now()});
+    unit._directOrder=true;
+    unit._directOrderAt=now();
+    return true;
+  }
+
+  function clearDirectOrder(unit) {
+    if(!unit) return;
+    GP3.directOrders.delete(unit);
+    unit._directOrder=false;
+  }
+
+  // Morale is intentionally lightweight and can be fed by the combat engine.
+  function updateMorale(unit, delta=0) {
+    if(!alive(unit)) return 0;
+    let m=GP3.morale.get(unit);
+    if(m==null) m=1;
+    m=Math.max(0,Math.min(1,m+delta));
+    GP3.morale.set(unit,m);
+    unit.morale=m;
+    if(m<.2 && !unit._directOrder) unit._order="move";
+    return m;
+  }
+
+  // Respect the hierarchy: direct orders must not be overridden by automatic posture/role AI.
+  function automaticDecisionAllowed(unit) {
+    const o=GP3.directOrders.get(unit);
+    return !o || (now()-o.at > 120000); // safety timeout, only if command is stale
+  }
+
+  // Context menu helper: issue a direct attack to the clicked target.
+  function directAttackFormation(formation, enemy) {
+    if(!formation || !alive(enemy)) return false;
+    formationMembers(formation).forEach(u=>{
+      setDirectOrder(u,"attack",{target:enemy});
+      u._target=enemy;
+      u._order="attack";
+    });
+    return true;
+  }
+
+  // UI
+  function installUI() {
+    if(document.getElementById("gameplay-v3-ui")) return;
+    const host=document.querySelector("#controls, #toolbar, .toolbar, header, body");
+    if(!host) return;
+    const p=document.createElement("div");
+    p.id="gameplay-v3-ui";
+    p.className="gp3-panel";
+    p.innerHTML=`
+      <strong>Posture :</strong>
+      <button data-posture="aggressive">Agressive</button>
+      <button data-posture="defensive" class="gp3-active">Défensive</button>
+      <button data-posture="cautious">Prudente</button>
+      <button data-posture="hold">Tenir</button>
+      <span class="gp3-status">Ordres directs prioritaires</span>
+      <span>|</span>
+      <strong>Objectif :</strong>
+      <button data-objective="capture">Capturer</button>
+      <button data-objective="defend">Défendre</button>
+      <button data-objective="escort">Escorter</button>
+      <button data-objective="block">Bloquer</button>
+    `;
+    host.prepend(p);
+    p.addEventListener("click",e=>{
+      const pb=e.target.closest("[data-posture]");
+      if(pb){
+        setPosture(window.selectedUnits||window.selection||[],pb.dataset.posture);
+        p.querySelectorAll("[data-posture]").forEach(b=>b.classList.toggle("gp3-active",b===pb));
+      }
+      const ob=e.target.closest("[data-objective]");
+      if(ob){
+        const sel=window.selectedUnits||window.selection||[];
+        if(sel.length){
+          const u=sel[0], q=pos(u);
+          const o=createObjective(ob.dataset.objective,q.x,q.y,140);
+          assignObjective(sel,o,ob.dataset.objective);
+        }
+      }
+    });
+  }
+
+  Object.assign(GP3,{
+    createObjective, updateObjectives, assignObjective,
+    applyFormationSynergy, setPosture, setDirectOrder, clearDirectOrder,
+    updateMorale, automaticDecisionAllowed, directAttackFormation, POSTURES
+  });
+
+  // Hook existing global formation map if present.
+  if(window.DvpFormationTactical){
+    const FT=window.DvpFormationTactical;
+    const oldCreate=FT.createFormation;
+    FT.createFormation=function(units,type){
+      const f=oldCreate.call(this,units,type);
+      if(f) GP3.formations.set(f.id,f);
+      return f;
+    };
+    const oldMove=FT.moveFormation;
+    FT.moveFormation=function(f,x,y,test){
+      if(!f) return false;
+      formationMembers(f).forEach(u=>GP3.directOrders.set(u,{kind:"formation-move",payload:{x,y},at:now()}));
+      return oldMove.call(this,f,x,y,test);
+    };
+    const oldAttack=FT.tacticalAttack;
+    FT.tacticalAttack=function(f,e){
+      if(!f || !alive(e)) return false;
+      formationMembers(f).forEach(u=>GP3.directOrders.set(u,{kind:"formation-attack",payload:{target:e},at:now()}));
+      return oldAttack.call(this,f,e);
+    };
+  }
+
+  installUI();
+  setInterval(()=>{
+    const fs=[...(GP3.formations.values())];
+    applyFormationSynergy(fs);
+    const all=[];
+    fs.forEach(f=>formationMembers(f).forEach(u=>all.push(u)));
+    updateObjectives(all);
+  },500);
+})();
+</script>
+
+<script id="hero-actions-v4-js">
+(() => {
+  // Héros : barre d'actions + raccourcis + cooldowns + portée.
+  // Les ordres directs restent prioritaires sur l'IA et les postures.
+  const H = window.DvpHeroActionsV4 || (window.DvpHeroActionsV4 = {
+    selectedHero:null,
+    selectedAction:null,
+    actions: new Map(),
+    cooldowns: new Map(),
+    rangeIndicator: null
+  });
+
+  const ACTIONS = [
+    {id:"1", key:"1", icon:"⚔️", name:"Frappe", range:55, cooldown:2.5, target:"enemy", desc:"Attaque au contact"},
+    {id:"2", key:"2", icon:"🎯", name:"Tir précis", range:280, cooldown:5, target:"enemy", desc:"Attaque à distance"},
+    {id:"3", key:"3", icon:"🛡️", name:"Garde", range:120, cooldown:8, target:"self", desc:"Protège les alliés proches"},
+    {id:"4", key:"4", icon:"✨", name:"Ralliement", range:180, cooldown:12, target:"ally", desc:"Renforce le moral proche"}
+  ];
+
+  ACTIONS.forEach(a=>H.actions.set(a.id,a));
+
+  function selectedUnits(){
+    return window.selectedUnits || window.selection || window.selected || [];
+  }
+  function isHero(u){
+    return !!(u && (u.isHero || u.hero || String(u.role||"").toLowerCase()==="hero" ||
+      String(u.type||u.unitType||u.kind||"").toLowerCase().includes("hero")));
+  }
+  function alive(u){
+    return !!(u && !u.dead && Number(u.hp ?? u.health ?? 1)>0);
+  }
+  function pos(u){
+    return {x:Number(u?.x ?? u?.px ?? u?.position?.x ?? 0),y:Number(u?.y ?? u?.py ?? u?.position?.y ?? 0)};
+  }
+  function distance(a,b){
+    const A=pos(a),B=pos(b); return Math.hypot(A.x-B.x,A.y-B.y);
+  }
+
+  function heroFromSelection(){
+    const sel=selectedUnits().filter(alive);
+    return sel.find(isHero) || (isHero(H.selectedHero)?H.selectedHero:null);
+  }
+
+  function keyFor(hero, action){
+    return `${hero?.id ?? hero?._id ?? hero?.name ?? "hero"}:${action.id}`;
+  }
+
+  function remaining(hero, action){
+    const t=H.cooldowns.get(keyFor(hero,action)) || 0;
+    return Math.max(0,t-Date.now()/1000);
+  }
+
+  function canUse(hero,action,target=null){
+    if(!hero || !alive(hero) || !action) return false;
+    if(remaining(hero,action)>0.02) return false;
+    if(action.target==="self") return true;
+    if(!target || !alive(target)) return false;
+    return distance(hero,target)<=action.range;
+  }
+
+  function setCooldown(hero,action){
+    H.cooldowns.set(keyFor(hero,action), Date.now()/1000+action.cooldown);
+  }
+
+  function setDirect(hero, kind, payload){
+    if(window.DvpGameplayV3?.setDirectOrder){
+      window.DvpGameplayV3.setDirectOrder(hero,kind,payload);
+    } else {
+      hero._directOrder=true;
+      hero._directOrderAt=Date.now();
+    }
+  }
+
+  function execute(action,target=null){
+    const hero=heroFromSelection();
+    if(!hero || !alive(hero)) return false;
+
+    // Activation d'un pouvoir : ordre direct prioritaire.
+    if(action.target==="self"){
+      if(!canUse(hero,action)) return false;
+    } else if(!canUse(hero,action,target)){
+      return false;
+    }
+
+    setDirect(hero,"hero-action",{actionId:action.id,target});
+    hero.heroAction=action.id;
+    hero.heroActionTarget=target || hero;
+    hero._order="attack";
+    hero._target=target || null;
+    setCooldown(hero,action);
+    H.selectedAction=null;
+    render();
+    return true;
+  }
+
+  function selectAction(action){
+    const hero=heroFromSelection();
+    if(!hero || !alive(hero)) return;
+    if(remaining(hero,action)>0.02) return;
+
+    if(action.target==="self"){
+      execute(action,hero);
+      return;
+    }
+
+    H.selectedHero=hero;
+    H.selectedAction=action;
+    showRange(hero,action.range);
+    render();
+  }
+
+  function showRange(hero,range){
+    if(!H.rangeIndicator){
+      const el=document.createElement("div");
+      el.id="hero-action-range-v4";
+      el.style.cssText="position:fixed;pointer-events:none;border:2px dashed currentColor;border-radius:50%;z-index:9999;display:none";
+      document.body.appendChild(el);
+      H.rangeIndicator=el;
+    }
+    const p=pos(hero);
+    const scale=1; // indicateur logique ; le moteur peut remplacer le rendu monde.
+    H.rangeIndicator.style.display="none";
+    H.rangeIndicator.dataset.x=p.x; H.rangeIndicator.dataset.y=p.y;
+    H.rangeIndicator.dataset.range=range;
+  }
+
+  function findTargetAtEvent(e){
+    // Priorité aux mécanismes de sélection/cible existants.
+    if(window.targetUnitFromEvent) return window.targetUnitFromEvent(e);
+    return e?.target?.unit || e?.target?.__unit || null;
+  }
+
+  function installTargetBridge(){
+    document.addEventListener("click",e=>{
+      if(!H.selectedAction) return;
+      if(e.target.closest("#hero-actions-v4")) return;
+      const action=H.selectedAction;
+      const hero=H.selectedHero;
+      const target=findTargetAtEvent(e);
+      if(target && canUse(hero,action,target)){
+        e.preventDefault();
+        e.stopPropagation();
+        execute(action,target);
+      }
+    },true);
+  }
+
+  function render(){
+    const bar=document.getElementById("hero-actions-v4");
+    if(!bar) return;
+    const hero=heroFromSelection();
+    const slots=bar.querySelectorAll(".ha-slot");
+    slots.forEach((el,i)=>{
+      const a=ACTIONS[i];
+      const cd=hero?remaining(hero,a):0;
+      el.classList.toggle("ha-disabled",!hero || cd>0.02);
+      el.classList.toggle("ha-selected",H.selectedAction?.id===a.id);
+      const cdEl=el.querySelector(".ha-cd");
+      cdEl.textContent=cd>0.02?Math.ceil(cd)+"s":"";
+    });
+    const name=bar.querySelector(".ha-current");
+    if(name) name.textContent=hero ? `Héros : ${hero.name || hero.id || "sélectionné"}` : "Sélectionnez un héros";
+    const hint=bar.querySelector(".ha-hint");
+    if(hint) hint.textContent=H.selectedAction ? `${H.selectedAction.name} — cliquez une cible à portée` : "1–4 : sélectionner une action";
+  }
+
+  function install(){
+    if(document.getElementById("hero-actions-v4")) return;
+    const host=document.querySelector("#controls, #toolbar, .toolbar, header, body");
+    if(!host) return;
+
+    const bar=document.createElement("div");
+    bar.id="hero-actions-v4";
+    bar.innerHTML=`<span class="ha-title">HÉROS</span>`+
+      ACTIONS.map(a=>`<button class="ha-slot" data-ha="${a.id}" title="${a.name} — portée ${a.range}px — recharge ${a.cooldown}s">
+        <span class="ha-key">${a.key}</span><span class="ha-icon">${a.icon}</span>
+        <span class="ha-name">${a.name}</span><span class="ha-cd"></span>
+      </button>`).join("")+
+      `<span class="ha-meta"><span class="ha-current">Sélectionnez un héros</span><span class="ha-range">Portée affichée lors du ciblage</span><span class="ha-hint">1–4 : sélectionner une action</span></span>`;
+    host.prepend(bar);
+
+    bar.addEventListener("click",e=>{
+      const b=e.target.closest("[data-ha]");
+      if(!b) return;
+      selectAction(H.actions.get(b.dataset.ha));
+    });
+
+    window.addEventListener("keydown",e=>{
+      if(e.repeat) return;
+      if(["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName)) return;
+      const a=H.actions.get(e.key);
+      if(a){ e.preventDefault(); selectAction(a); }
+      if(e.key==="Escape"){
+        H.selectedAction=null;
+        render();
+      }
+    });
+
+    installTargetBridge();
+    render();
+    setInterval(render,100);
+  }
+
+  // API pour brancher les vraies compétences des héros plus tard.
+  Object.assign(H,{
+    ACTIONS, execute, selectAction, canUse, remaining,
+    setCooldown, isHero, install, getSelectedHero:heroFromSelection
+  });
+
+  install();
+})();
+</script>
+
+
+
+<script id="ai-autonomous-v6">
+(() => {
+  "use strict";
+  const I = window.Interactions, M = window.Movement;
+  if (!I || !M) return;
+
+  const MELEE = 48;
+  const SEARCH_RADIUS = 520; // perception élargie pour éviter qu'une armée reste immobile
+  const THINK_MS = 350;
+
+  function alive(u){ return !!u && Number(u.hp) > 0; }
+  function ranged(u){ return Number(u.atkRange || 0) > 0; }
+  function gridDist(a,b){ return Math.hypot((a.col||0)-(b.col||0),(a.row||0)-(b.row||0)); }
+
+  function nearestStrategicEnemy(unit, foes){
+    const live = (foes||[]).filter(alive);
+    if (!live.length) return null;
+    return live.reduce((best,t) => {
+      if (!best) return t;
+      return gridDist(unit,t) < gridDist(unit,best) ? t : best;
+    }, null);
+  }
+
+  function findApproach(unit,target,grid,types){
+    if (!target || !grid) return null;
+    const desiredPx = ranged(unit) ? Math.min(Number(unit.atkRange||220), 220) : MELEE;
+    const dx = unit.col-target.col, dy = unit.row-target.row;
+    const len = Math.hypot(dx,dy) || 1;
+    const cells = Math.max(1, Math.round(desiredPx / 28));
+    let goal = {
+      col: Math.round(target.col + dx/len*cells),
+      row: Math.round(target.row + dy/len*cells)
+    };
+    goal.col = Math.max(1, Math.min(grid[0].length-2, goal.col));
+    goal.row = Math.max(1, Math.min(grid.length-2, goal.row));
+
+    if (!M.tilePassable(types,grid,goal.col,goal.row)) {
+      const candidates = [];
+      for(let dr=-2;dr<=2;dr++) for(let dc=-2;dc<=2;dc++){
+        const c=goal.col+dc,r=goal.row+dr;
+        if(M.tilePassable(types,grid,c,r)) candidates.push({col:c,row:r});
+      }
+      candidates.sort((a,b)=>Math.hypot(a.col-goal.col,a.row-goal.row)-Math.hypot(b.col-goal.col,b.row-goal.row));
+      goal=candidates[0] || null;
+    }
+    return goal;
+  }
+
+  function searchGoal(unit,target,grid){
+    // Avancée autonome vers le secteur ennemi jusqu'à acquisition de cible.
+    if(!target || !grid) return null;
+    const step = unit.side === "ally" ? 3 : -3;
+    // On utilise la position de l'ennemi uniquement comme direction stratégique,
+    // puis le système repasse en perception dès qu'une cible est détectée.
+    let c = Math.round(unit.col + Math.sign(target.col-unit.col)*Math.min(6,Math.abs(target.col-unit.col)));
+    let r = Math.round(unit.row + Math.sign(target.row-unit.row)*Math.min(6,Math.abs(target.row-unit.row)));
+    c=Math.max(1,Math.min(grid[0].length-2,c));
+    r=Math.max(1,Math.min(grid.length-2,r));
+    return {col:c,row:r};
+  }
+
+  function autonomousTick(unit, allies, foes, types, grid, now, allUnits){
+    if(!alive(unit) || !grid) return;
+    if(unit._manualUntil && now < unit._manualUntil) return;
+    if(unit._formationUntil && now < unit._formationUntil) return;
+    if(unit._aiNextThink && now < unit._aiNextThink) return;
+    unit._aiNextThink = now + THINK_MS;
+
+    const strategy = unit.targetStrategy || "closest";
+    const role = unit.role || "auto";
+
+    // 1. Cible actuellement engagée.
+    if(alive(unit._target) && unit._target.side !== unit.side){
+      const d = M.distUnits(unit, unit._target);
+      const attackRange = ranged(unit) ? Number(unit.atkRange||220) : MELEE;
+      if(d <= attackRange && M.lineOfSight(types,grid,{col:unit.col,row:unit.row},{col:unit._target.col,row:unit._target.row})){
+        unit._path=[]; unit._order="attack"; return;
+      }
+      const g=findApproach(unit,unit._target,grid,types);
+      if(g){
+        const p=M.findPath(types,grid,{col:unit.col,row:unit.row},g);
+        if(p && p.length>1){ unit._path=p.slice(1); unit._order="move"; return; }
+      }
+    }
+
+    // 2. Recherche locale réelle : chaque unité choisit sa propre cible.
+    let visible=(foes||[]).filter(alive).filter(t=>{
+      const max = ranged(unit) ? 340 : 240;
+      return M.distUnits(unit,t)<=max &&
+        M.lineOfSight(types,grid,{col:unit.col,row:unit.row},{col:t.col,row:t.row});
+    });
+
+    let target=null;
+    if(visible.length){
+      if(strategy==="lowest_hp")
+        target=visible.reduce((a,b)=>!a||b.hp<a.hp?b:a,null);
+      else if(strategy==="highest_chance" && I.estimateAttackSuccess)
+        target=visible.reduce((a,b)=>!a||I.estimateAttackSuccess(unit,b)>I.estimateAttackSuccess(unit,a)?b:a,null);
+      else
+        target=visible.reduce((a,b)=>!a||M.distUnits(unit,b)<M.distUnits(unit,a)?b:a,null);
+    }
+
+    // 3. Si aucun ennemi n'est encore visible, l'unité avance seule vers le secteur adverse.
+    // Cela évite le comportement "statue" au déploiement.
+    if(!target){
+      target = nearestStrategicEnemy(unit, foes);
+      if(!target){ unit._path=[]; unit._order="stop"; return; }
+      const g=searchGoal(unit,target,grid);
+      if(g && (g.col!==unit.col || g.row!==unit.row)){
+        const p=M.findPath(types,grid,{col:unit.col,row:unit.row},g);
+        if(p && p.length>1){ unit._path=p.slice(1); unit._order="move"; return; }
+      }
+      return;
+    }
+
+    // 4. Engagement autonome.
+    unit._target=target;
+    const d=M.distUnits(unit,target);
+    const ar=ranged(unit)?Number(unit.atkRange||220):MELEE;
+    const los=M.lineOfSight(types,grid,{col:unit.col,row:unit.row},{col:target.col,row:target.row});
+    if(d<=ar && los){ unit._path=[]; unit._order="attack"; return; }
+
+    const g=findApproach(unit,target,grid,types);
+    if(g){
+      const p=M.findPath(types,grid,{col:unit.col,row:unit.row},g);
+      if(p && p.length>1){ unit._path=p.slice(1); unit._order="move"; }
+    }
+  }
+
+  // Remplace définitivement les anciennes couches IA afin qu'une surcharge
+  // ultérieure ne rende pas les unités immobiles.
+  I.aiTick = autonomousTick;
+  window.DvpAI = { autonomousTick };
+})();
+</script>
+
+<script id="terrain-v2-boundary-relief-weather-destruction">
+(() => {
+  "use strict";
+  const T = window.Terrain, M = window.Movement, I = window.Interactions;
+  const originalGenerate = T.generate;
+  const originalDraw = T.draw;
+  const originalStep = M.stepUnit;
+  const originalAi = I.aiTick;
+  const weatherList = [
+    {id:"clair", name:"Ciel clair", icon:"☀️", move:1, sight:1},
+    {id:"pluie", name:"Pluie", icon:"🌧️", move:.82, sight:.9},
+    {id:"brouillard", name:"Brouillard", icon:"🌫️", move:.94, sight:.58}
+  ];
+  let weather = weatherList[0];
+  let weatherT = 0;
+  const DUR = { murs:90, rochers:110, arbres:70, profonde:9999 };
+  const HEIGHT = { herbe:0, sable:0, terre:0, ruines:1, colline:2, bois:1, decombres:0, rochers:2, murs:2, arbres:2, eau:-1, profonde:-2 };
+  const COVER = { herbe:0, sable:0, terre:0, ruines:.35, colline:.2, bois:.55, decombres:.1, rochers:.65, murs:.8, arbres:.9, eau:0, profonde:0 };
+
+  function terrainHeight(id){ return HEIGHT[id] ?? 0; }
+  function terrainCover(id){ return COVER[id] ?? 0; }
+  function cellKey(c,r){ return r+":"+c; }
+  function ensureDurability(grid){
+    const d = new Map();
+    for(let r=0;r<grid.length;r++) for(let c=0;c<grid[0].length;c++){
+      const id=grid[r][c]; if(DUR[id]) d.set(cellKey(c,r),DUR[id]);
+    }
+    return d;
+  }
+
+  T.generate = function(generatorId, seed){
+    const grid = originalGenerate(generatorId, seed);
+    const h=grid.length,w=grid[0].length;
+    // Bordure infranchissable : aucune unité ne peut sortir de la carte.
+    for(let r=0;r<h;r++) for(let c=0;c<w;c++){
+      if(r===0 || c===0 || r===h-1 || c===w-1) grid[r][c]="murs";
+    }
+    // Lissage supplémentaire : groupes de terrain plus cohérents.
+    const types=DATA.terrain.types;
+    for(let pass=0;pass<2;pass++){
+      const copy=grid.map(row=>row.slice());
+      for(let r=1;r<h-1;r++) for(let c=1;c<w-1;c++){
+        const id=grid[r][c];
+        if(types[id]?.blocks) continue;
+        const around=[grid[r-1][c],grid[r+1][c],grid[r][c-1],grid[r][c+1]];
+        const counts={}; around.forEach(x=>counts[x]=(counts[x]||0)+1);
+        const best=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+        if(best && best[1]>=3 && types[best[0]] && !types[best[0]].blocks) copy[r][c]=best[0];
+      }
+      for(let r=1;r<h-1;r++) for(let c=1;c<w-1;c++) grid[r][c]=copy[r][c];
+    }
+    T._durability=ensureDurability(grid);
+    T._grid=grid;
+    return grid;
+  };
+
+  T.damageObstacle = function(grid,c,r,amount=25){
+    if(!M.inBounds(grid,c,r)) return false;
+    const id=grid[r][c];
+    if(!DUR[id] || id==="profonde") return false;
+    const k=cellKey(c,r);
+    if(!T._durability) T._durability=ensureDurability(grid);
+    let hp=T._durability.get(k) ?? DUR[id];
+    hp-=Math.max(1,amount);
+    if(hp<=0){
+      grid[r][c]=(id==="murs"||id==="rochers")?"decombres":"terre";
+      T._durability.delete(k);
+    } else T._durability.set(k,hp);
+    return true;
+  };
+
+  T.getObstacleDurability = function(grid,c,r){
+    if(!M.inBounds(grid,c,r)) return 0;
+    return T._durability?.get(cellKey(c,r)) ?? 0;
+  };
+
+  T.getWeather = () => weather;
+  T.setWeather = function(id){ weather=weatherList.find(x=>x.id===id)||weatherList[0]; return weather; };
+  // Cycle météo public.
+  T.nextWeather = function(){ const i=weatherList.findIndex(x=>x.id===weather.id); weather=weatherList[(i+1)%weatherList.length]; return weather; };
+
+  T.draw = function(ctx,grid,camX,camY,viewW,viewH){
+    const data=DATA.terrain, tw=data.tileW, th=data.tileH;
+    const h=grid.length,w=grid[0].length;
+    for(let r=0;r<h;r++) for(let c=0;c<w;c++){
+      const s=M.gridToScreen(c,r), id=grid[r][c], t=data.types[id]; if(!t) continue;
+      const x=s.x+camX, y=s.y+camY, lift=terrainHeight(id)*4;
+      if(x<-tw||x>viewW+tw||y<-th*2||y>viewH+th*2) continue;
+      const base=t.color;
+      ctx.save();
+      // Face de relief visible pour les collines, murs et rochers.
+      if(terrainHeight(id)>0){
+        ctx.fillStyle="rgba(0,0,0,.24)";
+        ctx.beginPath(); ctx.moveTo(x-tw/2,y+th/2-lift); ctx.lineTo(x,y+th-lift); ctx.lineTo(x,y+th+3); ctx.lineTo(x-tw/2,y+th/2+3); ctx.closePath(); ctx.fill();
+      }
+      ctx.beginPath(); ctx.moveTo(x,y-lift); ctx.lineTo(x+tw/2,y+th/2-lift); ctx.lineTo(x,y+th-lift); ctx.lineTo(x-tw/2,y+th/2-lift); ctx.closePath();
+      ctx.fillStyle=base; ctx.fill();
+      const cover=terrainCover(id);
+      if(cover>0){ ctx.fillStyle=`rgba(20,25,20,${Math.min(.3,cover*.22)})`; ctx.fill(); }
+      ctx.strokeStyle=(r===0||c===0||r===h-1||c===w-1)?"rgba(184,151,90,.75)":"rgba(0,0,0,.25)"; ctx.lineWidth=(r===0||c===0||r===h-1||c===w-1)?1.5:1; ctx.stroke();
+      const hp=T.getObstacleDurability(grid,c,r);
+      if(hp>0 && hp<(DUR[id]||hp)){
+        ctx.strokeStyle="rgba(210,80,60,.9)"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x-8,y+th/2-lift-4); ctx.lineTo(x+2,y+th/2-lift+2); ctx.lineTo(x-3,y+th/2-lift+7); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    // Limite visuelle de la zone jouable.
+    ctx.save(); ctx.strokeStyle="rgba(184,151,90,.85)"; ctx.lineWidth=3; ctx.setLineDash([8,6]);
+    const a=M.gridToScreen(0,0), b=M.gridToScreen(w-1,0), d=M.gridToScreen(0,h-1), e=M.gridToScreen(w-1,h-1);
+    ctx.beginPath(); ctx.moveTo(a.x+camX,a.y+camY); ctx.lineTo(b.x+camX,b.y+camY); ctx.lineTo(e.x+camX,e.y+camY); ctx.lineTo(d.x+camX,d.y+camY); ctx.closePath(); ctx.stroke(); ctx.restore();
+    // Effets météo légers.
+    if(weather.id==="brouillard"){ ctx.fillStyle="rgba(190,200,205,.10)"; ctx.fillRect(0,0,viewW,viewH); }
+    if(weather.id==="pluie"){
+      ctx.save(); ctx.strokeStyle="rgba(170,190,210,.22)"; ctx.lineWidth=1;
+      for(let i=0;i<90;i++){ const x=(i*83+weatherT*140)%viewW, y=(i*47+weatherT*260)%viewH; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-4,y+11); ctx.stroke(); } ctx.restore();
+    }
+  };
+
+  M.stepUnit = function(types,grid,unit,dt){
+    const out=originalStep(types,grid,unit,dt*(weather.move||1));
+    weatherT+=dt;
+    // La météo ralentit sans jamais permettre de franchir la bordure.
+    if(weather.id!=="clair" && (unit._path?.length||0)>0){
+      // Compensation douce : l'étape originale est déjà appliquée, on ne déplace pas à nouveau.
+      // Le ralentissement réel est appliqué via un multiplicateur de vitesse ci-dessous.
+    }
+    if(unit.col<=0) unit.col=1;
+    if(unit.row<=0) unit.row=1;
+    if(unit.col>=grid[0].length-1) unit.col=grid[0].length-2;
+    if(unit.row>=grid.length-1) unit.row=grid.length-2;
+    return out;
+  };
+
+  // Effets météo sur détection et portée, sans casser les ordres directs.
+  I.aiTick = function(unit,allies,foes,types,grid,now,allUnits){
+    const old=unit.atkRange;
+    if(weather.id==="brouillard") unit.atkRange=Math.round(old*weather.sight);
+    else if(weather.id==="pluie") unit.atkRange=Math.round(old*weather.sight);
+    try { return originalAi(unit,allies,foes,types,grid,now,allUnits); }
+    finally { unit.atkRange=old; }
+  };
+
+  // Affichage météo dans le HUD.
+  function installWeatherUI(){
+    if(document.getElementById("weather-v2")) return;
+    const host=document.querySelector("#hud"); if(!host) return;
+    const box=document.createElement("div"); box.id="weather-v2";
+    box.style.cssText="position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:20;background:rgba(5,7,9,.82);border:1px solid #6f5b3c;color:#d8c39a;padding:6px 10px;border-radius:6px;font:12px sans-serif;cursor:pointer;user-select:none";
+    box.title="Cliquer pour changer la météo";
+    box.addEventListener("click",()=>{ T.nextWeather(); updateWeatherUI(); });
+    document.body.appendChild(box); updateWeatherUI();
+  }
+  function updateWeatherUI(){ const el=document.getElementById("weather-v2"); if(el) el.textContent=T.getWeather().icon+" "+T.getWeather().name; }
+  // Installation différée : le HUD n'existe qu'au début de la bataille.
+  const weatherTimer=setInterval(()=>{ if(gridReady()){ installWeatherUI(); clearInterval(weatherTimer); } },250);
+  function gridReady(){ return !!T._grid; }
+
+  // Clic sur une case bloquée : ordre de démolition si elle est adjacente.
+  cv.addEventListener("click",e=>{
+    if(typeof state==="undefined" || state!=="battle" || !grid) return;
+    const rect=cv.getBoundingClientRect(); const sx=e.clientX-rect.left, sy=e.clientY-rect.top;
+    const g=M.screenToGrid(sx,sy,cam.x,cam.y); if(!M.inBounds(grid,g.col,g.row)) return;
+    const type=terrainTypes[grid[g.row][g.col]];
+    const sel=I.getSelected();
+    if(sel && type?.blocks && grid[g.row][g.col]!=="profonde"){
+      const d=Math.hypot(sel.col-g.col,sel.row-g.row);
+      if(d<=1.5){ T.damageObstacle(grid,g.col,g.row,25); }
+    }
+  },true);
+
+  window.TerrainV2={weatherList,terrainHeight,terrainCover,DURABILITY:DUR};
+})();
+</script>
+
+<script id="terrain-ui-v1">
+(() => {
+  function installTerrainUI(){
+    if(document.getElementById("terrain-info-v1")) return;
+    const host=document.querySelector("#hud, #test-bar, #controls, #toolbar");
+    if(!host) return;
+    const box=document.createElement("div");
+    box.id="terrain-info-v1";
+    box.style.cssText="font:11px/1.35 sans-serif;color:#9a8a6a;margin-left:8px;padding:5px 8px;border-left:1px solid #3a2a1a";
+    box.textContent="Terrain : déplacement, couvert et relief actifs";
+    host.appendChild(box);
+  }
+  installTerrainUI();
+})();
+</script>
+
+<script id="formation-direction-fix-v3">
+(() => {
+  "use strict";
+  // Correction majeure : les boutons de formation pilotent réellement la sélection
+  // du bac à sable, et la géométrie tourne avec la direction du déplacement.
+  const TYPES = ["line","column","square","wedge","spread"];
+  const SPACING = 1.65; // cases de grille entre deux unités
+
+  function live(){ return [..._testSelected].filter(u => u && u._state !== "dead"); }
+  function selectedFormation(){
+    const members=live();
+    if(!members.length) return null;
+    let f=_testFormations.find(f=>f.units.some(u=>members.includes(u)) && f.units.some(u=>u._state!=="dead"));
+    return f || null;
+  }
+  function setFormationType(type){
+    if(!TYPES.includes(type)) return;
+    const members=live();
+    if(!members.length) return;
+    // Réutilise une formation existante plutôt que d'en empiler plusieurs.
+    let f=selectedFormation();
+    if(!f){
+      const id=++_testUid;
+      f={id,units:[...members],type,side:members[0].side,heading:0,destination:null};
+      _testFormations.push(f);
+    } else {
+      f.type=type;
+      f.units=members;
+    }
+    for(const old of _testFormations){
+      if(old!==f) old.units=old.units.filter(u=>!members.includes(u));
+    }
+    for(const u of members) u._formationId=f.id;
+    _testSelected=new Set(members); _testSel=members[0];
+    renderUnitList(); updateHint();
+    document.querySelectorAll("[data-ft]").forEach(b=>b.classList.toggle("active",b.dataset.ft===type));
+  }
+
+  function layout(type,n){
+    if(type==="line") return {cols:n,rows:1};
+    if(type==="column") return {cols:1,rows:n};
+    if(type==="spread") return {cols:Math.max(1,Math.ceil(Math.sqrt(n)*1.7)),rows:Math.ceil(n/Math.max(1,Math.ceil(Math.sqrt(n)*1.7)))};
+    if(type==="wedge") return {cols:Math.max(1,Math.ceil(Math.sqrt(n))),rows:Math.ceil(n/Math.max(1,Math.ceil(Math.sqrt(n))))};
+    return {cols:Math.max(1,Math.ceil(Math.sqrt(n))),rows:Math.ceil(n/Math.max(1,Math.ceil(Math.sqrt(n))))};
+  }
+
+  // Le front est toujours le côté le plus long. Il est placé PERPENDICULAIRE
+  // à la direction de marche : la formation fait donc face à sa destination.
+  function makeOffsets(type,n,dirCol,dirRow){
+    const {cols,rows}=layout(type,n);
+    const fx=dirCol, fy=dirRow;                 // avant
+    const lx=-fy, ly=fx;                       // gauche/droite = perpendiculaire
+    const out=[];
+    const midC=(cols-1)/2, midR=(rows-1)/2;
+    for(let r=0;r<rows;r++) for(let c=0;c<cols && out.length<n;c++){
+      let lateral=c-midC, depth=r-midR;
+      if(type==="wedge") lateral *= (1 + Math.max(0,depth)*0.22);
+      if(type==="spread"){ lateral*=1.45; depth*=1.45; }
+      // profondeur négative = avant, profondeur positive = arrière
+      const x=(lx*lateral + fx*depth)*SPACING;
+      const y=(ly*lateral + fy*depth)*SPACING;
+      out.push({x,y});
+    }
+    return out;
+  }
+
+  function validCell(c,r,used){
+    if(!M.inBounds(_testGrid,c,r)) return false;
+    // La bordure est volontairement infranchissable.
+    if(c<=0 || r<=0 || c>=_testGrid[0].length-1 || r>=_testGrid.length-1) return false;
+    if(!M.tilePassable(T.get().types,_testGrid,c,r)) return false;
+    return !used.has(c+":"+r);
+  }
+  function nearestFree(c,r,used){
+    for(let rad=0;rad<=5;rad++){
+      for(let dy=-rad;dy<=rad;dy++) for(let dx=-rad;dx<=rad;dx++){
+        if(Math.abs(dx)!==rad && Math.abs(dy)!==rad && rad>0) continue;
+        const cc=c+dx,rr=r+dy;
+        if(validCell(cc,rr,used)) return {col:cc,row:rr};
+      }
+    }
+    return null;
+  }
+
+  function moveFormationDirectional(gcol,grow){
+    const members=live();
+    if(!members.length) return;
+    const f=selectedFormation();
+    if(members.length===1){
+      const u=members[0], path=M.findPath(T.get().types,_testGrid,{col:u.col,row:u.row},{col:gcol,row:grow});
+      if(path&&path.length>1) u._path=path.slice(1);
+      return;
+    }
+    const cx=members.reduce((s,u)=>s+u.col,0)/members.length;
+    const cy=members.reduce((s,u)=>s+u.row,0)/members.length;
+    let dc=gcol-cx, dr=grow-cy, len=Math.hypot(dc,dr);
+    if(len<0.001){ dc=0; dr=-1; len=1; }
+    dc/=len; dr/=len;
+    const type=f?.type || "line";
+    const offsets=makeOffsets(type,members.length,dc,dr);
+    const used=new Set();
+    const ordered=[...members].sort((a,b)=>{
+      const da=(a.col-cx)*dc+(a.row-cy)*dr, db=(b.col-cx)*dc+(b.row-cy)*dr;
+      return da-db;
+    });
+    const targets=[];
+    for(let i=0;i<ordered.length;i++){
+      const o=offsets[i]||{x:0,y:0};
+      const tc=Math.round(gcol+o.x), tr=Math.round(grow+o.y);
+      const q=nearestFree(tc,tr,used);
+      if(q){ used.add(q.col+":"+q.row); targets.push({u:ordered[i],q}); }
+    }
+    if(f){
+      f.type=type; f.heading=Math.atan2(dr,dc); f.destination={col:gcol,row:grow};
+      f.slots=offsets;
+    }
+    for(const {u,q} of targets){
+      const path=M.findPath(T.get().types,_testGrid,{col:u.col,row:u.row},q);
+      if(path&&path.length>1) u._path=path.slice(1);
+    }
+  }
+
+  // Remplace la fonction appelée par le clic droit du bac à sable.
+  moveSelectionTo = moveFormationDirectional;
+
+  function installFixToolbar(){
+    const host=document.getElementById("formation-bar") || document.getElementById("test-side");
+    if(!host || document.getElementById("formation-direction-controls")) return;
+    const box=document.createElement("div");
+    box.id="formation-direction-controls";
+    box.style.cssText="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:8px 0;padding:7px;border:1px solid #3a2a1a;background:#0b0910";
+    box.innerHTML='<div style="grid-column:1/-1;color:#b8975a;font-size:11px">Formation — orientation automatique vers la destination</div>'+TYPES.map(t=>`<button class="btn sm" data-ft="${t}">${t==='line'?'Ligne':t==='column'?'Colonne':t==='square'?'Carré':t==='wedge'?'V': 'Dispersée'}</button>`).join('');
+    host.parentNode ? host.parentNode.insertBefore(box,host.nextSibling) : host.appendChild(box);
+    box.addEventListener("click",e=>{ const b=e.target.closest("[data-ft]"); if(b){ e.preventDefault(); e.stopPropagation(); setFormationType(b.dataset.ft); } });
+  }
+
+  // Capture le bouton historique « Former le même type » afin de le rendre fiable.
+  const formBtn=document.getElementById("form-btn");
+  if(formBtn) formBtn.addEventListener("click",e=>{
+    e.preventDefault(); e.stopImmediatePropagation();
+    const members=live();
+    if(!members.length) return;
+    const same=members[0].id;
+    const group=_testUnits.filter(u=>u._state!=="dead" && u.id===same && u.side===members[0].side);
+    _testSelected=new Set(group); _testSel=group[0]||null;
+    let f=_testFormations.find(x=>x.units.some(u=>group.includes(u)));
+    if(!f){ f={id:++_testUid,units:group,type:"line",side:group[0]?.side}; _testFormations.push(f); }
+    else f.units=group;
+    group.forEach(u=>u._formationId=f.id);
+    renderUnitList(); updateHint();
+  },true);
+
+  const timer=setInterval(()=>{
+    if(document.getElementById("test-screen") && !document.getElementById("test-screen").classList.contains("hidden")){
+      installFixToolbar(); clearInterval(timer);
+    }
+  },100);
+})();
+</script>
+
+
+<script id="ai-diagnostic-v6">
+(() => {
+  const badge=document.createElement("div");
+  badge.id="ai-v6-status";
+  badge.textContent="IA autonome ✓";
+  badge.style.cssText="position:fixed;right:10px;bottom:10px;z-index:99;background:rgba(20,20,20,.82);color:#b9d6a5;border:1px solid #59684f;padding:5px 8px;border-radius:5px;font:11px sans-serif";
+  const add=()=>{if(!document.getElementById("ai-v6-status"))document.body.appendChild(badge)};
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",add);else add();
+})();
+</script>
+
+
+<script id="old-world-tactical-ai-v7">
+(() => {
+  "use strict";
+  const I=window.Interactions, M=window.Movement, C=window.Combat, T=window.Terrain;
+  if(!I||!M) return;
+
+  const S={think:300, detect:260, charge:78, melee:48, shoot:220, command:260};
+  const alive=u=>u&&Number(u.hp)>0;
+  const d=(a,b)=>M.distUnits(a,b);
+  const gp=u=>({col:Number(u.col),row:Number(u.row)});
+  const los=(a,b,grid,types)=>M.lineOfSight(types,grid,gp(a),gp(b));
+  const role=u=>{
+    if(u.role) return String(u.role).toUpperCase();
+    const r=(u.raw?.category||u.category||"").toLowerCase();
+    if((u.atkRange||0)>0 || r.includes("arch") || r.includes("tir")) return "SHOOTER";
+    if(r.includes("caval")||r.includes("behem")) return "ASSASSIN";
+    return "LINE";
+  };
+
+  function frontage(u){
+    return Math.max(1, Number(u.models||u.count||u.size||1));
+  }
+  function faceToward(u,t){
+    const dx=t.col-u.col, dy=t.row-u.row;
+    if(Math.abs(dx)+Math.abs(dy)>0) u._facing=Math.atan2(dy,dx);
+  }
+  function morale(u, allies){
+    if(u._morale==null) u._morale=8;
+    const nearby=(allies||[]).filter(x=>alive(x)&&x!==u&&d(u,x)<S.command);
+    if(nearby.length) u._morale=Math.min(10,u._morale+0.015);
+    if(u._morale<3) u._panicked=true;
+    if(u._panicked && u._morale>5) u._panicked=false;
+  }
+  function chooseTarget(u,foes,types,grid){
+    const visible=(foes||[]).filter(alive).filter(t=>d(u,t)<=S.detect&&los(u,t,grid,types));
+    if(!visible.length) return null;
+    const strat=u.targetStrategy||"closest";
+    if(strat==="lowest_hp") return visible.sort((a,b)=>a.hp-b.hp)[0];
+    if(strat==="highest_chance" && I.estimateAttackSuccess){
+      return visible.sort((a,b)=>I.estimateAttackSuccess(u,b)-I.estimateAttackSuccess(u,a))[0];
+    }
+    return visible.sort((a,b)=>d(u,a)-d(u,b))[0];
+  }
+  function freeGoal(u,target,grid,types,desired){
+    const ang=Math.atan2(target.row-u.row,target.col-u.col);
+    const steps=Math.max(1,Math.round(desired/28));
+    const base={col:Math.round(target.col-Math.cos(ang)*steps),row:Math.round(target.row-Math.sin(ang)*steps)};
+    const cand=[base];
+    for(let r=1;r<=3;r++) for(let k=0;k<8;k++){
+      const a=k*Math.PI/4;
+      cand.push({col:base.col+Math.round(Math.cos(a)*r),row:base.row+Math.round(Math.sin(a)*r)});
+    }
+    for(const g of cand){
+      if(M.inBounds(grid,g.col,g.row)&&M.tilePassable(types,grid,g.col,g.row)) return g;
+    }
+    return null;
+  }
+  function go(u,g,types,grid){
+    if(!g) return false;
+    const p=M.findPath(types,grid,gp(u),g);
+    if(p&&p.length>1){u._path=p.slice(1);u._order="move";return true;}
+    return false;
+  }
+
+  function oldWorldTick(u,allies,foes,types,grid,now){
+    if(!alive(u)||!grid) return;
+    if(u._manualUntil&&now<u._manualUntil) return;
+    if(u._formationUntil&&now<u._formationUntil) return;
+    if(u._aiNextThink&&now<u._aiNextThink) return;
+    u._aiNextThink=now+S.think;
+
+    morale(u,allies);
+    if(u._panicked){
+      const enemy=chooseTarget(u,foes,types,grid);
+      if(enemy){
+        const dx=u.col-enemy.col,dy=u.row-enemy.row;
+        const g={col:Math.max(1,Math.min(grid[0].length-2,u.col+Math.sign(dx)*4)),
+                 row:Math.max(1,Math.min(grid.length-2,u.row+Math.sign(dy)*4))};
+        if(go(u,g,types,grid)){u._order="flee";return;}
+      }
+    }
+
+    let target=alive(u._target)&&u._target.side!==u.side?u._target:null;
+    const seen=chooseTarget(u,foes,types,grid);
+    if(seen) target=seen;
+
+    // Charge: priorité à une cible proche et visible.
+    if(target){
+      faceToward(u,target);
+      const dist=d(u,target);
+      const ranged=(u.atkRange||0)>0;
+      const ar=ranged?Number(u.atkRange||S.shoot):S.melee;
+
+      if(!ranged && dist<=S.charge && los(u,target,grid,types)){
+        u._target=target; u._order="charge";
+        const g=freeGoal(u,target,grid,types,S.melee);
+        if(dist>S.melee && g) go(u,g,types,grid);
+        return;
+      }
+
+      if(ranged && dist<=ar && los(u,target,grid,types)){
+        u._target=target;u._order="shoot";u._path=[];return;
+      }
+
+      // Les tireurs évitent le contact et cherchent une distance de tir.
+      const desired=ranged?Math.min(ar,190):S.melee;
+      const g=freeGoal(u,target,grid,types,desired);
+      if(g && go(u,g,types,grid)){u._target=target;return;}
+    }
+
+    // Pas de cible : avance par petits bonds vers le centre adverse.
+    // Cela reproduit une progression de ligne de bataille au lieu d'unités statiques.
+    const enemy=(foes||[]).filter(alive).sort((a,b)=>d(u,a)-d(u,b))[0];
+    if(enemy){
+      const step=role(u)==="SHOOTER"?3:5;
+      const ang=Math.atan2(enemy.row-u.row,enemy.col-u.col);
+      const g={col:Math.max(1,Math.min(grid[0].length-2,Math.round(u.col+Math.cos(ang)*step))),
+               row:Math.max(1,Math.min(grid.length-2,Math.round(u.row+Math.sin(ang)*step)))};
+      go(u,g,types,grid);
+    }
+  }
+
+  I.aiTick=oldWorldTick;
+  window.DvpOldWorldAI={tick:oldWorldTick};
+})();
+</script>
+<script id="old-world-test-ai-v7">
+(() => {
+  const M=window.Movement,T=window.Terrain,S=window.Sprites;
+  if(!M||!T) return;
+  const alive=u=>u&&u._state!=="dead"&&u.hp>0;
+  const dist=(a,b)=>M.distUnits(a,b);
+  const canSee=(a,b)=>M.lineOfSight(T.get().types,window._testGrid,{col:a.col,row:a.row},{col:b.col,row:b.row});
+  function tickTestAI(u, enemies, now){
+    if(!alive(u)||u._manualUntil&&now<u._manualUntil||u._aiNext&&now<u._aiNext)return;
+    u._aiNext=now+350;
+    let target=alive(u._target)&&u._target.side!==u.side?u._target:null;
+    const visible=enemies.filter(alive).filter(e=>dist(u,e)<260&&canSee(u,e)).sort((a,b)=>dist(u,a)-dist(u,b));
+    if(visible.length) target=visible[0];
+    if(!target)return;
+    u._target=target;
+    const ranged=(u.atkRange||0)>0;
+    const range=ranged?(u.atkRange||220):48;
+    if(dist(u,target)<=range&&canSee(u,target)){
+      u._order="attack";u._path=[];return;
+    }
+    const ang=Math.atan2(target.row-u.row,target.col-u.col);
+    const steps=ranged?Math.max(1,Math.round(range/35)):1;
+    const g={col:Math.round(target.col-Math.cos(ang)*steps),row:Math.round(target.row-Math.sin(ang)*steps)};
+    if(M.inBounds(window._testGrid,g.col,g.row)&&M.tilePassable(T.get().types,window._testGrid,g.col,g.row)){
+      const p=M.findPath(T.get().types,window._testGrid,{col:u.col,row:u.row},g);
+      if(p&&p.length>1){u._path=p.slice(1);u._order="move";}
+    }
+  }
+  window.DvpTestAI={tick:tickTestAI};
+})();
+</script>
+
+<script id="dvp-shared-ai-bridge-v8">
+(function(){
+  const AI=window.DvpOldWorldAI;if(!AI)return;
+  window.DvpRunSharedAI=function(units,grid,movement,types,now){
+    if(!Array.isArray(units))return;
+    for(const u of units){
+      if(!AI.alive(u) || u._playerControlled) continue;
+      const enemies=units.filter(e=>e!==u && AI.alive(e) && AI.side(e)!==AI.side(u));
+      AI.tick(u,{enemies,grid,movement,types,thinkMs:300},now||performance.now());
+    }
+  };
+})();
+</script>
+
+<style id="dvp-v11-fluidity-ux">
+/* V11 — Fluidité & ergonomie : rendre la bataille lisible, réactive et plus "jeu" */
+html,body{overscroll-behavior:none}
+button{touch-action:manipulation}
+#cv{image-rendering:auto;will-change:transform}
+.overlay{transition:opacity .16s ease,transform .16s ease}
+.dvp-v11-toast{
+  position:fixed;left:50%;top:78px;transform:translateX(-50%) translateY(-8px);
+  z-index:1000;pointer-events:none;opacity:0;
+  padding:10px 16px;border-radius:999px;background:rgba(12,12,18,.88);
+  border:1px solid rgba(255,255,255,.16);box-shadow:0 8px 30px rgba(0,0,0,.35);
+  color:#fff;font:600 13px/1.2 system-ui,sans-serif;letter-spacing:.2px;
+  transition:opacity .18s ease,transform .18s ease;
+}
+.dvp-v11-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.dvp-v11-help{
+  position:fixed;right:16px;bottom:16px;z-index:999;
+  max-width:290px;padding:11px 13px;border-radius:12px;
+  background:rgba(10,10,16,.82);backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.12);color:#eee;
+  font:500 12px/1.45 system-ui,sans-serif;pointer-events:none;
+  box-shadow:0 10px 32px rgba(0,0,0,.28)
+}
+.dvp-v11-help b{color:#fff}
+</style>
+<div id="dvp-v11-toast" class="dvp-v11-toast"></div>
+<div id="dvp-v11-help" class="dvp-v11-help">
+  <b>Commandes</b><br>
+  Clic : sélectionner · Shift/Ctrl : ajouter<br>
+  Glisser : sélectionner plusieurs · clic droit : ordre<br>
+  <b>1–4</b> : posture · <b>F</b> : former · <b>Espace</b> : pause
+</div>
+<script id="dvp-v11-fluidity-engine">
+(function(){
+  "use strict";
+  const toastEl=document.getElementById("dvp-v11-toast");
+  let toastTimer=0;
+  function toast(msg){
+    if(!toastEl)return;
+    toastEl.textContent=msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>toastEl.classList.remove("show"),1250);
+  }
+  window.DvpUX={toast};
+
+  // --- Smooth camera / pointer handling ---
+  const cv=document.getElementById("cv");
+  if(cv){
+    let down=null, dragging=false;
+    cv.addEventListener("contextmenu",e=>e.preventDefault(),{passive:false});
+    cv.addEventListener("pointerdown",e=>{
+      down={x:e.clientX,y:e.clientY,t:performance.now(),button:e.button};
+      dragging=false;
+    },{passive:true});
+    cv.addEventListener("pointermove",e=>{
+      if(!down)return;
+      if(Math.hypot(e.clientX-down.x,e.clientY-down.y)>7) dragging=true;
+    },{passive:true});
+    cv.addEventListener("pointerup",e=>{
+      if(down && dragging) e.__dvpDrag=true;
+      down=null; dragging=false;
+    },{passive:true});
+  }
+
+  // --- Global keyboard ergonomics ---
+  document.addEventListener("keydown",e=>{
+    if(e.target && /input|textarea|select/i.test(e.target.tagName))return;
+    const k=e.key.toLowerCase();
+    if(k===" "){
+      e.preventDefault();
+      const pause=document.querySelector('[id*="pause" i],button[title*="pause" i]');
+      if(pause){pause.click();toast("Pause / reprise");}
+      else { window.__dvpPaused=!window.__dvpPaused; toast(window.__dvpPaused?"Pause":"Reprise"); }
+      return;
+    }
+    const posture={ "1":"Agressive","2":"Défensive","3":"Prudente","4":"Tenir" };
+    if(posture[k]){
+      const buttons=[...document.querySelectorAll("button")];
+      const b=buttons.find(x=>x.textContent.trim().toLowerCase().includes(posture[k].toLowerCase()));
+      if(b){b.click();toast("Posture : "+posture[k]);}
+    }
+    if(k==="f"){
+      const b=[...document.querySelectorAll("button")].find(x=>/former|formation/i.test(x.textContent));
+      if(b){b.click();toast("Formation");}
+    }
+  });
+
+  // --- Make selection feel immediate: visual pulse on selected units when engine exposes selection ---
+  let lastSelKey="";
+  setInterval(()=>{
+    try{
+      const I=window.Interactions;
+      if(!I || !I.getSelected)return;
+      const s=I.getSelected()||[];
+      const key=s.map(u=>u.id||u.uid||u._id||`${u.col},${u.row}`).join("|");
+      if(key!==lastSelKey && key){
+        lastSelKey=key;
+        toast(s.length>1 ? s.length+" unités sélectionnées" : "Unité sélectionnée");
+      }
+    }catch(_){}
+  },120);
+
+  // --- Avoid runaway animation loops from accidental duplicated RAF loops ---
+  // We only throttle visibility-sensitive work; never freeze gameplay.
+  document.addEventListener("visibilitychange",()=>{
+    if(document.hidden) toast("Bataille en arrière-plan");
+  });
+
+  // --- Add a lightweight event log for feedback when the game exposes combat events ---
+  const seen=new WeakSet();
+  function scan(){
+    try{
+      const units=[];
+      if(window.Army && Army.getAll) units.push(...(Army.getAll()||[]));
+      else if(window.Army && Army.units) units.push(...Army.units);
+      if(!units.length)return;
+      // Detect deaths once and provide feedback without changing combat rules.
+      for(const u of units){
+        if(u.__dvpV11DeadSeen)continue;
+        if((u.hp??1)<=0){
+          u.__dvpV11DeadSeen=true;
+          toast("Une unité est tombée");
+        }
+      }
+    }catch(_){}
+  }
+  setInterval(scan,250);
+
+  // --- Idle prompt: keep the player engaged instead of staring at combat ---
+  let lastInteraction=performance.now();
+  ["pointerdown","keydown"].forEach(ev=>document.addEventListener(ev,()=>lastInteraction=performance.now(),{passive:true}));
+  setInterval(()=>{
+    if(performance.now()-lastInteraction>12000){
+      const h=document.getElementById("dvp-v11-help");
+      if(h) h.style.opacity=".98";
+    }
+  },3000);
+})();
+</script>
+
+
+<style id="dvp-v12-gameplay-style">
+#dvp-v12-objectives{
+ position:fixed;left:16px;top:72px;z-index:30;width:245px;
+ padding:12px 14px;border-radius:14px;background:rgba(10,10,16,.84);
+ backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.13);
+ color:#eee;font:500 12px/1.35 system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.3)
+}
+#dvp-v12-objectives .title{font-weight:800;font-size:13px;margin-bottom:8px}
+.dvp-v12-obj{margin:7px 0}.dvp-v12-obj b{display:block;color:#fff}
+.dvp-v12-bar{height:5px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:4px}
+.dvp-v12-bar i{display:block;height:100%;width:0;background:currentColor;transition:width .25s ease}
+#dvp-v12-events{
+ position:fixed;right:16px;top:72px;z-index:30;width:270px;pointer-events:none;
+ display:flex;flex-direction:column;gap:6px
+}
+.dvp-v12-event{
+ padding:9px 11px;border-radius:11px;background:rgba(12,12,18,.86);
+ border:1px solid rgba(255,255,255,.12);color:#fff;
+ font:600 12px/1.3 system-ui,sans-serif;box-shadow:0 7px 22px rgba(0,0,0,.28);
+ animation:dvpEventIn .22s ease-out
+}
+@keyframes dvpEventIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+#dvp-v12-crisis{
+ position:fixed;left:50%;top:18%;z-index:40;transform:translate(-50%,-10px);
+ padding:12px 20px;border-radius:999px;background:rgba(30,10,10,.92);
+ border:1px solid rgba(255,210,120,.35);color:#fff;font:900 15px/1 system-ui,sans-serif;
+ letter-spacing:.4px;opacity:0;pointer-events:none;transition:.22s ease;box-shadow:0 12px 38px rgba(0,0,0,.35)
+}
+#dvp-v12-crisis.show{opacity:1;transform:translate(-50%,0)}
+.dvp-v12-actions{
+ position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:35;
+ display:flex;gap:7px;padding:8px;border-radius:14px;background:rgba(8,8,13,.86);
+ border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(9px)
+}
+.dvp-v12-actions button{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);
+ color:#fff;border-radius:9px;padding:8px 10px;font:700 11px system-ui;cursor:pointer}
+.dvp-v12-actions button:hover{background:rgba(255,255,255,.15)}
+</style>
+<div id="dvp-v12-objectives">
+ <div class="title">OBJECTIFS DE BATAILLE</div>
+ <div class="dvp-v12-obj" data-obj="center"><b>⚑ Tenir le centre</b><span>Occupez la zone centrale.</span><div class="dvp-v12-bar"><i></i></div></div>
+ <div class="dvp-v12-obj" data-obj="survive"><b>⚔ Briser l'ennemi</b><span>Réduisez sa force à 50%.</span><div class="dvp-v12-bar"><i></i></div></div>
+ <div class="dvp-v12-obj" data-obj="hero"><b>★ Préserver le commandant</b><span>Gardez vos héros en vie.</span><div class="dvp-v12-bar"><i></i></div></div>
+</div>
+<div id="dvp-v12-events"></div>
+<div id="dvp-v12-crisis"></div>
+<div class="dvp-v12-actions">
+ <button data-v12="charge">⚡ Charge</button>
+ <button data-v12="volley">➶ Tir coordonné</button>
+ <button data-v12="rally">✦ Ralliement</button>
+ <button data-v12="guard">◈ Garde</button>
+</div>
+<script id="dvp-v12-gameplay-engine">
+(function(){
+"use strict";
+const events=document.getElementById("dvp-v12-events"), crisis=document.getElementById("dvp-v12-crisis");
+const state={lastLoss:0,lastEnemy:0,lastEvent:0,phase:"Approche",started:Date.now(),charges:0};
+function announce(msg,ms=2300){
+ if(!events)return; const e=document.createElement("div"); e.className="dvp-v12-event"; e.textContent=msg;
+ events.prepend(e); while(events.children.length>4)events.lastChild.remove();
+ setTimeout(()=>e.remove(),ms);
+}
+function crisisMsg(msg){
+ crisis.textContent=msg; crisis.classList.add("show"); setTimeout(()=>crisis.classList.remove("show"),1700);
+}
+window.DvpBattleEvents={announce,crisis:crisisMsg,state};
+
+function allUnits(){
+ try{
+  if(window.Army?.getAll)return window.Army.getAll()||[];
+  if(Array.isArray(window.Army?.units))return window.Army.units;
+ }catch(e){}
+ return [];
+}
+function side(u){
+ return u.team||u.side||u.faction||u.owner||u.army;
+}
+function alive(u){return (u?.hp??1)>0}
+function isHero(u){return !!(u?.hero||u?.isHero||/hero|seigneur|commandant/i.test(String(u?.role||"")))}
+function selected(){
+ try{return window.Interactions?.getSelected?.()||[]}catch(e){return []}
+}
+function dist(a,b){
+ const ac=a.col??a.x??0, ar=a.row??a.y??0, bc=b.col??b.x??0, br=b.row??b.y??0;
+ return Math.hypot(ac-bc,ar-br);
+}
+function enemyOf(u,units){
+ const s=side(u); return units.filter(v=>alive(v)&&side(v)!==s)
+}
+function setOrder(u,type){
+ u._order=type;
+ u._v12OrderUntil=performance.now()+4000;
+}
+function act(type){
+ const sel=selected();
+ if(!sel.length){announce("Sélectionnez une unité ou une formation.");return}
+ if(type==="charge"){
+   sel.forEach(u=>setOrder(u,"charge")); state.charges++;
+   announce("⚡ CHARGE : les unités sélectionnées vont chercher le contact !");
+   crisisMsg("CHARGE !");
+ } else if(type==="volley"){
+   sel.forEach(u=>setOrder(u,"volley"));
+   announce("➶ TIR COORDONNÉ : priorité aux cibles visibles.");
+ } else if(type==="rally"){
+   sel.forEach(u=>{u._morale=Math.min(100,(u._morale??70)+22);setOrder(u,"rally")});
+   announce("✦ RALLIEMENT : moral renforcé.");
+ } else if(type==="guard"){
+   sel.forEach(u=>setOrder(u,"guard"));
+   announce("◈ GARDE : maintien de position et priorité à la défense.");
+ }
+}
+document.querySelectorAll("[data-v12]").forEach(b=>b.addEventListener("click",()=>act(b.dataset.v12)));
+
+let lastPhase="";
+function updateObjectives(){
+ const units=allUnits(); if(!units.length)return;
+ const aliveUnits=units.filter(alive);
+ const friendly=aliveUnits.filter(u=>side(u)==="player"||side(u)==="friendly"||side(u)==="joueur"||side(u)===0);
+ const enemy=aliveUnits.filter(u=>!friendly.includes(u));
+ const center=units.length?Math.max(0,Math.min(1, friendly.filter(u=>dist(u,{col:Math.round((friendly[0]?.col??0)),row:Math.round((friendly[0]?.row??0))})<4).length/Math.max(1,friendly.length))):0;
+ const enemyRatio=enemy.length/Math.max(1,units.filter(u=>!friendly.includes(u)).length||1);
+ const heroAlive=friendly.filter(isHero).length, heroTotal=units.filter(u=>friendly.includes(u)&&isHero(u)).length;
+ const c=document.querySelector('[data-obj="center"] .dvp-v12-bar i'); if(c)c.style.width=(center*100)+"%";
+ const s=document.querySelector('[data-obj="survive"] .dvp-v12-bar i'); if(s)s.style.width=(Math.max(0,1-enemyRatio)*100)+"%";
+ const h=document.querySelector('[data-obj="hero"] .dvp-v12-bar i'); if(h)h.style.width=(heroTotal?(heroAlive/heroTotal):1)*100+"%";
+ const ratio=enemy.length/Math.max(1,friendly.length);
+ const phase=ratio>1.25?"Crise":ratio>.8?"Engagement":ratio>.35?"Affrontement":"Domination";
+ if(phase!==lastPhase){lastPhase=phase;announce("Phase : "+phase);if(phase==="Crise")crisisMsg("⚠ CRISE SUR LE CHAMP DE BATAILLE");}
+}
+let previousEnemy=Infinity,previousFriendly=Infinity;
+function combatFeedback(){
+ const units=allUnits(), aliveUnits=units.filter(alive);
+ const friendly=aliveUnits.filter(u=>side(u)==="player"||side(u)==="friendly"||side(u)==="joueur"||side(u)===0);
+ const enemy=aliveUnits.filter(u=>!friendly.includes(u));
+ if(previousEnemy!==Infinity && enemy.length<previousEnemy) announce("☠ Une unité ennemie est détruite !");
+ if(previousFriendly!==Infinity && friendly.length<previousFriendly) announce("⚠ Vos troupes subissent des pertes !");
+ previousEnemy=enemy.length;previousFriendly=friendly.length;
+}
+setInterval(()=>{updateObjectives();combatFeedback()},450);
+
+// Encourage actual tactical decisions: autonomous units get soft intents when idle.
+setInterval(()=>{
+ const sel=selected(), units=allUnits();
+ if(!units.length)return;
+ units.forEach(u=>{
+   if(!alive(u))return;
+   if(u._v12OrderUntil && performance.now()<u._v12OrderUntil)return;
+   if(u._order==="charge"||u._order==="volley"||u._order==="rally"||u._order==="guard")u._order=null;
+ });
+ // If player selected several units, keep their intent coherent rather than letting
+ // individual AI immediately diverge.
+ if(sel.length>1){
+   const orders=sel.map(u=>u._order).filter(Boolean);
+   if(orders.length===0)sel.forEach(u=>u._formationIntent="cohesion");
+ }
+},250);
+
+// Smooth camera/scroll prevention and double-click zoom avoidance.
+document.addEventListener("dblclick",e=>{
+ if(e.target===document.getElementById("cv"))e.preventDefault();
+},{passive:false});
+})();
+</script>
+
+</body>
+</html>
+
+<script id="dvp-battle-layer-guard-v10">
+(() => {
+  const enforce=()=>{
+    const app=document.getElementById("app"), bg=document.getElementById("bg-layer"),
+          dark=document.getElementById("bg-darken"), cv=document.getElementById("cv");
+    if(bg){bg.style.zIndex="0";bg.style.pointerEvents="none";}
+    if(dark){dark.style.zIndex="1";dark.style.pointerEvents="none";}
+    if(cv){cv.style.position="absolute";cv.style.inset="0";cv.style.zIndex="2";}
+    if(app) app.style.isolation="isolate";
+  };
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",enforce);
+  else enforce();
+  new MutationObserver(enforce).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:["style","class"]});
+})();
+</script>

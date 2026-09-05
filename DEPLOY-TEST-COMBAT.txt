@@ -1,0 +1,5 @@
+Pour GitHub Pages : copier le contenu de DvpSillageNoir-main/ dans la racine du dépôt.
+Le fichier indispensable pour le terrain est :
+data/images/sprites/terrainsGen.png
+La page de test est :
+test-combat.html

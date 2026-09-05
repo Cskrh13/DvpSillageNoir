@@ -1,0 +1,76 @@
+{
+  "_comment": "Scénarios de bataille. Chaque scénario : lieu, zone de déploiement alliée/ennemie, armée ennemie, victoire.",
+  "scenarios": [
+    {
+      "id": "debarquement-cotes",
+      "name": "Débarquement sur les côtes de Naggaroth",
+      "briefing": "L'Arche Noire Le Sillage Noir approche des côtes ennemies. Maldris Dravelyth mène le débarquement à travers les rochers pendant que les Corsaires couvrent l'avancée. Une garnison de Hauts-Elfes défend la plage.",
+      "background": "data/images/Proue.png",
+      "terrainGenerator": "cote-de-naggaroth",
+      "points": 1500,
+      "deploy": {
+        "ally":  { "x": 2, "y": 36, "w": 12, "h": 12, "label": "Zone de débarquement" },
+        "enemy": { "x": 34, "y": 2, "w": 12, "h": 12, "label": "Garnison haute-elfe" }
+      },
+      "enemyArmy": {
+        "armySource": "hauts-elfes",
+        "units": [
+          { "id": "elven-spearmen", "size": 20 },
+          { "id": "elven-archers",  "size": 10 },
+          { "id": "lothern-sea-guard", "size": 15 },
+          { "id": "noble", "size": 1 }
+        ]
+      },
+      "victory": "Éliminer toutes les unités ennemies ou capturer la zone de déploiement ennemie.",
+      "mareeDeSang": true
+    },
+    {
+      "id": "ruines-rituel",
+      "name": "Le rituel des ruines",
+      "briefing": "Moraveth Dravelyth a localisé un site rituel au cœur de ruines anciennes. Les Hauts-Elfes envoyés pour l'en empêcher arrivent par l'est. Maintenez le rituel et repoussez l'assaut.",
+      "background": "data/images/Conseil.png",
+      "terrainGenerator": "ruines-anciennes",
+      "points": 2000,
+      "deploy": {
+        "ally":  { "x": 20, "y": 20, "w": 8, "h": 8, "label": "Cercle rituel" },
+        "enemy": { "x": 34, "y": 2, "w": 12, "h": 12, "label": "Assaillants hauts-elfes" }
+      },
+      "enemyArmy": {
+        "armySource": "hauts-elfes",
+        "units": [
+          { "id": "swordmasters-of-hoeth", "size": 15 },
+          { "id": "silver-helms", "size": 8 },
+          { "id": "elven-archers", "size": 12 },
+          { "id": "mage", "size": 1 },
+          { "id": "prince", "size": 1 }
+        ]
+      },
+      "victory": "Moraveth doit survivre et au moins une unité alliée doit rester dans le cercle rituel pendant 60 secondes de jeu.",
+      "mareeDeSang": true
+    },
+    {
+      "id": "chasse-a-la-bete",
+      "name": "La traque de Kharyx",
+      "briefing": "Kharyx, le Prédateur de la Lune Noire, rôde dans l'archipel brumeux. Les Hauts-Elfes ont envoyé une force de chasse pour l'abattre. Libérez la bête et lancez-la sur vos ennemis.",
+      "background": "data/images/MareeDeSang.png",
+      "terrainGenerator": "archipel-brumeux",
+      "points": 1500,
+      "deploy": {
+        "ally":  { "x": 2, "y": 2, "w": 10, "h": 10, "label": "Repaire de Kharyx" },
+        "enemy": { "x": 34, "y": 36, "w": 12, "h": 12, "label": "Chasseurs hauts-elfes" }
+      },
+      "enemyArmy": {
+        "armySource": "hauts-elfes",
+        "units": [
+          { "id": "white-lions-of-chrace", "size": 15 },
+          { "id": "ellyrian-reavers", "size": 8 },
+          { "id": "great-eagle", "size": 1 },
+          { "id": "chracian-chieftain", "size": 1 }
+        ]
+      },
+      "victory": "Kharyx doit survivre et toutes les unités de chasse ennemies doivent être détruites.",
+      "mareeDeSang": true,
+      "specialUnits": ["kharyx"]
+    }
+  ]
+}
