@@ -55,6 +55,14 @@
   isométrique du jeu — utilise le panneau <b>« Repère des orientations »</b> plus bas pour me dire laquelle est laquelle,
   et je câblerai ça proprement ensuite.
 </p>
+<p class="sub" style="background:#1a1508; border:1px solid #4a3a1a; padding:10px 12px;">
+  <b style="color:#e8c890;">🔧 Correctif appliqué :</b> les fichiers sources n'étaient pas fautifs de ton côté — dans la feuille
+  de marche d'origine, le personnage n'était tout simplement pas centré au même endroit dans sa case selon la colonne
+  (le centre glisse progressivement de ~480px à ~145px de gauche à droite sur les 6 colonnes). Résultat : en jouant
+  l'animation, il « sautait » horizontalement à chaque image. J'ai recentré chaque colonne par script (translation pixel
+  simple, aucune retouche manuelle nécessaire). Utilise l'interrupteur ci-dessous pour comparer avant/après.
+  <label style="display:inline-block; margin-top:6px;"><input type="checkbox" id="useAligned" checked> utiliser les sprites corrigés</label>
+</p>
 
 <div class="row">
 
@@ -124,16 +132,33 @@
 <p class="sub">Idem pour <code>dark_elf_death_cycle_02.png</code>. La ligne 4 (bas) est la pose finale au sol.</p>
 <canvas id="fullDeath" style="max-width:100%; border:1px solid var(--edge);"></canvas>
 
-<p class="note warn" style="margin-top:24px;">
-  Note technique : les deux fichiers sources pèsent ~8-9 Mo chacun (3840×2160). Très bien pour ce banc d'essai local,
+<p class="note">
+  Détail de la correction : pour la <b>marche</b>, chaque colonne a été recentrée horizontalement sur la moyenne de ses
+  4 images (le personnage revient au même point d'ancrage à chaque cycle, donc pas de dérive dans la boucle). Pour la
+  <b>mort</b>, seule la 1ʳᵉ image (position debout) sert de référence, et le <i>même</i> décalage est appliqué en bloc
+  aux 4 images de la colonne — ça aligne le point de départ sur celui de la marche sans effacer le mouvement naturel
+  de chute. Aucune image n'a été redessinée : uniquement des translations horizontales, rien n'est recadré ni déformé.
+</p>
+<p class="note warn" style="margin-top:10px;">
+  Note technique : les fichiers sources pèsent ~8-9 Mo chacun (3840×2160). Très bien pour ce banc d'essai local,
   mais avant de les brancher sur la carte de bataille réelle (des dizaines d'unités visibles), il faudra les redimensionner
   / compresser — je peux le faire dès que le découpage et le mapping de direction sont validés ici.
 </p>
 
 <script>
+const SHEET_SOURCES = {
+  aligned: {
+    walk:  './data/images/units/dark_elf_walk_cycle_02_aligned.png',
+    death: './data/images/units/dark_elf_death_cycle_02_aligned.png'
+  },
+  original: {
+    walk:  './data/images/units/dark_elf_walk_cycle_02.png',
+    death: './data/images/units/dark_elf_death_cycle_02.png'
+  }
+};
 const SHEETS = {
-  walk:  { src:'./data/images/units/dark_elf_walk_cycle_02.png',  cols:6, rows:4, cw:640, ch:540, loop:true  },
-  death: { src:'./data/images/units/dark_elf_death_cycle_02.png', cols:6, rows:4, cw:640, ch:540, loop:false }
+  walk:  { src:SHEET_SOURCES.aligned.walk,  cols:6, rows:4, cw:640, ch:540, loop:true  },
+  death: { src:SHEET_SOURCES.aligned.death, cols:6, rows:4, cw:640, ch:540, loop:false }
 };
 const DIR_LABELS = ['1','2','3','4','5','6']; // mapping direction inconnu — à confirmer
 
@@ -368,12 +393,24 @@ document.getElementById('btnSceneWalk').onclick = ()=>{ resetScene(); };
 document.getElementById('btnSceneDie').onclick = ()=>{ sceneUnit.dying = true; sceneUnit.frame=-1; sceneUnit.deathDone=false; sceneUnit.acc=0; };
 document.getElementById('btnSceneReset').onclick = ()=>{ resetScene(); };
 
-Promise.all([loadImg(SHEETS.walk.src), loadImg(SHEETS.death.src)]).then(([w,d])=>{
-  imgs.walk = w; imgs.death = d;
-  buildDirPicker();
-  buildFrameStrip();
-  drawFullSheet('fullWalk','walk');
-  drawFullSheet('fullDeath','death');
+function loadAllSheets(){
+  return Promise.all([loadImg(SHEETS.walk.src), loadImg(SHEETS.death.src)]).then(([w,d])=>{
+    imgs.walk = w; imgs.death = d;
+    buildDirPicker();
+    buildFrameStrip();
+    drawFullSheet('fullWalk','walk');
+    drawFullSheet('fullDeath','death');
+  });
+}
+
+document.getElementById('useAligned').onchange = (e)=>{
+  const set = e.target.checked ? SHEET_SOURCES.aligned : SHEET_SOURCES.original;
+  SHEETS.walk.src = set.walk;
+  SHEETS.death.src = set.death;
+  loadAllSheets();
+};
+
+loadAllSheets().then(()=>{
   requestAnimationFrame(tick);
   requestAnimationFrame(sceneLoop);
 });
