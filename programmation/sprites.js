@@ -90,8 +90,19 @@
   function loadImg(url) {
     return new Promise((res, rej) => {
       const img = new Image();
-      img.onload = () => res(img);
-      img.onerror = () => rej(new Error("Image injoignable: " + url));
+      img.crossOrigin = "anonymous"; // évite un canvas "taché" si l'image est servie depuis un autre domaine
+      img.onload = () => {
+        // Une image "chargée" mais avec des dimensions nulles n'est pas une vraie
+        // image (fichier vide, page d'erreur renvoyée avec un code 200, pointeur
+        // Git LFS non résolu, etc.) : on le traite comme un échec explicite plutôt
+        // que de mettre en cache une image inutilisable.
+        if (!img.naturalWidth || !img.naturalHeight) {
+          rej(new Error("Image invalide (0x0) — vérifier que le fichier n'est pas un pointeur Git LFS ou une page d'erreur : " + url));
+          return;
+        }
+        res(img);
+      };
+      img.onerror = () => rej(new Error("Image injoignable (chemin/casse/hébergement à vérifier) : " + url));
       img.src = url;
     });
   }
