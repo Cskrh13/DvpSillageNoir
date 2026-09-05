@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Test Sprites — Guerrier Elfe Noir — Sillage Noir</title>
+<style>
+  :root{ --ink:#c8b890; --gold:#b8975a; --bg:#08080c; --edge:#3a2a1a; --panel:#0c0a12; font-family:Georgia,serif; }
+  *{box-sizing:border-box; margin:0; padding:0; }
+  body{ background:var(--bg); color:var(--ink); padding:16px 20px 60px; }
+  h1{ color:var(--gold); font-size:20px; letter-spacing:2px; margin-bottom:4px; }
+  h2{ color:var(--gold); font-size:14px; letter-spacing:1.5px; margin:22px 0 10px; border-bottom:1px solid var(--edge); padding-bottom:6px; }
+  p.sub{ color:#8a6a4a; font-size:12.5px; margin-bottom:10px; max-width:900px; line-height:1.5; }
+  .row{ display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; }
+  .panel{ background:var(--panel); border:1px solid var(--edge); padding:14px; }
+
+  #stageWrap{ width:420px; }
+  #stage{ width:420px; height:355px; display:block; background:radial-gradient(ellipse at 50% 78%, #26301f 0%, #141a10 60%, #0a0d08 100%); border:1px solid var(--edge); }
+  .ctrlRow{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px; font-size:12px; }
+  .ctrlRow label{ color:#8a6a4a; }
+  button{ background:linear-gradient(180deg,#1a1520,#0c0a12); color:var(--gold); border:1px solid var(--gold);
+    padding:6px 14px; cursor:pointer; font-family:inherit; font-size:12.5px; }
+  button:hover{ box-shadow:0 0 10px #b8975a44; }
+  button.active{ background:#3a2a10; }
+  button.small{ padding:4px 9px; font-size:11px; }
+  input[type=range]{ accent-color:#b8975a; }
+  select{ background:#0a0810; color:var(--gold); border:1px solid var(--edge); padding:4px 6px; font-family:inherit; font-size:12px; }
+
+  #dirPicker{ display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+  .dirBtn{ border:2px solid var(--edge); background:#0a0810; padding:2px; cursor:pointer; width:64px; height:54px; position:relative; }
+  .dirBtn canvas{ width:100%; height:100%; image-rendering:auto; }
+  .dirBtn.sel{ border-color:var(--gold); box-shadow:0 0 8px #b8975a55; }
+  .dirBtn .lbl{ position:absolute; bottom:1px; right:2px; font-size:9px; color:#e8d8a8; background:rgba(0,0,0,.55); padding:0 3px; }
+
+  #frameStrip{ display:flex; gap:5px; flex-wrap:wrap; margin-top:8px; }
+  .frameThumb{ width:46px; height:39px; border:1px solid var(--edge); cursor:pointer; opacity:.55; }
+  .frameThumb.cur{ border-color:var(--gold); opacity:1; }
+  .frameThumb canvas{ width:100%; height:100%; }
+
+  #sceneCanvas{ width:100%; height:260px; display:block; background:linear-gradient(180deg,#1a2412 0%,#0c1208 70%,#080a06 100%); border:1px solid var(--edge); }
+
+  .legendImg{ max-width:100%; border:1px solid var(--edge); }
+  .note{ font-size:11.5px; color:#7a6a4a; line-height:1.5; margin-top:8px; }
+  .warn{ color:#c08040; }
+  code{ color:#e8c890; background:#0a0810; padding:1px 5px; font-size:11.5px; }
+</style>
+</head>
+<body>
+
+<h1>⚔ Test des sprites — Guerrier Elfe Noir</h1>
+<p class="sub">
+  Banc d'essai pour vérifier les deux feuilles de sprites (marche / mort) avant intégration dans <code>test-combat.html</code>.
+  Chaque feuille est une grille fixe <b>6 colonnes × 4 lignes</b>, cellules de <b>640×540 px</b>. Les colonnes semblent être
+  6 orientations du personnage ; je n'ai pas de certitude sur la correspondance exacte avec les 6/8 directions de la grille
+  isométrique du jeu — utilise le panneau <b>« Repère des orientations »</b> plus bas pour me dire laquelle est laquelle,
+  et je câblerai ça proprement ensuite.
+</p>
+
+<div class="row">
+
+  <!-- ===================== ANIMATOR ===================== -->
+  <div class="panel" id="stageWrap">
+    <div id="stage-holder">
+      <canvas id="stage" width="420" height="355"></canvas>
+    </div>
+    <div class="ctrlRow">
+      <button id="btnAnimWalk" class="active">Marche</button>
+      <button id="btnAnimDeath">Mort</button>
+      <span style="flex:1"></span>
+      <button id="btnPlay">⏸ Pause</button>
+      <button id="btnReplay">↺ Rejouer</button>
+    </div>
+    <div class="ctrlRow">
+      <button id="btnPrev" class="small">◀ image</button>
+      <button id="btnNext" class="small">image ▶</button>
+      <label>Vitesse</label>
+      <input type="range" id="fps" min="1" max="16" value="8" step="1">
+      <span id="fpsLbl">8 img/s</span>
+    </div>
+    <div class="ctrlRow">
+      <label><input type="checkbox" id="loopWalk" checked> boucler la marche</label>
+      <label><input type="checkbox" id="flipX"> miroir horizontal</label>
+      <label><input type="checkbox" id="showBox"> cadre de la cellule</label>
+    </div>
+
+    <h2 style="margin-top:16px;">Direction (colonne)</h2>
+    <div id="dirPicker"></div>
+
+    <h2>Images de la ligne courante</h2>
+    <div id="frameStrip"></div>
+  </div>
+
+  <!-- ===================== SCENE DEMO ===================== -->
+  <div class="panel" style="flex:1; min-width:420px;">
+    <h2 style="margin-top:0;">Mise en situation — marche + mort dans une petite scène</h2>
+    <p class="sub" style="margin-bottom:6px;">
+      L'unité fait des allers-retours en marchant (profil), puis meurt sur commande. Sert à juger l'échelle,
+      le rythme de la marche et l'enchaînement marche→mort une fois posé sur un vrai fond.
+    </p>
+    <canvas id="sceneCanvas" width="900" height="260"></canvas>
+    <div class="ctrlRow">
+      <button id="btnSceneWalk" class="active">▶ Marcher (aller-retour)</button>
+      <button id="btnSceneDie">☠ Déclencher la mort</button>
+      <button id="btnSceneReset">↺ Réinitialiser</button>
+      <label>Échelle</label>
+      <input type="range" id="sceneScale" min="0.15" max="0.55" step="0.01" value="0.32">
+    </div>
+    <div class="note">
+      La marche utilise la colonne « profil » sélectionnée à gauche ; le miroir horizontal est appliqué automatiquement
+      au retour. Clique <b>Déclencher la mort</b> à tout moment pour voir l'enchaînement.
+    </div>
+  </div>
+</div>
+
+<h2>Repère des orientations (fourni)</h2>
+<p class="sub">Planche de référence livrée avec les sprites — sert à identifier quelle colonne correspond à quelle orientation.</p>
+<img class="legendImg" src="./data/images/units/dark_elf_reference_02.png" alt="Repère des orientations">
+
+<h2>Vérification de la grille — feuille de marche complète</h2>
+<p class="sub">Contrôle brut : les 24 cellules (6×4) de <code>dark_elf_walk_cycle_02.png</code>, sans retouche, pour repérer tout décalage de découpe.</p>
+<canvas id="fullWalk" style="max-width:100%; border:1px solid var(--edge);"></canvas>
+
+<h2>Vérification de la grille — feuille de mort complète</h2>
+<p class="sub">Idem pour <code>dark_elf_death_cycle_02.png</code>. La ligne 4 (bas) est la pose finale au sol.</p>
+<canvas id="fullDeath" style="max-width:100%; border:1px solid var(--edge);"></canvas>
+
+<p class="note warn" style="margin-top:24px;">
+  Note technique : les deux fichiers sources pèsent ~8-9 Mo chacun (3840×2160). Très bien pour ce banc d'essai local,
+  mais avant de les brancher sur la carte de bataille réelle (des dizaines d'unités visibles), il faudra les redimensionner
+  / compresser — je peux le faire dès que le découpage et le mapping de direction sont validés ici.
+</p>
+
+<script>
+const SHEETS = {
+  walk:  { src:'./data/images/units/dark_elf_walk_cycle_02.png',  cols:6, rows:4, cw:640, ch:540, loop:true  },
+  death: { src:'./data/images/units/dark_elf_death_cycle_02.png', cols:6, rows:4, cw:640, ch:540, loop:false }
+};
+const DIR_LABELS = ['1','2','3','4','5','6']; // mapping direction inconnu — à confirmer
+
+function loadImg(src){
+  return new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.src=src; });
+}
+
+let imgs = {};
+let state = {
+  anim: 'walk',
+  dir: 0,
+  frame: 0,
+  playing: true,
+  fps: 8,
+  acc: 0,
+  flip: false
+};
+
+const stage = document.getElementById('stage');
+const sctx = stage.getContext('2d');
+
+function drawFrame(ctx, img, sheet, col, row, dx, dy, dw, dh, flip){
+  const sx = col*sheet.cw, sy = row*sheet.ch;
+  ctx.save();
+  if(flip){
+    ctx.translate(dx+dw, dy);
+    ctx.scale(-1,1);
+    ctx.drawImage(img, sx, sy, sheet.cw, sheet.ch, 0, 0, dw, dh);
+  } else {
+    ctx.drawImage(img, sx, sy, sheet.cw, sheet.ch, dx, dy, dw, dh);
+  }
+  ctx.restore();
+}
+
+function renderStage(){
+  sctx.clearRect(0,0,stage.width,stage.height);
+  // sol simple
+  sctx.save();
+  sctx.beginPath();
+  sctx.ellipse(stage.width/2, stage.height*0.82, 120, 26, 0, 0, Math.PI*2);
+  sctx.fillStyle = 'rgba(0,0,0,.45)';
+  sctx.fill();
+  sctx.restore();
+
+  const sheet = SHEETS[state.anim];
+  const img = imgs[state.anim];
+  if(!img) return;
+  const dh = stage.height*0.92;
+  const dw = dh*(sheet.cw/sheet.ch);
+  const dx = stage.width/2 - dw/2;
+  const dy = stage.height*0.90 - dh;
+  drawFrame(sctx, img, sheet, state.dir, state.frame, dx, dy, dw, dh, document.getElementById('flipX').checked);
+
+  if(document.getElementById('showBox').checked){
+    sctx.strokeStyle = 'rgba(184,151,90,.5)';
+    sctx.lineWidth = 1;
+    sctx.strokeRect(dx, dy, dw, dh);
+  }
+  updateFrameStripHighlight();
+}
+
+function buildDirPicker(){
+  const wrap = document.getElementById('dirPicker');
+  wrap.innerHTML = '';
+  for(let c=0;c<6;c++){
+    const btn = document.createElement('div');
+    btn.className = 'dirBtn' + (c===state.dir?' sel':'');
+    const cv = document.createElement('canvas');
+    cv.width = 64; cv.height = 54;
+    btn.appendChild(cv);
+    const lbl = document.createElement('div');
+    lbl.className = 'lbl';
+    lbl.textContent = DIR_LABELS[c];
+    btn.appendChild(lbl);
+    btn.onclick = ()=>{ state.dir=c; state.frame=0; buildDirPicker(); buildFrameStrip(); };
+    wrap.appendChild(btn);
+    const cctx = cv.getContext('2d');
+    const sheet = SHEETS.walk, img = imgs.walk;
+    if(img){
+      cctx.drawImage(img, c*sheet.cw, 0, sheet.cw, sheet.ch, 0,0,64,54);
+    }
+  }
+}
+
+function buildFrameStrip(){
+  const wrap = document.getElementById('frameStrip');
+  wrap.innerHTML = '';
+  const sheet = SHEETS[state.anim], img = imgs[state.anim];
+  for(let r=0;r<sheet.rows;r++){
+    const div = document.createElement('div');
+    div.className = 'frameThumb' + (r===state.frame?' cur':'');
+    const cv = document.createElement('canvas');
+    cv.width=46; cv.height=39;
+    div.appendChild(cv);
+    div.onclick = ()=>{ state.frame=r; state.playing=false; document.getElementById('btnPlay').textContent='▶ Lecture'; renderStage(); };
+    wrap.appendChild(div);
+    if(img){
+      cv.getContext('2d').drawImage(img, state.dir*sheet.cw, r*sheet.ch, sheet.cw, sheet.ch, 0,0,46,39);
+    }
+  }
+}
+function updateFrameStripHighlight(){
+  document.querySelectorAll('#frameStrip .frameThumb').forEach((el,i)=>{
+    el.classList.toggle('cur', i===state.frame);
+  });
+}
+
+function drawFullSheet(canvasId, sheetKey){
+  const cv = document.getElementById(canvasId);
+  const sheet = SHEETS[sheetKey], img = imgs[sheetKey];
+  const scale = 0.16;
+  cv.width = sheet.cw*sheet.cols*scale;
+  cv.height = sheet.ch*sheet.rows*scale;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#12121a';
+  c.fillRect(0,0,cv.width,cv.height);
+  c.drawImage(img, 0,0,cv.width,cv.height);
+  c.strokeStyle = 'rgba(184,151,90,.4)';
+  for(let i=1;i<sheet.cols;i++){ c.beginPath();c.moveTo(i*sheet.cw*scale,0);c.lineTo(i*sheet.cw*scale,cv.height);c.stroke(); }
+  for(let j=1;j<sheet.rows;j++){ c.beginPath();c.moveTo(0,j*sheet.ch*scale);c.lineTo(cv.width,j*sheet.ch*scale);c.stroke(); }
+}
+
+/* ---------- animation loop ---------- */
+let lastT = performance.now();
+function tick(now){
+  const dt = Math.min(0.1,(now-lastT)/1000); lastT = now;
+  if(state.playing){
+    state.acc += dt;
+    const step = 1/state.fps;
+    if(state.acc >= step){
+      state.acc -= step;
+      const sheet = SHEETS[state.anim];
+      state.frame++;
+      if(state.frame >= sheet.rows){
+        if(sheet.loop){ state.frame = 0; }
+        else { state.frame = sheet.rows-1; state.playing=false; document.getElementById('btnPlay').textContent='▶ Lecture'; }
+      }
+    }
+  }
+  renderStage();
+  requestAnimationFrame(tick);
+}
+
+/* ---------- scene demo ---------- */
+const scene = document.getElementById('sceneCanvas');
+const scctx = scene.getContext('2d');
+let sceneUnit = { x:80, dir:1, dying:false, frame:0, acc:0, walking:true, flip:false, deathDone:false };
+const PROFILE_COL = 2; // colonne "profil" par défaut, modifiable via le sélecteur de gauche
+
+function resetScene(){
+  sceneUnit = { x:80, dir:1, dying:false, frame:0, acc:0, walking:true, flip:false, deathDone:false };
+  document.getElementById('btnSceneWalk').classList.add('active');
+}
+function sceneTick(dt){
+  const scaleV = parseFloat(document.getElementById('sceneScale').value);
+  const sheet = sceneUnit.dying ? SHEETS.death : SHEETS.walk;
+  const img = sceneUnit.dying ? imgs.death : imgs.walk;
+  const speed = 70; // px/s
+  if(sceneUnit.walking && !sceneUnit.dying){
+    sceneUnit.x += speed*dt*sceneUnit.dir;
+    if(sceneUnit.x > scene.width-100){ sceneUnit.dir=-1; sceneUnit.flip=true; }
+    if(sceneUnit.x < 60){ sceneUnit.dir=1; sceneUnit.flip=false; }
+  }
+  sceneUnit.acc += dt;
+  const fps = sceneUnit.dying ? 6 : 8;
+  if(sceneUnit.acc >= 1/fps){
+    sceneUnit.acc -= 1/fps;
+    if(!sceneUnit.deathDone){
+      sceneUnit.frame++;
+      if(sceneUnit.frame >= sheet.rows){
+        if(sheet.loop) sceneUnit.frame = 0;
+        else { sceneUnit.frame = sheet.rows-1; sceneUnit.deathDone = true; }
+      }
+    }
+  }
+  scctx.clearRect(0,0,scene.width,scene.height);
+  scctx.save();
+  scctx.beginPath(); scctx.ellipse(sceneUnit.x, scene.height*0.86, 34,9,0,0,Math.PI*2);
+  scctx.fillStyle='rgba(0,0,0,.4)'; scctx.fill(); scctx.restore();
+
+  const dh = scene.height*0.62*(scaleV/0.32);
+  const dw = dh*(sheet.cw/sheet.ch);
+  const dy = scene.height*0.88 - dh;
+  drawFrame(scctx, img, sheet, PROFILE_COL, sceneUnit.frame, sceneUnit.x-dw/2, dy, dw, dh, sceneUnit.flip);
+}
+let sceneLastT = performance.now();
+function sceneLoop(now){
+  const dt = Math.min(0.1,(now-sceneLastT)/1000); sceneLastT = now;
+  sceneTick(dt);
+  requestAnimationFrame(sceneLoop);
+}
+
+/* ---------- wiring ---------- */
+document.getElementById('btnAnimWalk').onclick = ()=>{
+  state.anim='walk'; state.frame=0; state.playing=true;
+  document.getElementById('btnAnimWalk').classList.add('active');
+  document.getElementById('btnAnimDeath').classList.remove('active');
+  document.getElementById('btnPlay').textContent='⏸ Pause';
+  buildFrameStrip();
+};
+document.getElementById('btnAnimDeath').onclick = ()=>{
+  state.anim='death'; state.frame=0; state.playing=true;
+  document.getElementById('btnAnimDeath').classList.add('active');
+  document.getElementById('btnAnimWalk').classList.remove('active');
+  document.getElementById('btnPlay').textContent='⏸ Pause';
+  buildFrameStrip();
+};
+document.getElementById('btnPlay').onclick = (e)=>{
+  state.playing = !state.playing;
+  e.target.textContent = state.playing ? '⏸ Pause' : '▶ Lecture';
+};
+document.getElementById('btnReplay').onclick = ()=>{
+  state.frame = 0; state.playing = true;
+  document.getElementById('btnPlay').textContent='⏸ Pause';
+};
+document.getElementById('btnPrev').onclick = ()=>{
+  state.playing=false; document.getElementById('btnPlay').textContent='▶ Lecture';
+  const sheet = SHEETS[state.anim];
+  state.frame = (state.frame-1+sheet.rows)%sheet.rows; renderStage();
+};
+document.getElementById('btnNext').onclick = ()=>{
+  state.playing=false; document.getElementById('btnPlay').textContent='▶ Lecture';
+  const sheet = SHEETS[state.anim];
+  state.frame = (state.frame+1)%sheet.rows; renderStage();
+};
+document.getElementById('fps').oninput = (e)=>{
+  state.fps = parseInt(e.target.value);
+  document.getElementById('fpsLbl').textContent = state.fps+' img/s';
+};
+
+document.getElementById('btnSceneWalk').onclick = ()=>{ resetScene(); };
+document.getElementById('btnSceneDie').onclick = ()=>{ sceneUnit.dying = true; sceneUnit.frame=-1; sceneUnit.deathDone=false; sceneUnit.acc=0; };
+document.getElementById('btnSceneReset').onclick = ()=>{ resetScene(); };
+
+Promise.all([loadImg(SHEETS.walk.src), loadImg(SHEETS.death.src)]).then(([w,d])=>{
+  imgs.walk = w; imgs.death = d;
+  buildDirPicker();
+  buildFrameStrip();
+  drawFullSheet('fullWalk','walk');
+  drawFullSheet('fullDeath','death');
+  requestAnimationFrame(tick);
+  requestAnimationFrame(sceneLoop);
+});
+</script>
+</body>
+</html>
