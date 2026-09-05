@@ -2,26 +2,38 @@
    terrain-gen.js — Génération de terrain (carte de combat)
    ------------------------------------------------------------
    1. Le fond de carte mélange plusieurs terrains "normaux"
-      (herbe / terre / sable) en grandes plaques organiques,
-      au lieu d'un seul type uniforme pour toute la carte.
+      (herbe / terre) en grandes plaques organiques, au lieu
+      d'un seul type uniforme pour toute la carte.
    2. Des espaces d'eau (eau peu profonde + eau profonde) sont
       posés par-dessus le fond, sous forme de lacs/étangs.
+   2b. Le "sable" n'est plus une grande plaque aléatoire : c'est
+      la frontière (rive) entre l'eau et l'herbe/la terre —
+      cf. l'asset ligne 3, colonne 2 de terrainsGen2.png, qui est
+      précisément ce tuile de bordure. Toute case herbe/terre
+      directement au contact de l'eau devient donc "sable".
    3. Des espaces de pierre (rochers) sont posés par-dessus le
-      fond, mais jamais sur l'eau.
-   4. Des ruines sont posées sur (une partie de) ces espaces de
-      pierre : c'est la seule chose qui peut aussi déborder sur
-      l'eau (ruines à moitié englouties / en bord de rive).
+      fond, mais jamais sur l'eau. Les cases de pierre qui
+      touchent directement l'eau deviennent des "falaises"
+      (même famille que "rochers" niveau jeu, mais rendues avec
+      les sprites de falaise/cascade de terrainsGen2.png).
+   4. Des ruines (bâtiments en ruine, rows 9/10/11 du bas de
+      terrainsGen2.png) sont posées en DÉCOR, par-dessus le sol
+      existant (elles ne remplacent plus le type de case), sous
+      forme de petits cercles de 2 à 10 éléments. Leur centre
+      peut être choisi sur de la terre, de l'herbe ou de l'eau.
    5. Des zones de bois sont posées uniquement sur les cases de
-      terre ou d'herbe (jamais sur le sable, l'eau, la pierre ou
-      les ruines).
+      terre ou d'herbe (jamais sur le sable, l'eau, la pierre,
+      les falaises ou les ruines).
 
-   Les cases ne portent aucune image en elles-mêmes : c'est
-   test-combat.html (buildDecor(), DVP_ASSETS) qui, en lisant les
-   types de cases retournés ici (bois/arbres, rochers, ruines,
-   herbe/terre/sable...), y pose les sprites correspondants
-   (arbres, buissons, rochers, ruines...) via
-   data/images/sprites/terrainsGen*.png. Ce fichier décide
-   seulement QUEL type de terrain se trouve sur chaque case.
+   Les cases ne portent (presque) aucune image en elles-mêmes :
+   c'est test-combat.html (buildDecor(), DVP_ASSETS) qui, en
+   lisant les types de cases retournés ici (bois/arbres,
+   rochers/falaises, herbe/terre/sable...) ainsi que la liste
+   grid.ruinCircles (cercles de ruines), y pose les sprites
+   correspondants (arbres, buissons, rochers, falaises,
+   ruines...) via data/images/sprites/terrainsGen*.png. Ce
+   fichier décide seulement QUEL type de terrain se trouve sur
+   chaque case, et OÙ poser les cercles de ruines.
    ============================================================ */
 (function () {
   "use strict";
@@ -100,19 +112,20 @@
     const rnd = makeRng(S);
 
     // ---- 1) Fond de carte : mélange de plusieurs terrains "normaux" -------
-    // Herbe / terre / sable, en grandes plaques organiques (bruit à basse
+    // Herbe / terre, en grandes plaques organiques (bruit à basse
     // fréquence), au lieu d'un seul type uniforme pour toute la carte.
+    // (Le sable n'est plus tiré ici : voir l'étape 2b, il ne représente que
+    // la rive au contact de l'eau.)
     const baseScale = Math.max(6, Math.round(Math.min(w, h) * 0.22));
-    // Petites variations des seuils d'une carte à l'autre, pour que la
-    // proportion herbe/terre/sable change aussi d'une bataille à l'autre.
-    const herbeCut = 0.42 + rnd() * 0.12;              // ~0.42–0.54
-    const terreCut = herbeCut + 0.30 + rnd() * 0.10;   // au-delà = sable
+    // Petite variation du seuil d'une carte à l'autre, pour que la
+    // proportion herbe/terre change aussi d'une bataille à l'autre.
+    const herbeCut = 0.46 + rnd() * 0.18; // ~0.46–0.64
     const grid = [];
     for (let y = 0; y < h; y++) {
       const row = [];
       for (let x = 0; x < w; x++) {
         const n = valueNoise(x, y, S + 401, baseScale);
-        row.push(n < herbeCut ? "herbe" : (n < terreCut ? "terre" : "sable"));
+        row.push(n < herbeCut ? "herbe" : "terre");
       }
       grid.push(row);
     }
@@ -134,9 +147,31 @@
       });
     }
 
-    // ---- 3) Espaces de pierre ("rochers") ----------------------------------
+    // ---- 2b) Rive : bordure sable entre l'eau et l'herbe/la terre ----------
+    // Sprite dédié (terrainsGen2.png, ligne 3 colonne 2) : on ne le pose que
+    // sur les cases herbe/terre directement au contact de l'eau, jamais
+    // ailleurs — le sable n'est donc plus une plaque aléatoire mais un vrai
+    // liseré de rivage.
+    const shoreCells = [];
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (grid[y][x] !== "herbe" && grid[y][x] !== "terre") continue;
+        let touchesWater = false;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          if (isWater(grid[ny][nx])) { touchesWater = true; break; }
+        }
+        if (touchesWater) shoreCells.push([x, y]);
+      }
+    }
+    for (const [x, y] of shoreCells) grid[y][x] = "sable";
+
+    // ---- 3) Espaces de pierre ("rochers" / "falaises") ---------------------
     // Jamais posés sur l'eau : on garde la case telle quelle si elle est
-    // déjà de l'eau.
+    // déjà de l'eau. Une case de pierre directement au contact de l'eau
+    // devient une "falaise" (mêmes règles de jeu que "rochers", mais rendue
+    // avec les sprites de falaise/cascade de terrainsGen2.png).
     const stoneCount = rnd() < 0.7 ? 1 : 2;
     const stoneRadius = Math.max(3, Math.round(Math.min(w, h) * 0.075));
     const stoneZones = [];
@@ -152,26 +187,49 @@
         return "rochers";
       });
     }
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (grid[y][x] !== "rochers") continue;
+        let touchesWater = false;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          if (isWater(grid[ny][nx])) { touchesWater = true; break; }
+        }
+        if (touchesWater) grid[y][x] = "falaises";
+      }
+    }
 
-    // ---- 4) Ruines, situées sur les espaces de pierre ----------------------
-    // Sous-zone plus petite, centrée dans (ou juste à côté de) chaque zone
-    // de pierre. C'est la seule chose autorisée à déborder sur l'eau
-    // (ruines à moitié englouties / en bord de rive).
-    for (const zone of stoneZones) {
-      if (rnd() < 0.15) continue; // toutes les zones de pierre n'ont pas de ruines
-      const rseed = (zone.seed ^ 0x2545f491) >>> 0;
+    // ---- 4) Ruines : cercles de décor (2 à 10 éléments) ---------------------
+    // Ne modifient plus le type de case : ce sont des éléments de décor
+    // (rows 9/10/11 du bas de terrainsGen2.png — tours, arches, piliers,
+    // bâtisses, chariots, palissades...) posés en cercle par-dessus le sol
+    // existant. Le centre du cercle est choisi sur de la terre, de l'herbe
+    // ou de l'eau (ruines à moitié englouties comprises).
+    const ruinCircles = [];
+    const ruinAnchorOk = (cur) => cur === "herbe" || cur === "terre" || isWater(cur);
+    const ruinCount = rnd() < 0.5 ? 1 : (rnd() < 0.7 ? 2 : 3);
+    for (let i = 0; i < ruinCount; i++) {
+      const rseed = (S + i * 40503 + 9001) >>> 0;
       const rrnd = makeRng(rseed);
-      const offAngle = rrnd() * Math.PI * 2, offDist = zone.radius * 0.25 * rrnd();
-      const cx = zone.cx + Math.cos(offAngle) * offDist;
-      const cy = zone.cy + Math.sin(offAngle) * offDist;
-      const radius = zone.radius * (0.45 + rrnd() * 0.25);
-      stampBlob(grid, w, h, cx, cy, radius, 0.6, rseed, () => "ruines");
+      let cx = 0, cy = 0, found = false;
+      for (let tries = 0; tries < 40 && !found; tries++) {
+        cx = Math.floor(w * 0.12 + rrnd() * w * 0.76);
+        cy = Math.floor(h * 0.12 + rrnd() * h * 0.76);
+        if (ruinAnchorOk(grid[cy][cx])) found = true;
+      }
+      if (!found) continue; // pas trouvé d'ancrage valable sur cette carte
+      const count = 2 + Math.floor(rrnd() * 9); // 2 à 10 éléments
+      const radius = 1.4 + rrnd() * 1.8;
+      ruinCircles.push({ cx: cx + 0.5, cy: cy + 0.5, count, radius, seed: rseed });
     }
 
     // ---- 5) Bois, uniquement sur les espaces de terre ou d'herbe -----------
-    // On ne recouvre jamais le sable, l'eau, la pierre ou les ruines : si la
+    // On ne recouvre jamais le sable, l'eau, la pierre/falaise : si la
     // case n'est pas "terre" ou "herbe" au moment du passage, on la laisse
-    // telle quelle.
+    // telle quelle. (Les ruines n'étant plus un type de case, elles ne
+    // bloquent plus le bois ici — mais les deux peuvent désormais se
+    // superposer visuellement, ce qui est voulu.)
     const forestCount = rnd() < 0.5 ? 1 : 2;
     const baseRadius = Math.max(4, Math.round(Math.min(w, h) * 0.12));
     for (let i = 0; i < forestCount; i++) {
@@ -184,6 +242,11 @@
         return (cur === "terre" || cur === "herbe") ? "bois" : null;
       });
     }
+
+    // Les cercles de ruines sont attachés à la grille (plutôt que renvoyés à
+    // part) pour ne rien changer à la signature de generate() ni aux points
+    // d'appel existants (test-combat.html lit `_grid.ruinCircles`).
+    grid.ruinCircles = ruinCircles;
 
     return grid;
   }
