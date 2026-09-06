@@ -1177,37 +1177,101 @@ DVP_TERRAIN_SHEET.decoding = "async";
 DVP_TERRAIN_SHEET.src = "./data/images/sprites/terrainsGen2.png";
 
 /* The atlas is a transparent RGBA sheet, 1536x1024, laid out as a strict
-   12-column grid. Coordinates below were measured directly on the real
-   file (data/images/sprites/terrainsGen2.png), not guessed: the top 4
-   rows (128x90 cells) are flat isometric ground tiles, and everything
+   12-column grid (128px/col). Coordinates below were measured directly on
+   the real file (data/images/sprites/terrainsGen2.png), not guessed —
+   every "LxCy" in the comments is the row/column the user identified by
+   eye on the sheet (L1 = row 1 = y:0, C1 = col 1 = x:0, both 1-indexed).
+   Rows 1-4 (128x90 cells) are flat isometric ground tiles; everything
    below is decor (rocks, cliffs, trees, ruins, buildings, props) sliced
-   to each sprite's real ink bounding box so nothing bleeds or clips.
-   Row 3 col 2 (x:128,y:180 — "sable") is the actual shoreline tile: it's
-   used by terrain-gen.js only on land cells touching water, never as a
-   random biome. Row 4 cols 11/12 (x:1280/1408, y:270) are the mossy
-   rock/stone ground tiles: "rochers" (dry stone) uses the first, and
-   "falaises" (stone at the water's edge) uses the second, so the base
-   ground under rocks/cliffs is an actual rock texture rather than the
-   paved-floor tile that used to sit at row 1 col 10. */
+   to each sprite's real ink bounding box so nothing bleeds or clips. */
+const DVP_TERRE_VARIANTS = [
+  {x:0,   y:0,  w:128, h:90}, // L1C1
+  {x:128, y:0,  w:128, h:90}, // L1C2
+  {x:896, y:0,  w:128, h:90}, // L1C8
+  {x:512, y:90, w:128, h:90}, // L2C5
+  {x:640, y:90, w:128, h:90}, // L2C6
+  {x:768, y:90, w:128, h:90}  // L2C7
+];
+const DVP_HERBE_VARIANTS = [
+  {x:256, y:90, w:128, h:90}, // L2C3
+  {x:896, y:90, w:128, h:90}, // L2C8
+  {x:1024,y:90, w:128, h:90}  // L2C9
+];
+// Base rocheuse "sèche" (sous les rochers, loin de l'eau) : tuile plate
+// "pierre" du haut du plan (L1 C9-12), pas les gros rochers en relief.
+const DVP_PIERRE_VARIANTS = [
+  {x:1024,y:0, w:128, h:90}, // L1C9
+  {x:1152,y:0, w:128, h:90}, // L1C10
+  {x:1280,y:0, w:128, h:90}, // L1C11
+  {x:1408,y:0, w:128, h:90}  // L1C12
+];
+// Bord d'eau côté pierre (falaise touchant l'eau) : L4 C11/C12.
+const DVP_BORD_EAU_PIERRE_VARIANTS = [
+  {x:1280,y:270, w:128, h:90}, // L4C11
+  {x:1408,y:270, w:128, h:90}  // L4C12
+];
+const DVP_EAU_VARIANTS = [
+  {x:128, y:270, w:128, h:90}, // L4C2
+  {x:384, y:180, w:128, h:90}  // L3C4
+];
 const DVP_GROUND = {
-  herbe:      {x:256,  y:90,  w:128, h:90},
-  sable:      {x:128,  y:180, w:128, h:90},
-  terre:      {x:640,  y:90,  w:128, h:90},
+  herbe:               DVP_HERBE_VARIANTS,
+  terre:               DVP_TERRE_VARIANTS,
+  sable:               {x:512,  y:270, w:128, h:90}, // L4C5 — bord d'eau (terre)
+  sableHerbe:          {x:768,  y:270, w:128, h:90}, // L4C7 — bord d'eau (herbe)
+  frontiereTerreHerbe: {x:768,  y:0,   w:128, h:90}, // L1C7 — lisière terre/herbe
+  frontierePierre:     [
+    {x:256, y:0, w:128, h:90}, // L1C3
+    {x:384, y:0, w:128, h:90}, // L1C4
+    {x:512, y:0, w:128, h:90}, // L1C5
+    {x:896, y:0, w:128, h:90}  // L1C8
+  ],
   ruines:     {x:384,  y:0,   w:128, h:90},
   colline:    {x:512,  y:0,   w:128, h:90},
   bois:       {x:896,  y:90,  w:128, h:90},
   decombres:  {x:128,  y:90,  w:128, h:90},
-  rochers:    {x:1280, y:270, w:128, h:90},
-  falaises:   {x:1408, y:270, w:128, h:90},
+  rochers:    DVP_PIERRE_VARIANTS,
+  falaises:   DVP_BORD_EAU_PIERRE_VARIANTS,
   murs:       {x:256,  y:0,   w:128, h:90},
   arbres:     {x:1024, y:90,  w:128, h:90},
-  eau:        {x:256,  y:180, w:128, h:90},
+  eau:        DVP_EAU_VARIANTS,
   profonde:   {x:768,  y:180, w:128, h:90}
 };
 
+/* Choix déterministe d'une variante : même case (col,row) + même seed de
+   décor => toujours la même tuile (pas de scintillement au redessin). */
+let _groundSeed = 1;
+function pickGroundVariant(entry, col, row){
+  if(!Array.isArray(entry)) return entry;
+  if(entry.length === 0) return null;
+  const h = ((col|0)*374761393 ^ (row|0)*668265263 ^ (_groundSeed|0)*69069) >>> 0;
+  return entry[h % entry.length];
+}
+
 const DVP_ASSETS = {
-  rockA:{x:22,y:377,w:97,h:73}, rockB:{x:272,y:376,w:101,h:77}, rockC:{x:912,y:379,w:98,h:74},
-  cliffA:{x:787,y:455,w:92,h:90}, cliffB:{x:1165,y:456,w:103,h:95},
+  // Rochers "secs" (L5 C1-5, L6 C1-5) — 10 variantes de blocs de pierre.
+  rockA:{x:22,y:377,w:97,h:73},           // L5C1
+  rocL5C2:{x:143,y:362,w:105,h:88},       // L5C2
+  rockB:{x:272,y:376,w:101,h:77},         // L5C3
+  rocL5C4:{x:393,y:362,w:108,h:88},       // L5C4
+  rocL5C5:{x:522,y:362,w:108,h:88},       // L5C5
+  rocL6C1:{x:15,y:467,w:103,h:78},        // L6C1
+  rocL6C2:{x:142,y:461,w:107,h:84},       // L6C2
+  rocL6C3:{x:248,y:452,w:125,h:93},       // L6C3
+  rocL6C4:{x:397,y:452,w:104,h:93},       // L6C4
+  rocL6C5:{x:527,y:452,w:98,h:93},        // L6C5
+  // Falaises sèches, sans cascade (L5 C8/C9/C10/C12, L6 C12).
+  rockC:{x:912,y:379,w:98,h:74},          // L5C8
+  falL5C9:{x:1036,y:362,w:106,h:88},      // L5C9
+  falL5C10:{x:1163,y:362,w:105,h:88},     // L5C10
+  falL5C12:{x:1415,y:362,w:104,h:88},     // L5C12
+  falL6C12:{x:1421,y:452,w:98,h:93},      // L6C12
+  // Falaises avec cascade, au contact direct de l'eau (L6 C8/C9/C10/C11 + L6C7 en bonus).
+  cliffA:{x:787,y:455,w:92,h:90},         // L6C7 (bonus, hors liste initiale)
+  falEauL6C8:{x:914,y:452,w:97,h:93},     // L6C8
+  falEauL6C9:{x:1037,y:452,w:105,h:93},   // L6C9
+  cliffB:{x:1165,y:456,w:103,h:95},       // L6C10
+  falEauL6C11:{x:1292,y:452,w:104,h:93},  // L6C11
   pineA:{x:687,y:550,w:63,h:105}, pineB:{x:810,y:548,w:83,h:110}, pineC:{x:1280,y:556,w:46,h:102},
   broadA:{x:947,y:550,w:65,h:109}, deadA:{x:1164,y:555,w:68,h:106}, deadB:{x:1461,y:603,w:50,h:59},
   bushTealA:{x:33,y:569,w:67,h:64}, bushGreenA:{x:461,y:567,w:51,h:64},
@@ -1218,26 +1282,34 @@ const DVP_ASSETS = {
   bridgeA:{x:256,y:827,w:75,h:87}, houseA:{x:697,y:832,w:71,h:71}, hutA:{x:1337,y:818,w:68,h:93},
   caveA:{x:914,y:828,w:80,h:81}, towerStiltA:{x:1152,y:821,w:49,h:81},
   tableA:{x:24,y:928,w:81,h:63}, cartA:{x:575,y:927,w:65,h:57}, fenceA:{x:772,y:927,w:100,h:59},
-  latticeA:{x:1024,y:921,w:67,h:73}, bannerA:{x:1152,y:917,w:42,h:77}, grateA:{x:1444,y:932,w:78,h:55}
+  latticeA:{x:1024,y:921,w:67,h:73}, bannerA:{x:1152,y:917,w:42,h:77}, grateA:{x:1444,y:932,w:78,h:55},
+  // Ruines (L9 C1-11, L10 C1-2) — tuiles fraîches dédiées aux cercles de ruines.
+  ruinL9C1:{x:22,y:703,w:98,h:97}, ruinL9C2:{x:153,y:703,w:111,h:97}, ruinL9C3:{x:255,y:703,w:137,h:97},
+  ruinL9C4:{x:376,y:703,w:133,h:97}, ruinL9C5:{x:504,y:703,w:144,h:97}, ruinL9C6:{x:632,y:703,w:142,h:97},
+  ruinL9C7:{x:760,y:703,w:144,h:97}, ruinL9C8:{x:888,y:703,w:144,h:97}, ruinL9C9:{x:1016,y:703,w:144,h:97},
+  ruinL9C10:{x:1144,y:703,w:144,h:97}, ruinL9C11:{x:1272,y:703,w:144,h:97},
+  ruinL10C1:{x:24,y:806,w:112,h:99}, ruinL10C2:{x:122,y:806,w:142,h:99}
 };
 
 const DVP_ASSET_KEYS = Object.keys(DVP_ASSETS);
 let _decor = [];
 
+/* Décor de rochers/falaises : pierre sèche (Rochers), falaise sèche
+   (Falaise) et falaise avec cascade au contact de l'eau (Falaise eau),
+   toutes tirées de terrainsGen2.png (L5/L6). */
+const DVP_ROCHER_ASSETS = ['rockA','rocL5C2','rockB','rocL5C4','rocL5C5','rocL6C1','rocL6C2','rocL6C3','rocL6C4','rocL6C5'];
+const DVP_FALAISE_ASSETS = ['rockC','falL5C9','falL5C10','falL5C12','falL6C12'];
+const DVP_FALAISE_EAU_ASSETS = ['cliffA','falEauL6C8','falEauL6C9','cliffB','falEauL6C11'];
+
 /* Décor de ruines : uniquement des éléments du bas de terrainsGen2.png
-   (lignes 9, 10 et 11 — tours/arches/piliers en pierre, bâtisses/pont/
-   grotte, puis chariots/palissades/bannières en bois), posés en cercle
-   par-dessus le sol existant (terre, herbe ou eau) via grid.ruinCircles. */
+   (lignes 9 et 10 — tours/arches/piliers/bâtisses en pierre), posés en
+   cercle par-dessus le sol existant via grid.ruinCircles. */
 const DVP_RUIN_ASSETS = [
-  // Ligne 9 — pierre
-  {k:'tower',scale:.55}, {k:'archA',scale:.55}, {k:'pillarA',scale:.52},
-  {k:'ruinA',scale:.50}, {k:'shrineA',scale:.50}, {k:'debrisPileA',scale:.60},
-  // Ligne 10 — bâtisses
-  {k:'bridgeA',scale:.55}, {k:'houseA',scale:.55}, {k:'hutA',scale:.52},
-  {k:'caveA',scale:.55}, {k:'towerStiltA',scale:.52},
-  // Ligne 11 — bois/accessoires
-  {k:'tableA',scale:.48}, {k:'cartA',scale:.48}, {k:'fenceA',scale:.46},
-  {k:'latticeA',scale:.46}, {k:'bannerA',scale:.46}, {k:'grateA',scale:.46}
+  {k:'ruinL9C1',scale:.50}, {k:'ruinL9C2',scale:.50}, {k:'ruinL9C3',scale:.48},
+  {k:'ruinL9C4',scale:.48}, {k:'ruinL9C5',scale:.46}, {k:'ruinL9C6',scale:.46},
+  {k:'ruinL9C7',scale:.46}, {k:'ruinL9C8',scale:.46}, {k:'ruinL9C9',scale:.46},
+  {k:'ruinL9C10',scale:.46}, {k:'ruinL9C11',scale:.46},
+  {k:'ruinL10C1',scale:.50}, {k:'ruinL10C2',scale:.48}
 ];
 
 function drawAtlasAsset(asset,x,y,scale=1,alpha=1){
@@ -1277,16 +1349,17 @@ function buildDecor(seed){
       else if(q<.60)add('deadB',c,r,.62);
       if(rnd()<.18)add(rnd()<.5?'bushTealA':'bushGreenA',c+(rnd()-.5)*.5,r+(rnd()-.5)*.5,.7);
     } else if(t==='falaises'){
-      /* Falaise au contact de l'eau : on privilégie les blocs avec cascade. */
-      if(q<.28)add(rnd()<.5?'cliffA':'cliffB',c,r,.66);
-      else if(q<.40)add('rockA',c,r,.74);
-      else if(q<.48)add('rockB',c,r,.70);
+      /* Falaise au contact de l'eau : cascade en priorité, sèche en appoint. */
+      if(q<.32)add(DVP_FALAISE_EAU_ASSETS[Math.floor(rnd()*DVP_FALAISE_EAU_ASSETS.length)],c,r,.66);
+      else if(q<.46)add(DVP_FALAISE_ASSETS[Math.floor(rnd()*DVP_FALAISE_ASSETS.length)],c,r,.68);
       if(rnd()<.10)add(rnd()<.5?'grassTuftA':'grassTuftB',c+(rnd()-.5)*.4,r+(rnd()-.5)*.4,.65);
+    } else if(t==='frontierePierre'){
+      /* Abords rocheux : quelques blocs épars, sans bloquer le passage. */
+      if(q<.18)add(DVP_ROCHER_ASSETS[Math.floor(rnd()*DVP_ROCHER_ASSETS.length)],c,r,.42);
+      if(rnd()<.14)add(rnd()<.5?'grassTuftA':'grassTuftB',c+(rnd()-.5)*.5,r+(rnd()-.5)*.5,.55);
     } else if(t==='rochers' || t==='colline'){
-      if(q<.20)add('rockA',c,r,.78);
-      else if(q<.36)add('rockB',c,r,.72);
-      else if(q<.46)add('rockC',c,r,.68);
-      else if(q<.50)add(rnd()<.5?'cliffA':'cliffB',c,r,.62);
+      if(q<.42)add(DVP_ROCHER_ASSETS[Math.floor(rnd()*DVP_ROCHER_ASSETS.length)],c,r,.76);
+      else if(q<.50)add(DVP_FALAISE_ASSETS[Math.floor(rnd()*DVP_FALAISE_ASSETS.length)],c,r,.66);
       if(rnd()<.12)add(rnd()<.5?'grassTuftA':'grassTuftB',c+(rnd()-.5)*.4,r+(rnd()-.5)*.4,.65);
     } else if(t==='murs'){
       if(q<.10)add('tower',c,r,.55,1);
@@ -1302,7 +1375,7 @@ function buildDecor(seed){
       if(rnd()<.08)add('fenceA',c,r,.50);
     } else if(t==='eau' || t==='profonde'){
       /* Keep water itself clean; shoreline vegetation is enough. */
-    } else if(t==='herbe' || t==='terre' || t==='sable'){
+    } else if(t==='herbe' || t==='terre' || t==='sable' || t==='sableHerbe' || t==='frontiereTerreHerbe'){
       if(rnd()<.035)add(rnd()<.5?'bushSmallA':'bushSmallB',c+(rnd()-.5)*.7,r+(rnd()-.5)*.7,.58);
       if(rnd()<.022)add('rockA',c+(rnd()-.5)*.7,r+(rnd()-.5)*.7,.45);
       if(rnd()<.012)add(rnd()<.5?'grassTuftA':'grassTuftB',c+(rnd()-.5)*.7,r+(rnd()-.5)*.7,.55);
@@ -1337,8 +1410,9 @@ function buildDecor(seed){
   return out.sort((a,b)=>(a.y+a.depth*100)-(b.y+b.depth*100));
 }
 
-function drawGroundTile(type,x,y,scale=1){
-  const a=DVP_GROUND[type]||DVP_GROUND.herbe;
+function drawGroundTile(type,x,y,scale=1,col=0,row=0){
+  const raw=DVP_GROUND[type]||DVP_HERBE_VARIANTS;
+  const a=pickGroundVariant(raw,col,row)||DVP_HERBE_VARIANTS[0];
   const im=DVP_TERRAIN_SHEET;
   if(!im.complete || !im.naturalWidth) return false;
   const dw=TW*scale,dh=TH*scale;
@@ -1348,6 +1422,7 @@ function drawGroundTile(type,x,y,scale=1){
 function drawTerrain(){
   if(!_terrain||!_grid)return;
   const tw=TW,th=TH,h=_grid.length,w=_grid[0].length;
+  if(!_decor.length) _groundSeed=Date.now()&0xffff; // même seed pour les tuiles et le décor de cette carte
   ctx.save();
   ctx.imageSmoothingEnabled=true;
   /* Deep base prevents transparent gaps from becoming black holes. */
@@ -1355,9 +1430,9 @@ function drawTerrain(){
   for(let r=0;r<h;r++) for(let c=0;c<w;c++){
     const type=_grid[r][c],s=gridToScreen(c,r),x=s.x+_cam.x,y=s.y+_cam.y;
     if(x<-tw*2||x>cv.width+tw*2||y<-th*2||y>cv.height+th*2)continue;
-    drawGroundTile(type,x,y,1.08);
+    drawGroundTile(type,x,y,1.08,c,r);
   }
-  if(!_decor.length) _decor=buildDecor(Date.now()&0xffff);
+  if(!_decor.length) _decor=buildDecor(_groundSeed);
   /* Décor dessiné avec les unités dans drawDepthSortedScene() (tri de profondeur commun). */
   /* Debug-only grid. Never visible in normal play. */
   if(window.DvpTestShowGrid){
