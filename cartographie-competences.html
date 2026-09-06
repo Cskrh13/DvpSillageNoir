@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<!-- SYNAPSES-AUTHOR: Cskrh13 / Vincent | © 2026 -->
+<meta name="author" content="Cskrh13 / Vincent">
+<meta name="copyright" content="© 2026 Cskrh13 / Vincent — Synapses">
+<meta name="application-name" content="Synapses">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cartographie des compétences — Synapses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1E2A4A;--navy-deep:#141d33;--bg:#F6F5F1;--panel:#FFFFFF;--line:#DEDBD2;
+  --ink:#20242E;--ink-soft:#5B5F6B;--accent-sky:#2E5EAA;--ring:#2E5EAA;
+  --lecture:#B5502E;--ecriture:#2A7F72;--oral:#6B4E8E;--vocabulaire:#B5871E;
+  --radius:10px;
+  --node-competence:#2A7F72;--node-sequence:#B5871E;--node-seance:#2E5EAA;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;color:var(--ink);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{background:var(--bg)}
+h1,h2,h3,h4{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.01em;margin:0}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden}
+#stage{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}
+canvas{position:absolute;inset:0;width:100%;height:100%;cursor:grab;touch-action:none}
+canvas.dragging{cursor:grabbing}
+
+/* ===== Header (charte Synapses) ===== */
+header.site-header{position:relative;z-index:20;flex:0 0 auto;background:var(--navy);color:#fff;border-bottom:3px solid var(--accent-sky)}
+.header-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 22px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:#fff}
+.brand-mark{width:38px;height:38px;border-radius:8px;background:linear-gradient(160deg,var(--accent-sky),#5486d6);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:16px;color:#fff;flex-shrink:0}
+.brand-text{display:flex;flex-direction:column;line-height:1.15}
+.brand-text .top{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#B9C6E5;font-weight:600}
+.brand-text .bottom{font-family:'Fraunces',serif;font-weight:600;font-size:16px}
+.btn-back{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);color:#fff;text-decoration:none;font-size:13px;font-weight:500;padding:9px 14px;border-radius:7px;white-space:nowrap}
+.btn-back:hover{background:rgba(255,255,255,.18)}
+
+/* ===== Toolbar (panneau de filtres, aéré) ===== */
+.toolbar{position:relative;z-index:19;flex:0 0 auto;background:var(--panel);border-bottom:1px solid var(--line);box-shadow:0 6px 18px rgba(24,40,55,.05);padding:11px 22px}
+.tb-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:9px}
+.tb-row:last-child{margin-bottom:0}
+.tb-label{flex:0 0 auto;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft);font-weight:700;min-width:74px}
+.tb-scroll{display:flex;gap:6px;flex-wrap:wrap;flex:1 1 auto}
+.tb-scroll button{font:500 12.5px 'Inter',sans-serif;border:1px solid var(--line);background:#fff;color:var(--ink-soft);border-radius:999px;padding:6px 13px;cursor:pointer;transition:background .12s,border-color .12s,color .12s;white-space:nowrap}
+.tb-scroll button:hover{border-color:#b9c3cc;color:var(--ink)}
+.tb-scroll button.active{background:var(--accent-sky);border-color:var(--accent-sky);color:#fff;font-weight:600}
+
+/* ===== Filtres Niveaux / Domaines en menus déroulants ===== */
+.filter-dropdown{position:relative;flex:0 0 auto}
+.filter-dropdown>summary{list-style:none;cursor:pointer;font:600 13px 'Inter',sans-serif;color:var(--navy);background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 14px;display:flex;align-items:center;gap:7px;white-space:nowrap;user-select:none}
+.filter-dropdown>summary::-webkit-details-marker{display:none}
+.filter-dropdown>summary::after{content:"⌄";font-size:11px;color:var(--ink-soft);margin-left:2px}
+.filter-dropdown[open]>summary,.filter-dropdown>summary:hover{border-color:var(--accent-sky)}
+.filter-dropdown .count{font:600 11px 'IBM Plex Mono',monospace;color:var(--accent-sky);background:#EEF3FB;border-radius:999px;padding:2px 8px}
+.filter-dropdown-menu{position:absolute;z-index:25;top:calc(100% + 7px);left:0;width:min(560px,86vw);max-height:340px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;box-shadow:0 16px 36px rgba(24,40,55,.14)}
+@media(max-width:760px){.filter-dropdown-menu{width:86vw}}
+
+.tb-search-row{gap:10px}
+#search{flex:1 1 260px;min-width:180px;font:14px 'Inter',sans-serif;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:7px;padding:9px 12px}
+#search::placeholder{color:#9aa2ab}
+.btn-reset{font:500 13px 'Inter',sans-serif;border:1px solid var(--line);background:#fff;color:var(--ink-soft);border-radius:7px;padding:9px 14px;cursor:pointer}
+.btn-reset:hover{border-color:#b9c3cc;color:var(--ink)}
+#status{font:500 12px 'Inter',sans-serif;color:var(--ink-soft);margin-left:auto;white-space:nowrap}
+
+/* ===== Panneaux flottants (légende / navigation) ===== */
+.side{position:absolute;z-index:11;pointer-events:none}
+.card{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 10px 30px rgba(28,45,61,.08);backdrop-filter:blur(6px);padding:16px 17px;pointer-events:auto}
+#legend{right:20px;bottom:20px;width:210px}
+.card h3{font-size:11px;margin:0 0 11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);font-family:'Inter',sans-serif;font-weight:700}
+.legendrow{display:flex;align-items:center;gap:9px;margin:8px 0;font-size:12.5px;color:var(--ink)}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex-shrink:0}
+.lineSample{width:22px;height:0;border-top:1.5px solid #7a8792;display:inline-block;flex-shrink:0}
+.dashSample{width:22px;height:0;border-top:2px dashed var(--vocabulaire);display:inline-block;flex-shrink:0}
+.navrow{margin:7px 0;font-size:12px;color:var(--ink-soft);line-height:1.45}
+
+/* ===== Barre de zoom / navigation caméra ===== */
+.zoombar{position:absolute;z-index:12;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 8px 24px rgba(24,40,55,.1);backdrop-filter:blur(8px)}
+.zoombar button{font-size:16px;line-height:1;padding:8px 11px;border:0;background:transparent;border-radius:999px;color:var(--ink-soft);cursor:pointer}
+.zoombar button:hover{background:#eef1f4;color:var(--ink)}
+.zoombar button.active{background:var(--accent-sky);color:#fff}
+#zoomRange{width:120px;accent-color:var(--accent-sky)}
+#relationMenu{position:absolute;z-index:13;left:50%;bottom:66px;transform:translateX(-50%);display:none;gap:6px;padding:6px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.96);box-shadow:0 8px 24px rgba(24,40,55,.12);backdrop-filter:blur(8px)}
+#relationMenu.open{display:flex}
+#relationMenu button{font:500 12px 'Inter',sans-serif;padding:8px 11px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink-soft);cursor:pointer}
+#relationMenu button:hover{border-color:#b9c3cc;color:var(--ink)}
+
+/* ===== Fiche latérale (détail d'un nœud) ===== */
+.linkedItem{cursor:pointer}
+.linkedItem:hover{background:#EEF3FB}
+#panel{position:absolute;z-index:30;right:20px;top:14px;width:min(400px,calc(100vw - 40px));max-height:calc(100vh - 34px);overflow:auto;transform:translateX(calc(100% + 40px));transition:transform .2s ease;pointer-events:auto}
+#panel.open{transform:translateX(0)}
+.panelCard{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 18px 50px rgba(26,44,60,.16);padding:22px}
+.close{float:right;font:26px/1 'Inter',sans-serif;color:#9aa2ab;cursor:pointer}
+.close:hover{color:var(--ink)}
+.tag{display:inline-block;font:600 10.5px 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.05em;padding:5px 9px;border-radius:999px;background:#EEF3FB;color:var(--accent-sky)}
+#panel h2{font-size:21px;line-height:1.25;margin:11px 30px 8px 0;color:var(--navy)}
+.meta{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px}
+.section{margin:16px 0}
+.section h4{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin:0 0 8px;font-weight:700}
+.item{border:1px solid var(--line);border-left:3px solid var(--vocabulaire);border-radius:0 6px 6px 0;padding:9px 10px;margin:6px 0;background:#FAF9F6;font-size:13px;line-height:1.45;color:var(--ink)}
+.panelAction{display:inline-block;margin-top:10px;padding:10px 15px;border-radius:7px;background:var(--accent-sky);color:#fff;text-decoration:none;font:600 13px 'Inter',sans-serif}
+.panelAction:hover{background:#264d8f}
+
+/* ===== Erreur ===== */
+#error{display:none;position:absolute;z-index:40;left:50%;top:50%;transform:translate(-50%,-50%);width:min(700px,90vw);padding:24px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 20px 60px rgba(0,0,0,.15)}
+#error h2{margin:0 0 12px;color:var(--navy);font-size:20px}
+.errorText{white-space:pre-wrap;font:12px/1.6 'IBM Plex Mono',monospace;color:#8a3a3a}
+
+/* ===== Infobulle au survol d'une boule ===== */
+#nodeTooltip{position:absolute;z-index:35;pointer-events:none;display:none;max-width:280px;background:var(--navy);color:#fff;border-radius:7px;padding:8px 12px;font:500 13px 'Inter',sans-serif;line-height:1.35;box-shadow:0 10px 24px rgba(20,32,50,.28);transform:translate(-50%,calc(-100% - 14px))}
+#nodeTooltip .tt-type{display:block;font:600 10px 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.06em;color:#B9C6E5;margin-bottom:2px}
+#nodeTooltip::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--navy)}
+
+/* ===== Footer ===== */
+.synapses-footer{flex:0 0 auto;position:relative;z-index:19;padding:9px 22px;text-align:center;font:12px 'Inter',sans-serif;color:var(--ink-soft);background:var(--panel);border-top:1px solid var(--line)}
+.synapses-footer div:first-child{font-weight:600;letter-spacing:.03em;color:var(--ink)}
+
+@media(max-width:900px){
+  .header-top{padding:10px 14px}
+  .toolbar{padding:12px 14px 14px}
+  .tb-label{min-width:auto;width:100%}
+  #legend{right:12px;bottom:70px;width:180px}
+  .zoombar{bottom:8px}
+  #panel{right:8px;top:8px;width:calc(100vw - 16px)}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<header class="site-header">
+  <div class="header-top">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true">RÉ</span>
+      <span class="brand-text">
+        <span class="top">Synapses</span>
+        <span class="bottom">Cartographie des compétences</span>
+      </span>
+    </a>
+    <a id="backProgramming" class="btn-back" href="Programmation/sequences.html">← Retour à la programmation</a>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="tb-row tb-search-row">
+    <details class="filter-dropdown" id="levelsDropdown">
+      <summary>Niveaux <span class="count" id="levelsCount"></span></summary>
+      <div class="filter-dropdown-menu tb-scroll" id="levels"></div>
+    </details>
+    <details class="filter-dropdown" id="domainsDropdown">
+      <summary>Domaines <span class="count" id="domainsCount"></span></summary>
+      <div class="filter-dropdown-menu tb-scroll" id="domains"></div>
+    </details>
+    <input id="search" autocomplete="off" placeholder="Rechercher une compétence, une séquence, une séance…">
+    <button class="btn-reset" id="reset">Réinitialiser les filtres</button>
+    <span id="status">Chargement…</span>
+  </div>
+</div>
+
+<div id="stage">
+<div class="side card" id="legend">
+  <h3>Légende</h3>
+  <div class="legendrow"><span class="dot" style="background:var(--node-competence)"></span>Compétence (dans la sphère)</div>
+  <div class="legendrow"><span class="dot" style="background:var(--node-sequence)"></span>Séquence (au clic)</div>
+  <div class="legendrow"><span class="dot" style="background:var(--node-seance)"></span>Séance (au clic)</div>
+  <div class="legendrow"><span class="dashSample"></span>Prérequis déclaré</div>
+  <div class="legendrow"><span class="lineSample"></span>Compétence → séquence</div>
+  <div class="legendrow"><span class="lineSample" style="opacity:.55"></span>Séquence → séance</div>
+</div>
+
+<div id="relationMenu">
+<button id="showImmediatePre">Prérequis immédiats</button>
+<button id="showAncestors">Chemin des antécédents</button>
+<button id="clearRelations">Effacer</button>
+</div>
+<div class="zoombar">
+  <button id="home" title="Recentrer">⌂</button>
+  <button id="minus" title="Zoom arrière">−</button>
+  <input id="zoomRange" type="range" min="0.015" max="2.4" step="0.005" value="0.015" aria-label="Zoom">
+  <button id="plus" title="Zoom avant">+</button>
+  <button id="rotateToggle" title="Activer/désactiver la rotation automatique">⟳</button>
+  <button id="fullscreen" title="Plein écran">⛶</button>
+</div>
+
+<aside id="panel"><div class="panelCard"><span class="close" id="close">×</span><div id="panelContent"></div></div></aside>
+<div id="error"><h2>Impossible de charger la cartographie</h2><div class="errorText" id="errorText"></div></div>
+<div id="nodeTooltip"></div>
+<canvas id="graph" aria-label="Cartographie des compétences"></canvas>
+</div>
+
+<footer class="synapses-footer">
+    <div>Synapses — Grand Planificateur pédagogique</div>
+    <div>© 2026 Cskrh13 / Vincent · v0.9.0-test · 27/08/2026</div>
+</footer>
+</div>
+
+
+
+<script>
+/* =========================================================
+   SYNAPSES — AUTHOR MARKER
+   Project: Grand Planificateur pédagogique
+   Author: Cskrh13 / Vincent
+   Copyright: © 2026
+   Version: 0.9.0-test
+   Build: 2026-08-27
+   ========================================================= */
+
+const SYNAPSES_BUILD = {
+    project: "Synapses",
+    author: "Cskrh13",
+    year: 2026,
+    version: "0.9.0-test",
+    build: "2026-08-27"
+};
+
+"use strict";
+
+/* =========================================================
+   CARTOGRAPHIE SYNAPSES
+   - Les données sont lues depuis index.json et competences.json.
+   - Aucun lien de prérequis n'est inventé.
+   - Aucun rattachement compétence → séquence n'est deviné :
+     il faut un competence_id exact dans la séquence.
+   - Les niveaux TPS, PS, MS, GS, CP, CE1, CE2, CM1, CM2 et 6e sont disposés en spirale ascendante sous forme de sphères
+     en volume qui contiennent leurs nœuds.
+   ========================================================= */
+
+const LEVEL_ORDER = ["TPS","PS","MS","GS","CP","CE1","CE2","CM1","CM2","6e"];
+
+function normalizeLevel(value){
+  const raw=String(value??"").trim().toLowerCase()
+    .replace(/[éèêë]/g,"e").replace(/\s+/g,"");
+  const map={
+    "tps":"TPS","toutepetitesection":"TPS","toutpetitesection":"TPS",
+    "ps":"PS","petitesection":"PS",
+    "ms":"MS","moyennesection":"MS",
+    "gs":"GS","grandesection":"GS",
+    "cp":"CP","ce1":"CE1","ce2":"CE2","cm1":"CM1","cm2":"CM2",
+    "6e":"6e","6eme":"6e","6ème":"6e","sixieme":"6e"
+  };
+  return map[raw] || String(value??"").trim();
+}
+const TYPE = {
+  competence:{color:"#2A7F72",radius:15},
+  sequence:{color:"#B5871E",radius:17},
+  seance:{color:"#2E5EAA",radius:12}
+};
+
+const $ = id => document.getElementById(id);
+const vw = () => $("stage").clientWidth;
+const vh = () => $("stage").clientHeight;
+const esc = v => String(v ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+const norm = v => String(v ?? "").trim().toLowerCase();
+const levelRank = n => { const i=LEVEL_ORDER.indexOf(n); return i<0?999:i; };
+
+const state = {
+  index:null, compData:{competences:[],domaines:[]},
+  sequences:[], seances:[], nodes:[], links:[],
+  levels:new Set(LEVEL_ORDER), domains:new Set(),
+  search:"", selected:null, hover:null,
+  yaw:0.28, pitch:-0.12, zoom:.015,
+  minZoom:.015, maxZoom:2.4, openingSpin:false, openingSpinTimer:null,
+  autoRotate:false,
+  relationMode:null, relationNodes:new Set(), relationLinks:new Set(),
+  panX:0, panY:0,
+  dragging:false, panning:false, moved:false, lastX:0, lastY:0,
+  sphereR:340, sphereSpacing:600, spiralRadiusBase:850, spiralRiseBase:190, spiralTurns:1.35,
+  sphereRByLevel:{}, sphereScaleFactor:1, camDist:1500, fitZoom:.4,
+  projected:[]
+};
+
+/* ---------- Chargement robuste des chemins ---------- */
+async function getJSON(path){
+  const r = await fetch(path,{cache:"no-store"});
+  if(!r.ok) throw new Error(`${path} → HTTP ${r.status}`);
+  return r.json();
+}
+async function firstJSON(paths){
+  let last;
+  for(const p of paths){
+    try { return {data:await getJSON(p), path:p}; }
+    catch(e){ last=e; }
+  }
+  throw last || new Error("Aucun chemin de données valide.");
+}
+function joinFromIndex(path){
+  return new URL(path, new URL(state.indexPath, location.href)).href;
+}
+function indexCandidates(){
+  const here = location.pathname;
+  const inProgrammation = /\/Programmation\/?[^/]*$/i.test(here);
+  return inProgrammation
+    ? ["data/index.json","../Programmation/data/index.json","Programmation/data/index.json"]
+    : ["Programmation/data/index.json","data/index.json","../Programmation/data/index.json"];
+}
+function normalizeSequence(raw, fallback){
+  if(Array.isArray(raw?.sequences)) raw = raw.sequences[0];
+  if(Array.isArray(raw)) raw = raw[0];
+  return raw && typeof raw==="object" ? {...fallback,...raw} : fallback;
+}
+function extractExactCompetenceId(seq){
+  // Uniquement un identifiant explicitement déclaré et présent dans le référentiel.
+  const id = seq?.competence_id;
+  return state.compData.competences.some(c=>c.id===id) ? id : null;
+}
+function flattenIndex(index){
+  const out=[];
+  for(const niveau of index?.niveaux||[]){
+    for(const discipline of niveau?.disciplines||[]){
+      for(const domaine of discipline?.domaines||[]){
+        for(const seq of domaine?.sequences||[]){
+          out.push({
+            ...seq,
+            niveau:normalizeLevel(niveau.id), niveau_nom:niveau.nom||niveau.id,
+            discipline_id:discipline.id, discipline:discipline.nom||discipline.id,
+            domaine_id:domaine.id, domaine:domaine.nom||domaine.id
+          });
+        }
+      }
+    }
+  }
+  return out;
+}
+async function loadData(){
+  try{
+    $("status").textContent="Chargement de index.json…";
+    const idx = await firstJSON(indexCandidates());
+    state.index=idx.data;
+    state.indexPath=idx.path;
+
+    // index.json peut contenir "data/competences.json" alors qu'il est déjà
+    // dans Programmation/data/. On essaie donc plusieurs chemins réels.
+    const declaredCompPath = state.index?.meta?.competences || "competences.json";
+    $("status").textContent="Chargement de competences.json…";
+
+    const compCandidates = [
+      joinFromIndex(declaredCompPath),
+      joinFromIndex("competences.json"),
+      new URL("Programmation/data/competences.json", location.href).href,
+      new URL("data/competences.json", location.href).href
+    ].filter((v,i,a)=>a.indexOf(v)===i);
+
+    let compResult=null, lastCompError=null;
+    for(const candidate of compCandidates){
+      try{
+        compResult=await getJSON(candidate);
+        break;
+      }catch(e){ lastCompError=e; }
+    }
+    if(!compResult) throw lastCompError || new Error("competences.json introuvable");
+    state.compData = compResult;
+    state.compData.competences ||= [];
+    state.compData.domaines ||= [];
+
+    state.domains = new Set(state.compData.domaines.map(d=>d.id).filter(Boolean));
+
+    const indexed = flattenIndex(state.index);
+    $("status").textContent=`Lecture de ${indexed.length} séquence(s)…`;
+
+    const loaded = await Promise.all(indexed.map(async base=>{
+      let seq={...base};
+      if(base.fichier_sequence){
+        try { seq = normalizeSequence(await getJSON(joinFromIndex(base.fichier_sequence)), base); }
+        catch(e){ console.warn("Séquence non chargée :",base.fichier_sequence,e); }
+      }
+      return seq;
+    }));
+    state.sequences=loaded;
+
+    state.seances=[];
+    for(const seq of state.sequences){
+      for(const seance of seq.seances||[]){
+        state.seances.push({
+          ...seance,
+          niveau:seq.niveau,
+          discipline:seq.discipline,
+          domaine_id:seq.domaine_id,
+          domaine:seq.domaine,
+          sequence_id:seq.id
+        });
+      }
+    }
+
+    buildGraph();
+    computeCameraFraming();
+    renderFilters();
+    resetView();
+    update();
+  }catch(err){
+    console.error(err);
+    $("errorText").textContent =
+      `${err.message}\n\nPlace ce fichier dans le dépôt Synapses et ouvre-le via GitHub Pages ou un serveur local.\nChemins index essayés :\n${indexCandidates().join("\n")}`;
+    $("error").style.display="block";
+    $("status").textContent="Erreur de chargement";
+  }
+}
+
+/* ---------- Construction : aucun lien inventé ---------- */
+function fibonacciPoint(i,n,r){
+  const golden=Math.PI*(3-Math.sqrt(5));
+  const y=1-(i/(Math.max(1,n-1)))*2;
+  const rr=Math.sqrt(Math.max(0,1-y*y));
+  const a=golden*i;
+  return {x:Math.cos(a)*rr*r,y:y*r,z:Math.sin(a)*rr*r};
+}
+function sphereRadiusFor(level){
+  return state.sphereRByLevel[level] || state.sphereR;
+}
+function sphereCenter(level){
+  const i=LEVEL_ORDER.indexOf(normalizeLevel(level));
+  const count=LEVEL_ORDER.length;
+  const safe=i<0?0:i;
+
+  // Spirale ascendante : TPS → 6e.
+  // Le rayon augmente légèrement et chaque niveau gagne de la hauteur.
+  // L'ensemble s'agrandit automatiquement si les sphères contiennent
+  // beaucoup d'éléments (state.sphereScaleFactor), pour garder de l'espace entre elles.
+  const t=count<=1?0:safe/(count-1);
+  const angle=(-Math.PI/2) + t*Math.PI*2*state.spiralTurns;
+  const radius=state.spiralRadiusBase*state.sphereScaleFactor*(0.72+0.28*t);
+
+  return {
+    x:Math.cos(angle)*radius,
+    y:(0.5-t)*state.spiralRiseBase*state.sphereScaleFactor*count,
+    z:Math.sin(angle)*radius
+  };
+}
+/* ---------- Taille des sphères adaptée à leur contenu ----------
+   Les sphères n'accueillent au repos que les nœuds compétences
+   (séquences et séances ne se chargent qu'au clic), donc leur
+   taille dépend uniquement du nombre de compétences par niveau. */
+function computeSphereSizing(comps){
+  const counts={};
+  for(const level of LEVEL_ORDER) counts[level]=0;
+  for(const c of comps) counts[normalizeLevel(c.niveau)]=(counts[normalizeLevel(c.niveau)]||0)+1;
+  const rByLevel={};
+  for(const level of LEVEL_ORDER){
+    const n=counts[level]||0;
+    // Base généreuse + croissance douce avec le nombre d'éléments,
+    // plafonnée pour rester manipulable même avec beaucoup de contenu.
+    rByLevel[level]=Math.max(190,Math.min(820,150+34*Math.sqrt(n)));
+  }
+  state.sphereRByLevel=rByLevel;
+  const maxR=Math.max(...Object.values(rByLevel));
+  // Facteur d'espacement global : plus les plus grosses sphères sont grandes,
+  // plus elles sont éloignées les unes des autres sur la spirale.
+  state.sphereScaleFactor=Math.max(1,maxR/340);
+}
+/* ---------- Cadrage : distance de caméra et zoom initial ----------
+   La spirale grandit avec le contenu (sphereScaleFactor). Avec une
+   distance de caméra fixe, les sphères les plus lointaines pouvaient
+   dépasser le plan de la caméra et s'inverser à l'écran (représentation
+   illisible). On calcule donc une distance de caméra et un zoom de
+   démarrage proportionnés à l'étendue réelle de la spirale, pour que
+   l'ensemble reste toujours visible et bien ordonné dès l'ouverture. */
+function spiralExtent(){
+  const maxR=Math.max(...LEVEL_ORDER.map(sphereRadiusFor));
+  const maxRadiusXZ=state.spiralRadiusBase*state.sphereScaleFactor+maxR;
+  const maxHeight=0.5*state.spiralRiseBase*state.sphereScaleFactor*LEVEL_ORDER.length+maxR;
+  return {maxRadiusXZ,maxHeight};
+}
+function computeCameraFraming(){
+  const {maxRadiusXZ,maxHeight}=spiralExtent();
+  // Distance de caméra très supérieure à l'étendue max : perspective
+  // stable (pas d'inversion) et déformation douce, pour une lecture nette.
+  state.camDist=Math.max(2600,maxRadiusXZ*2.6,maxHeight*2.6);
+  const fitW=(Math.min(vw(),vh())*0.42)/maxRadiusXZ;
+  const fitH=(vh()*0.40)/maxHeight;
+  state.fitZoom=Math.max(0.02,Math.min(fitW,fitH,state.maxZoom));
+  state.minZoom=Math.max(0.008,state.fitZoom*0.28);
+  const range=$("zoomRange");
+  range.min=state.minZoom;range.max=state.maxZoom;
+  range.step=Math.max(0.001,(state.maxZoom-state.minZoom)/500);
+}
+function buildGraph(){
+  state.nodes=[]; state.links=[];
+  const comps=state.compData.competences;
+  computeSphereSizing(comps);
+
+  // Au repos, seules les compétences peuplent les sphères — cf. schéma cible.
+  for(const level of LEVEL_ORDER){
+    const group=comps.filter(c=>normalizeLevel(c.niveau)===level);
+    const center=sphereCenter(level);
+    const r=sphereRadiusFor(level);
+    group.forEach((c,i)=>{
+      const p=fibonacciPoint(i,group.length,r*.76);
+      state.nodes.push({
+        id:"c:"+c.id,type:"competence",ref:c.id,label:c.intitule,
+        niveau:normalizeLevel(c.niveau),domaine_id:c.domaine_id,discipline:c.discipline,
+        x:center.x+p.x,y:center.y+p.y,z:center.z+p.z
+      });
+    });
+  }
+
+  // Prérequis : uniquement les IDs explicitement déclarés dans prerequis_competences.
+  const ids=new Set(comps.map(c=>c.id));
+  for(const c of comps){
+    for(const pre of c.prerequis_competences||[]){
+      if(ids.has(pre)){
+        state.links.push({source:"c:"+pre,target:"c:"+c.id,type:"prerequis"});
+      }
+    }
+  }
+}
+
+/* ---------- Chargement à la demande : séquences puis séances ----------
+   Aucune séquence ni séance n'existe comme nœud tant qu'une compétence
+   n'a pas été sélectionnée. Au clic sur une compétence, on ajoute
+   uniquement ses séquences liées (competence_id exact) juste au-dessus
+   d'elle, et les séances de ces séquences juste en dessous — comme
+   dans le schéma cible (sphère → compétence → séquence → séances). */
+function clearDynamicNodes(){
+  if(!state.nodes.some(n=>n.dynamic)) { state.activeCompetenceSatellite=null; return; }
+  state.nodes=state.nodes.filter(n=>!n.dynamic);
+  state.links=state.links.filter(l=>!l.dynamic);
+  state.activeCompetenceSatellite=null;
+}
+function loadCompetenceSatellites(compId){
+  clearDynamicNodes();
+  const compNode=state.nodes.find(n=>n.id==="c:"+compId);
+  if(!compNode) return;
+  const seqs=state.sequences.filter(s=>extractExactCompetenceId(s)===compId);
+  seqs.forEach((s,i)=>{
+    const angle=(i/Math.max(1,seqs.length))*Math.PI*2;
+    const rr=60;
+    const seqPos={
+      x:compNode.x+Math.cos(angle)*rr*.4,
+      y:compNode.y-85-i*10,
+      z:compNode.z+Math.sin(angle)*rr*.4+15
+    };
+    state.nodes.push({
+      id:"s:"+s.id,type:"sequence",ref:s.id,label:s.titre||s.id,
+      niveau:normalizeLevel(s.niveau),domaine_id:s.domaine_id,discipline:s.discipline,
+      x:seqPos.x,y:seqPos.y,z:seqPos.z,competence_id:compId,dynamic:true
+    });
+    state.links.push({source:"c:"+compId,target:"s:"+s.id,type:"sequence",dynamic:true});
+
+    const seances=s.seances||[];
+    seances.forEach((se,j)=>{
+      const rr2=42+(j%2)*10;
+      state.nodes.push({
+        id:"x:"+se.id,type:"seance",ref:se.id,label:se.titre||se.id,
+        niveau:normalizeLevel(s.niveau),domaine_id:s.domaine_id,discipline:s.discipline,
+        x:compNode.x-rr2*.5-(j%3)*10,
+        y:compNode.y+30+j*26,
+        z:compNode.z+10+(j%4)*8,
+        sequence_id:s.id,dynamic:true
+      });
+      state.links.push({source:"s:"+s.id,target:"x:"+se.id,type:"seance",dynamic:true});
+    });
+  });
+  state.activeCompetenceSatellite=compId;
+}
+
+/* ---------- Filtres ---------- */
+function visible(n){
+  if(n.type==="competence"){
+    if(!state.levels.has(normalizeLevel(n.niveau))) return false;
+    if(state.domains.size && !state.domains.has(n.domaine_id)) return false;
+  } else {
+    if(!state.levels.has(normalizeLevel(n.niveau))) return false;
+    if(state.domains.size && n.domaine_id && !state.domains.has(n.domaine_id)) return false;
+  }
+  const q=norm(state.search);
+  if(!q) return true;
+  return norm(n.label).includes(q) || norm(n.niveau).includes(q) || norm(n.discipline).includes(q);
+}
+function renderFilters(){
+  const levels=$("levels"), domains=$("domains");
+  levels.innerHTML=""; domains.innerHTML="";
+  for(const l of LEVEL_ORDER){
+    const b=document.createElement("button"); b.textContent=l;
+    b.className=state.levels.has(l)?"active":"";
+    b.onclick=()=>{state.levels.has(l)?state.levels.delete(l):state.levels.add(l);renderFilters();update();};
+    levels.appendChild(b);
+  }
+  for(const d of state.compData.domaines){
+    const b=document.createElement("button"); b.textContent=d.nom||d.id;
+    b.className=state.domains.has(d.id)?"active":"";
+    b.onclick=()=>{state.domains.has(d.id)?state.domains.delete(d.id):state.domains.add(d.id);renderFilters();update();};
+    domains.appendChild(b);
+  }
+  $("levelsCount").textContent=`${state.levels.size}/${LEVEL_ORDER.length}`;
+  $("domainsCount").textContent=`${state.domains.size}/${state.compData.domaines.length}`;
+}
+
+/* ---------- Projection et rendu ---------- */
+function rotate(p){
+  const cy=Math.cos(state.yaw), sy=Math.sin(state.yaw);
+  const cp=Math.cos(state.pitch), sp=Math.sin(state.pitch);
+  const x=p.x*cy-p.z*sy, z=p.x*sy+p.z*cy;
+  return {x,y:p.y*cp-z*sp,z:p.y*sp+z*cp};
+}
+function projectPoint(p){
+  const r=rotate(p), d=state.camDist;
+  const scale=(d/(d+r.z))*state.zoom;
+  return {x:vw()/2+state.panX+r.x*scale,y:vh()/2+state.panY+r.y*scale,z:r.z,scale};
+}
+function sphereProjection(level){
+  const p=projectPoint(sphereCenter(level));
+  return {...p,r:sphereRadiusFor(level)*p.scale};
+}
+/* ---------- Projection d'un nœud, ancrée à sa sphère ----------
+   Un nœud appartenant à une sphère (compétence, ou séquence/séance
+   affichée sous une compétence) est projeté avec la MÊME échelle
+   que le centre de sa sphère, et pas avec sa propre profondeur.
+   Sans cela, l'écart de profondeur entre nœuds d'une même sphère se
+   traduisait en perspective par un étalement en cône bien au-delà
+   du contour dessiné. */
+function projectNode(n){
+  const lvl=normalizeLevel(n.niveau);
+  if(lvl && LEVEL_ORDER.includes(lvl)){
+    const center=sphereCenter(lvl);
+    const sp=projectPoint(center);
+    const off=rotate({x:n.x-center.x,y:n.y-center.y,z:n.z-center.z});
+    return {x:sp.x+off.x*sp.scale,y:sp.y+off.y*sp.scale,z:sp.z+off.z,scale:sp.scale};
+  }
+  return projectPoint(n);
+}
+function drawSphere(ctx,s,label){
+  const {x,y,r}=s;
+  ctx.save();
+  // Fond très léger pour donner du volume, sans masquer le maillage.
+  const g=ctx.createRadialGradient(x-r*.3,y-r*.35,r*.05,x,y,r);
+  g.addColorStop(0,"rgba(255,255,255,.55)");
+  g.addColorStop(.65,"rgba(235,239,242,.10)");
+  g.addColorStop(1,"rgba(180,190,198,.02)");
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+
+  // Maillage façon globe filaire (méridiens + parallèles), comme sur le schéma.
+  const TILT=.34; // aplatissement des parallèles, cohérent avec l'ancien équateur
+  ctx.strokeStyle="rgba(20,32,42,.55)";ctx.lineWidth=1;
+
+  // Méridiens : ellipses pleines partageant les pôles (haut/bas de la sphère).
+  const meridianCount=9;
+  for(let i=0;i<meridianCount;i++){
+    const theta=((i+1)/(meridianCount+1))*Math.PI;
+    const rx=Math.max(1,r*Math.sin(theta));
+    ctx.beginPath();ctx.ellipse(x,y,rx,r,0,0,Math.PI*2);ctx.stroke();
+  }
+  // Parallèles : ellipses horizontales aplaties, plus petites vers les pôles.
+  const latCount=5;
+  for(let i=1;i<latCount;i++){
+    const phi=(i/latCount-0.5)*Math.PI;
+    const rx=r*Math.cos(phi);
+    const ry=Math.max(.6,rx*TILT);
+    const dy=-r*Math.sin(phi)*(1-TILT);
+    ctx.beginPath();ctx.ellipse(x,y+dy,rx,ry,0,0,Math.PI*2);ctx.stroke();
+  }
+
+  // Contour extérieur bien marqué, comme la limite visible du globe.
+  ctx.strokeStyle="rgba(20,32,42,.9)";ctx.lineWidth=3;
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.stroke();
+
+  ctx.fillStyle="rgba(21,35,51,.96)";ctx.font=`600 ${Math.max(22,Math.min(40,r*.18))}px Fraunces,Georgia,serif`;
+  ctx.textAlign="center";ctx.fillText(label,x,y-r-20);
+  ctx.restore();
+}
+function drawNode(ctx,p,n){
+  const r=Math.max(5,TYPE[n.type].radius*p.scale*.78);
+  ctx.save();
+  const base=(state.selected===n.id || state.relationNodes.has(n.id)) ? "#c52b2b" : TYPE[n.type].color;
+  const grad=ctx.createRadialGradient(p.x-r*.35,p.y-r*.42,1,p.x,p.y,r);
+  grad.addColorStop(0,"rgba(255,255,255,.9)");
+  grad.addColorStop(.25,base);grad.addColorStop(1,"rgba(0,0,0,.28)");
+  ctx.shadowColor="rgba(20,30,35,.22)";ctx.shadowBlur=8;
+  ctx.fillStyle=grad;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;ctx.strokeStyle="rgba(255,255,255,.38)";ctx.lineWidth=1;ctx.stroke();
+  if(state.hover===n.id || state.selected===n.id){ctx.strokeStyle="#152333";ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,r+4,0,Math.PI*2);ctx.stroke();}
+  ctx.restore();
+}
+function focusOpacityFor(n){
+  // Estompage désactivé : toutes les boules restent pleinement visibles.
+  return 1;
+}
+function draw(){
+  const canvas=$("graph"),ctx=canvas.getContext("2d");
+  const dpr=Math.min(devicePixelRatio||1,2);
+  canvas.width=vw()*dpr;canvas.height=vh()*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,vw(),vh());
+
+  const bg=ctx.createRadialGradient(vw()*.52,vh()*.45,30,vw()*.52,vh()*.45,Math.max(vw(),vh())*.72);
+  bg.addColorStop(0,"#fff");bg.addColorStop(.7,"#f5f7f8");bg.addColorStop(1,"#e7ebee");
+  ctx.fillStyle=bg;ctx.fillRect(0,0,vw(),vh());
+
+  const spheres=LEVEL_ORDER
+    .filter(l=>state.levels.has(l))
+    .map(l=>({level:l,...sphereProjection(l)}))
+    .sort((a,b)=>b.z-a.z);
+  for(const s of spheres){
+    ctx.save();ctx.globalAlpha=1;drawSphere(ctx,s,s.level);ctx.restore();
+  }
+
+  const projected=new Map();
+  for(const n of state.nodes.filter(visible)) projected.set(n.id,{...projectNode(n),node:n});
+  state.projected=[...projected.values()];
+
+  // liens d'abord
+  for(const l of state.links){
+    const a=projected.get(l.source),b=projected.get(l.target);
+    if(!a||!b) continue;
+    ctx.save();
+    ctx.globalAlpha=Math.min(focusOpacityFor(a.node),focusOpacityFor(b.node));
+    if(l.type==="prerequis"){
+      ctx.strokeStyle="rgba(169,125,34,.76)";ctx.lineWidth=1.5;ctx.setLineDash([5,6]);
+    }else if(l.type==="sequence"){
+      ctx.strokeStyle="rgba(41,72,95,.82)";ctx.lineWidth=1.4;
+    }else{
+      ctx.strokeStyle="rgba(73,108,126,.48)";ctx.lineWidth=1;
+    }
+    if(state.relationLinks.has(l.source+"->"+l.target)){ctx.strokeStyle="#c52b2b";ctx.lineWidth=3;ctx.setLineDash(l.type==="prerequis"?[5,6]:[]);}
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.restore();
+  }
+
+  const ordered=[...projected.values()].sort((a,b)=>a.z-b.z);
+  for(const p of ordered){
+    ctx.save();ctx.globalAlpha=focusOpacityFor(p.node);drawNode(ctx,p,p.node);ctx.restore();
+  }
+}
+function update(){
+  draw();
+  const comps=state.nodes.filter(n=>n.type==="competence"&&visible(n)).length;
+  const seq=state.nodes.filter(n=>n.type==="sequence"&&visible(n)).length;
+  const sea=state.nodes.filter(n=>n.type==="seance"&&visible(n)).length;
+  const pre=state.links.filter(l=>l.type==="prerequis"&&state.nodes.find(n=>n.id===l.source&&visible(n))&&state.nodes.find(n=>n.id===l.target&&visible(n))).length;
+  $("status").textContent=`${comps} compétences · ${seq} séquences · ${sea} séances · ${pre} prérequis`;
+}
+/* ---------- Infobulle au survol ---------- */
+const TYPE_LABEL={competence:"Compétence",sequence:"Séquence",seance:"Séance"};
+function updateNodeTooltip(node,clientX,clientY){
+  const tt=$("nodeTooltip");
+  if(!node){tt.style.display="none";return;}
+  const p=state.projected.find(pr=>pr.node.id===node.id);
+  if(!p){tt.style.display="none";return;}
+  tt.innerHTML=`<span class="tt-type">${TYPE_LABEL[node.type]||node.type}${node.niveau?" · "+node.niveau:""}</span>${node.label||""}`;
+  tt.style.left=p.x+"px";
+  tt.style.top=p.y+"px";
+  tt.style.display="block";
+}
+function hideNodeTooltip(){ $("nodeTooltip").style.display="none"; }
+
+function hit(clientX,clientY){
+  const rect=$("graph").getBoundingClientRect();
+  const x=clientX-rect.left,y=clientY-rect.top;
+  let best=null,bestD=Infinity;
+  for(const p of state.projected){
+    const r=Math.max(8,TYPE[p.node.type].radius*p.scale*.9+6);
+    const d=Math.hypot(x-p.x,y-p.y);
+    if(d<r&&d<bestD){best=p.node;bestD=d;}
+  }
+  return best;
+}
+
+/* ---------- Fiches ---------- */
+function compById(id){return state.compData.competences.find(c=>c.id===id)}
+function seqById(id){return state.sequences.find(s=>s.id===id)}
+function relationData(id){
+  const byId=new Map(state.compData.competences.map(c=>[c.id,c]));
+  const pre=(byId.get(id)?.prerequis_competences||[]).filter(x=>byId.has(x));
+  const after=state.compData.competences.filter(c=>(c.prerequis_competences||[]).includes(id));
+  return {byId,pre,after};
+}
+function showRelations(mode){
+  state.relationNodes=new Set(); state.relationLinks=new Set();
+  const id=state.selected?.startsWith("c:")?state.selected.slice(2):null;
+  if(!id||!mode){$("relationMenu").classList.remove("open");update();return;}
+  const {pre}=relationData(id);
+  if(mode==="immediate"){
+    pre.forEach(x=>{state.relationNodes.add("c:"+x);state.relationLinks.add("c:"+x+"->c:"+id);});
+  }else{
+    const byId=new Map(state.compData.competences.map(c=>[c.id,c])), seen=new Set();
+    function walk(x){
+      for(const y of byId.get(x)?.prerequis_competences||[]){
+        if(!byId.has(y))continue;
+        state.relationNodes.add("c:"+y);state.relationLinks.add("c:"+y+"->c:"+x);
+        if(!seen.has(y)){seen.add(y);walk(y);}
+      }
+    }
+    walk(id);
+  }
+  $("relationMenu").classList.add("open");update();
+}
+function showPanel(node){
+  state.selected=node.id;
+  let html="";
+  if(node.type==="competence"){
+    // Charge (et affiche) les séquences liées et leurs séances,
+    // uniquement maintenant que cette compétence est sélectionnée.
+    loadCompetenceSatellites(node.ref);
+    const c=compById(node.ref), {byId,pre,after}=relationData(c?.id);
+    const linkedSeqs=state.sequences.filter(s=>extractExactCompetenceId(s)===c?.id);
+    html=`<span class="tag">Compétence · ${esc(c?.niveau)}</span><h2>${esc(c?.intitule)}</h2>
+      <div class="meta">${esc(c?.discipline)} · ${esc(c?.domaine)}</div>
+      <div class="section"><h4>Objectifs</h4>${(c?.objectifs||[]).map(x=>`<div class="item">${esc(x)}</div>`).join("")||"<div class='item'>Aucun objectif renseigné.</div>"}</div>
+      <div class="section"><h4>Séquences liées (chargées à l'instant)</h4>${linkedSeqs.length?linkedSeqs.map(s=>`<div class="item linkedItem" data-s="${esc(s.id)}">${esc(s.titre||s.id)} — ${s.seances?.length||0} séance(s)</div>`).join(""):"<div class='item'>Aucune séquence rattachée par competence_id.</div>"}</div>
+      <div class="section"><h4>Prérequis explicitement déclarés</h4>${pre.length?pre.map(id=>`<div class="item linkedItem" data-c="${esc(id)}">${esc(byId.get(id)?.intitule||id)}</div>`).join(""):"<div class='item'>Aucun prérequis déclaré.</div>"}</div>
+      <div class="section"><h4>Compétences qui en dépendent</h4>${after.length?after.map(x=>`<div class="item linkedItem" data-c="${esc(x.id)}">${esc(x.intitule)}</div>`).join(""):"<div class='item'>Aucune relation déclarée.</div>"}</div>
+      <a class="panelAction" href="Programmation/sequences.html?competence=${encodeURIComponent(c?.id||"")}">Ouvrir dans la programmation</a>`;
+  }else if(node.type==="sequence"){
+    const s=seqById(node.ref);
+    html=`<span class="tag">Séquence · ${esc(s?.niveau)}</span><h2>${esc(s?.titre)}</h2><div class="meta">${esc(s?.discipline)} · ${esc(s?.domaine)}</div>`;
+  }else{
+    const se=state.seances.find(x=>x.id===node.ref),seq=seqById(se?.sequence_id);
+    html=`<span class="tag">Séance · ${esc(se?.niveau)}</span><h2>${esc(se?.titre)}</h2><div class="meta">${esc(se?.type||"Séance")} · ${esc(seq?.titre||"")}</div>`;
+  }
+  $("panelContent").innerHTML=html;$("panel").classList.add("open");
+  if(node.type==="competence"){
+    $("relationMenu").classList.add("open");
+    $("panelContent").querySelectorAll("[data-c]").forEach(e=>e.onclick=()=>showPanel(state.nodes.find(n=>n.id==="c:"+e.dataset.c)));
+    $("panelContent").querySelectorAll("[data-s]").forEach(e=>e.onclick=()=>showPanel(state.nodes.find(n=>n.id==="s:"+e.dataset.s)));
+  }else $("relationMenu").classList.remove("open");
+  update();
+}
+
+/* ---------- Navigation ---------- */
+function resetView(){
+  state.yaw=0.42;state.pitch=-0.24;state.zoom=state.fitZoom;state.panX=0;state.panY=0;
+  state.relationNodes=new Set();state.relationLinks=new Set();$("relationMenu").classList.remove("open");
+  $("zoomRange").value=state.zoom;draw();
+}
+$("search").addEventListener("input",e=>{state.search=e.target.value;update();});
+$("reset").onclick=()=>{
+  state.search="";$("search").value="";
+  state.levels=new Set(LEVEL_ORDER);
+  state.domains=new Set(state.compData.domaines.map(d=>d.id));
+  state.selected=null;$("panel").classList.remove("open");
+  clearDynamicNodes();
+  renderFilters();resetView();update();
+};
+$("close").onclick=()=>{$("panel").classList.remove("open");state.selected=null;clearDynamicNodes();update();};
+$("home").onclick=resetView;
+$("minus").onclick=()=>{state.zoom=Math.max(state.minZoom,state.zoom*.88);$("zoomRange").value=state.zoom;draw();};
+$("plus").onclick=()=>{state.zoom=Math.min(state.maxZoom,state.zoom*1.12);$("zoomRange").value=state.zoom;draw();};
+$("zoomRange").oninput=e=>{state.zoom=+e.target.value;draw();};
+$("fullscreen").onclick=()=>document.fullscreenElement?document.exitFullscreen():$("app").requestFullscreen?.();
+
+const canvas=$("graph");
+canvas.addEventListener("contextmenu",e=>e.preventDefault());
+canvas.addEventListener("pointerdown",e=>{
+  state.openingSpin=false;
+  state.dragging=true;state.panning=e.button===2;state.moved=false;
+  state.lastX=e.clientX;state.lastY=e.clientY;canvas.classList.add("dragging");
+  canvas.setPointerCapture?.(e.pointerId);
+});
+canvas.addEventListener("pointermove",e=>{
+  if(!state.dragging){
+    const n=hit(e.clientX,e.clientY);
+    state.hover=n?.id||null;
+    draw();
+    updateNodeTooltip(n,e.clientX,e.clientY);
+    return;
+  }
+  hideNodeTooltip();
+  const dx=e.clientX-state.lastX,dy=e.clientY-state.lastY;
+  if(Math.abs(dx)+Math.abs(dy)>2) state.moved=true;
+  if(state.panning){
+    state.panX+=dx;state.panY+=dy;
+  }else{
+    state.yaw+=dx*.006;
+    state.pitch=Math.max(-1.25,Math.min(1.25,state.pitch+dy*.004));
+  }
+  state.lastX=e.clientX;state.lastY=e.clientY;draw();
+});
+canvas.addEventListener("dblclick",e=>{
+  state.openingSpin=false;
+  const n=hit(e.clientX,e.clientY) || (state.selected && state.nodes.find(x=>x.id===state.selected));
+  if(!n) return;
+  state.zoom=Math.min(state.maxZoom,Math.max(state.zoom,1.8));
+  state.panX=0; state.panY=0;
+  const p=projectNode(n);
+  state.panX=vw()/2-p.x;
+  state.panY=vh()/2-p.y;
+  $("zoomRange").value=state.zoom;
+  draw();
+});
+canvas.addEventListener("pointerup",e=>{
+  if(!state.dragging)return;
+  const wasPan=state.panning,moved=state.moved;
+  state.dragging=false;state.panning=false;canvas.classList.remove("dragging");
+  if(!wasPan&&!moved){
+    const n=hit(e.clientX,e.clientY);
+    if(n) showPanel(n);
+  }
+});
+canvas.addEventListener("wheel",e=>{
+  state.openingSpin=false;
+  e.preventDefault();
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const cx=vw()/2, cy=vh()/2;
+  const newZoom=Math.max(state.minZoom,Math.min(state.maxZoom,state.zoom*(e.deltaY<0?1.08:.925)));
+  const k=newZoom/state.zoom; // ratio réel appliqué (peut être bridé par min/max)
+  // Le point du monde sous le curseur doit rester sous le curseur après le zoom.
+  state.panX=(mx-cx)*(1-k)+k*state.panX;
+  state.panY=(my-cy)*(1-k)+k*state.panY;
+  state.zoom=newZoom;
+  $("zoomRange").value=state.zoom;draw();hideNodeTooltip();
+},{passive:false});
+canvas.addEventListener("pointerleave",()=>{state.hover=null;draw();hideNodeTooltip();});
+$("showImmediatePre").onclick=()=>showRelations("immediate");
+$("showAncestors").onclick=()=>showRelations("ancestors");
+$("clearRelations").onclick=()=>showRelations(null);
+window.addEventListener("resize",draw);
+let rotateRAF=null;
+function autoRotateLoop(){
+  if(!state.autoRotate){ rotateRAF=null; return; }
+  if(!state.dragging){
+    state.yaw+=0.0022;
+    draw();
+  }
+  rotateRAF=requestAnimationFrame(autoRotateLoop);
+}
+function setAutoRotate(on){
+  state.autoRotate=on;
+  $("rotateToggle").classList.toggle("active",on);
+  if(on && rotateRAF===null) rotateRAF=requestAnimationFrame(autoRotateLoop);
+}
+$("rotateToggle").onclick=()=>setAutoRotate(!state.autoRotate);
+// La rotation automatique se coupe dès que l'utilisateur interagit avec la scène.
+canvas.addEventListener("pointerdown",()=>{ if(state.autoRotate) setAutoRotate(false); });
+canvas.addEventListener("wheel",()=>{ if(state.autoRotate) setAutoRotate(false); },{passive:true});
+
+Promise.all([loadData(), document.fonts?.ready||Promise.resolve()]).then(()=>draw());
+
+/* ---------- Menus déroulants Niveaux / Domaines ---------- */
+(function(){
+  const dropdowns=[$("levelsDropdown"),$("domainsDropdown")];
+  dropdowns.forEach(dd=>{
+    dd.addEventListener("toggle",()=>{
+      if(dd.open) dropdowns.forEach(o=>{ if(o!==dd) o.open=false; });
+    });
+  });
+  document.addEventListener("click",e=>{
+    dropdowns.forEach(dd=>{ if(dd.open && !dd.contains(e.target)) dd.open=false; });
+  });
+})();
+</script>
+
+</body>
+</html>

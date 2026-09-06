@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<!-- SYNAPSES-AUTHOR: Cskrh13 / Vincent | © 2026 -->
+<meta name="author" content="Cskrh13 / Vincent">
+<meta name="copyright" content="© 2026 Cskrh13 / Vincent — Synapses">
+<meta name="application-name" content="Synapses">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Élèves à besoins éducatifs particuliers — Synapses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1E2A4A;
+  --navy-deep:#141d33;
+  --bg:#F6F5F1;
+  --panel:#FFFFFF;
+  --line:#DEDBD2;
+  --ink:#20242E;
+  --ink-soft:#5B5F6B;
+  --accent-sky:#2E5EAA;
+  --danger:#B5502E;
+  --ok:#2A7F72;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;line-height:1.5;}
+h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;margin:0 0 8px;letter-spacing:-0.01em;}
+button{font-family:inherit;cursor:pointer;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-sky);font-weight:500;}
+header.site-header{background:var(--navy);color:#fff;position:sticky;top:0;z-index:50;border-bottom:3px solid var(--accent-sky);}
+.header-top{display:flex;align-items:center;justify-content:space-between;max-width:1240px;margin:0 auto;padding:14px 24px;gap:20px;flex-wrap:wrap;}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:#fff;}
+.brand-mark{width:40px;height:40px;border-radius:8px;background:linear-gradient(160deg,var(--accent-sky),#5486d6);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:700;font-size:18px;color:#fff;flex-shrink:0;}
+.brand-text{display:flex;flex-direction:column;line-height:1.15;}
+.brand-text .top{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#B9C6E5;font-family:'Inter',sans-serif;font-weight:600;}
+.brand-text .bottom{font-family:'Fraunces',serif;font-weight:600;font-size:17px;}
+nav.main-nav{display:flex;gap:6px;flex-wrap:wrap;row-gap:6px;align-items:center;}
+nav.main-nav>a{height:36px;box-sizing:border-box;display:flex;align-items:center;}
+nav.main-nav a{color:#D9E0F2;text-decoration:none;font-size:14px;font-weight:500;padding:8px 12px;border-radius:6px;transition:background .15s;white-space:nowrap;}
+nav.main-nav a:hover{background:rgba(255,255,255,.09);color:#fff;}
+.nav-dropdown{position:relative;flex:0 0 auto;}
+.nav-dropdown>summary{height:36px;line-height:20px;list-style:none;color:#D9E0F2;font-size:14px;font-weight:500;padding:8px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;display:block;box-sizing:border-box;}
+.nav-dropdown>summary::-webkit-details-marker{display:none;}
+.nav-dropdown>summary::after{content:"⌄";font-size:11px;margin-left:7px;opacity:.75;}
+.nav-dropdown[open]>summary,.nav-dropdown>summary:hover{background:rgba(255,255,255,.09);color:#fff;}
+.nav-dropdown-menu{position:absolute;top:100%;right:0;margin-top:7px;min-width:235px;background:var(--navy);border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:7px;box-shadow:0 14px 30px rgba(0,0,0,.25);z-index:100;}
+.nav-dropdown-menu a{display:block!important;color:#D9E0F2!important;padding:9px 11px!important;border-radius:5px;margin:0!important;background:transparent!important;border:0!important;}
+.nav-dropdown-menu a:hover{background:rgba(255,255,255,.09)!important;color:#fff!important;}
+.menu-separator{height:1px;background:rgba(255,255,255,.12);margin:6px 4px;}
+.menu-label{padding:5px 11px 3px;color:#9EADD0;font-family:'Inter',sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;}
+@media(max-width:760px){nav.main-nav{width:100%;}.nav-dropdown-menu{position:static;margin-top:4px;width:100%;}}
+nav.main-nav a.nav-coffre-actif{background:rgba(181,80,46,.16);border:1px solid rgba(181,80,46,.4);margin-left:4px;color:#fff;cursor:default;}
+main{max-width:960px;margin:0 auto;padding:32px 24px 80px;}
+.banner{background:#FFF7ED;border:1px solid #EFD9B8;color:#7A4A12;border-radius:var(--radius);padding:14px 18px;font-size:14px;margin-bottom:28px;}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;margin-bottom:20px;}
+.card h2{font-size:19px;margin-bottom:4px;}
+.card p.hint{color:var(--ink-soft);font-size:13.5px;margin:4px 0 16px;}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px;}
+label{font-size:13px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px;}
+input[type=text],input[type=password],input[type=file],select,textarea{
+  font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);min-width:220px;
+}
+textarea{width:100%;min-height:60px;resize:vertical;}
+.field{margin-bottom:10px;}
+.btn{border:none;border-radius:7px;padding:10px 16px;font-size:14px;font-weight:600;transition:.15s;}
+.btn-primary{background:var(--accent-sky);color:#fff;}
+.btn-primary:hover{background:#254c8c;}
+.btn-outline{background:#fff;border:1px solid var(--line);color:var(--ink);}
+.btn-outline:hover{border-color:var(--accent-sky);color:var(--accent-sky);}
+.btn-danger{background:#fff;border:1px solid var(--danger);color:var(--danger);}
+.btn-danger:hover{background:var(--danger);color:#fff;}
+.status{font-size:13.5px;margin-top:10px;padding:8px 12px;border-radius:7px;display:none;}
+.status.ok{display:block;background:#EAF6F3;color:var(--ok);border:1px solid #BFE3DA;}
+.status.err{display:block;background:#FBEAE5;color:var(--danger);border:1px solid #F0C6B8;}
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;border-radius:99px;background:#EEF2FB;color:var(--accent-sky);font-weight:600;}
+.pill.closed{background:#F1F1EC;color:var(--ink-soft);}
+.force-mdp{margin-top:6px;max-width:260px;}
+.force-mdp .barre{height:6px;border-radius:4px;background:#EAE8E0;overflow:hidden;}
+.force-mdp .barre-remplie{height:100%;width:0%;border-radius:4px;transition:width .2s,background-color .2s;background:#B5502E;}
+.force-mdp .label{font-size:11.5px;margin-top:4px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+.force-mdp .conseils{font-size:11.5px;color:var(--ink-soft);margin-top:3px;}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px;}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);}
+th{color:var(--ink-soft);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:640px){.grid2{grid-template-columns:1fr;}}
+.disabled-overlay{opacity:.45;pointer-events:none;}
+
+/* ===== Intro pédagogique (nouveau) ===== */
+.intro-hero{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:26px 28px;margin-bottom:22px;}
+.intro-hero h1{font-size:23px;color:var(--navy);}
+.intro-hero p.intro-lead{color:var(--ink-soft);font-size:14.5px;margin:10px 0 0;max-width:720px;}
+.how-it-works{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px;}
+@media(max-width:760px){.how-it-works{grid-template-columns:1fr;}}
+.how-step{background:#FAF9F5;border:1px solid var(--line);border-radius:8px;padding:14px 16px;}
+.how-step .how-num{
+  display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;
+  background:var(--accent-sky);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;margin-bottom:8px;
+}
+.how-step h4{font-size:13.5px;color:var(--navy);margin-bottom:4px;}
+.how-step p{font-size:12.5px;color:var(--ink-soft);margin:0;line-height:1.5;}
+.card-step-head{padding:18px 24px 0;font-family:'Fraunces',serif;font-weight:600;font-size:15px;color:var(--navy);}
+
+/* ===== suivi-individuel.js ===== */
+.si-loading,.si-error{padding:24px;color:var(--ink-soft);font-size:14px;}
+.si-error{color:var(--danger);}
+.si-layout{display:grid;grid-template-columns:240px 1fr;min-height:420px;}
+.si-sidebar{border-right:1px solid var(--line);padding:18px;background:#FAFAF7;}
+.si-sidebar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;}
+.si-sidebar-head h3{font-size:15px;margin:0;}
+.si-btn-export-tout{width:100%;background:#fff;border:1px solid var(--line);color:var(--ink-soft);font-size:12.5px;padding:8px 10px;border-radius:7px;margin-bottom:14px;}
+.si-btn-export-tout:hover{border-color:var(--accent-sky);color:var(--accent-sky);}
+.si-eleves-liste{display:flex;flex-direction:column;gap:4px;}
+.si-eleve-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;background:transparent;border:1px solid transparent;border-radius:7px;padding:8px 10px;font-size:13.5px;}
+.si-eleve-item:hover{background:#F0EFE9;}
+.si-eleve-item.active{background:#EEF2FB;border-color:var(--accent-sky);}
+.si-eleve-id{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent-sky);font-weight:600;}
+.si-eleve-nom{color:var(--ink);}
+.si-fiche{padding:22px 24px;}
+.si-fiche-vide{color:var(--ink-soft);display:flex;align-items:center;justify-content:center;min-height:300px;}
+.si-fiche-entete{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line);}
+.si-fiche-id{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent-sky);font-weight:600;letter-spacing:.04em;}
+.si-fiche-nom{font-size:20px;margin:2px 0 0;}
+.si-onglets-nav{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;flex-wrap:wrap;}
+.si-onglet{background:none;border:none;padding:9px 14px;font-size:13.5px;font-weight:600;color:var(--ink-soft);border-bottom:2px solid transparent;}
+.si-onglet:hover{color:var(--ink);}
+.si-onglet.active{color:var(--accent-sky);border-bottom-color:var(--accent-sky);}
+.si-btn{border:none;border-radius:7px;padding:8px 14px;font-size:13.5px;font-weight:600;}
+.si-btn-primary{background:var(--accent-sky);color:#fff;}
+.si-btn-primary:hover{background:#254c8c;}
+.si-btn-danger-outline{background:#fff;border:1px solid var(--danger);color:var(--danger);}
+.si-btn-danger-outline:hover{background:var(--danger);color:#fff;}
+.si-form-observation{background:#FAFAF7;border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:18px;display:flex;flex-direction:column;gap:10px;}
+.si-form-row label,.si-form-row-pair label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:4px;}
+.si-form-row select,.si-form-row input{width:100%;}
+.si-form-row-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.si-form-row-pair select,.si-form-row-pair input{width:100%;margin-bottom:6px;}
+@media(max-width:640px){.si-form-row-pair{grid-template-columns:1fr;} .si-layout{grid-template-columns:1fr;}}
+.si-table{width:100%;border-collapse:collapse;font-size:13px;}
+.si-table th,.si-table td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);}
+.si-table th{color:var(--ink-soft);font-size:11px;text-transform:uppercase;letter-spacing:.04em;}
+.si-empty{color:var(--ink-soft);font-size:13.5px;font-style:italic;}
+.si-hint{color:var(--ink-soft);font-size:12.5px;margin-top:10px;}
+.si-frise{display:flex;flex-direction:column;gap:0;border-left:2px solid var(--line);padding-left:16px;}
+.si-frise-item{position:relative;padding:0 0 16px;}
+.si-frise-item::before{content:'';position:absolute;left:-21px;top:4px;width:9px;height:9px;border-radius:50%;background:var(--accent-sky);}
+.si-frise-date{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);}
+.si-frise-type{font-weight:600;font-size:13.5px;}
+.si-frise-detail{font-size:13px;color:var(--ink-soft);}
+
+/* ===== grille-analyse.js (onglet "Analyse & IA") ===== */
+.ga-section { margin-bottom: 28px; }
+.ga-section h3 { font-family: Georgia, serif; margin: 0 0 10px; font-size: 1.1rem; }
+.ga-section h4 { margin: 16px 0 6px; font-size: .95rem; }
+.ga-section ul, .ga-section ol { margin: 0; padding-left: 22px; }
+.ga-section li { margin-bottom: 6px; }
+.ga-atelier-ia { border-left: 5px solid var(--accent-sky); padding-left: 14px; }
+.ga-toolbar { margin: 10px 0; display: flex; gap: 10px; }
+.ga-textarea {
+  width: 100%; box-sizing: border-box; font-family: Consolas, monospace;
+  font-size: .8rem; border-radius: 8px; padding: 10px; margin: 6px 0 10px;
+}
+.ga-resultats-ia { margin-top: 16px; }
+.prompt-box{font-family:Consolas,monospace;font-size:.76rem;background:#151922;color:#eef2f8;border-radius:10px;padding:12px;white-space:pre-wrap;max-height:430px;overflow:auto;}
+
+.synapses-footer {
+    margin-top: 40px;
+    padding: 18px 24px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--line);
+}
+.synapses-footer div:first-child {
+    font-weight: 600;
+    letter-spacing: .04em;
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-top">
+    <a href="../index.html" class="brand">
+      <span class="brand-mark" aria-hidden="true">RÉ</span>
+      <span class="brand-text">
+        <span class="top">Synapses</span>
+        <span class="bottom">Élèves à besoins particuliers</span>
+      </span>
+    </a>
+    <nav class="main-nav" aria-label="Navigation principale">
+      <details class="nav-dropdown">
+        <summary>Consulter le référentiel</summary>
+        <div class="nav-dropdown-menu">
+          <div class="menu-label">Sur la page du référentiel</div>
+          <a href="../ref-competences.html#niveaux">Parcourir par niveau</a>
+          <a href="../ref-competences.html#disciplines">Parcourir par discipline</a>
+          <a href="../ref-competences.html#repertoire">Rechercher une compétence</a>
+          <a href="../ref-competences.html#vue-ensemble">Vue d'ensemble</a>
+          <div class="menu-separator"></div>
+          <a href="../cartographie-competences.html">Cartographie des compétences</a>
+        </div>
+      </details>
+      <details class="nav-dropdown">
+        <summary>Préparer l'année</summary>
+        <div class="nav-dropdown-menu">
+          <div class="menu-label">Programmation pédagogique</div>
+          <a href="../Programmation/sequences.html">Ma programmation</a>
+          <a href="../Programmation/planning-affichage.html">Mon emploi du temps</a>
+          <a href="../Programmation/generateur-sequences-projet.html">Créer une séquence</a>
+        </div>
+      </details>
+      <details class="nav-dropdown">
+        <summary>À propos</summary>
+        <div class="nav-dropdown-menu">
+          <a href="../detailduprojet.html">Le projet Synapses</a>
+          <a href="../feedback/feedback.html">Donner mon avis</a>
+          <a href="../feedback/maintenance.html">État du site</a>
+        </div>
+      </details>
+      <a href="coffre.html" class="nav-coffre-actif" aria-current="page">🔒 Besoins éducatifs particuliers</a>
+    </nav>
+    <div id="etatCoffre" style="margin-left:auto;"><span class="pill closed">Aucun coffre ouvert</span></div>
+  </div>
+</header>
+
+<main>
+  <div class="intro-hero">
+    <p class="eyebrow">Synapses · Suivi individuel</p>
+    <h1>Élèves à besoins éducatifs particuliers</h1>
+    <p class="intro-lead">Cette page est votre espace pour suivre, élève par élève, les observations, adaptations et éléments de la grille d'analyse (ULIS, UPE2A, SEGPA, PAP, inclusion en classe ordinaire…). Elle fonctionne comme un classeur que vous seul pouvez ouvrir : rien n'est envoyé sur Internet, et vous décidez vous-même quand sauvegarder.</p>
+    <div class="how-it-works">
+      <div class="how-step">
+        <span class="how-num">1</span>
+        <h4>J'ouvre mon espace</h4>
+        <p>La première fois, je crée un nouveau fichier. Les fois suivantes, j'ouvre le fichier que j'ai déjà sauvegardé.</p>
+      </div>
+      <div class="how-step">
+        <span class="how-num">2</span>
+        <h4>Je note mes observations</h4>
+        <p>Pour chaque élève, j'ajoute des observations et je complète la grille d'analyse au fil de l'année.</p>
+      </div>
+      <div class="how-step">
+        <span class="how-num">3</span>
+        <h4>Je sauvegarde avant de fermer</h4>
+        <p>Je télécharge un fichier protégé par mot de passe, à conserver sur un support que je maîtrise (clé USB, disque local).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="banner">
+    <strong>Pourquoi c'est confidentiel :</strong> tant que vous n'avez pas cliqué sur « Sauvegarder », vos notes restent uniquement dans la mémoire de cet onglet — rien n'est envoyé à un serveur, rien n'est écrit ailleurs sur l'ordinateur. Elles disparaissent automatiquement si vous fermez l'onglet ou cliquez sur « Effacer mes données » : pensez donc à sauvegarder régulièrement si vous voulez les conserver.
+  </div>
+
+  <!-- ============ Ouverture / création ============ -->
+  <section class="card" id="cardOuverture">
+    <h2>1. Ouvrir mon espace de suivi</h2>
+    <p class="hint">Un fichier correspond en général à une classe (ou un dispositif) pour une année scolaire.</p>
+
+    <div class="grid2">
+      <div>
+        <h3 style="font-size:15px;margin-bottom:8px;">Première utilisation : je crée mon fichier</h3>
+        <div class="field">
+          <label for="dispositif">Dispositif ou contexte (obligatoire)</label>
+          <select id="dispositif" required>
+            <option value="">— sélectionner —</option>
+            <option value="ULIS école">ULIS école</option>
+            <option value="ULIS collège">ULIS collège</option>
+            <option value="ULIS lycée">ULIS lycée</option>
+            <option value="UEE">UEE (unité d'enseignement externalisée)</option>
+            <option value="UPE2A">UPE2A</option>
+            <option value="SEGPA">SEGPA</option>
+            <option value="Classe ordinaire avec inclusion">Classe ordinaire avec inclusion</option>
+            <option value="Autre">Autre</option>
+          </select>
+          <p class="hint" style="margin:6px 0 0;">
+            Sert uniquement à donner du contexte à l'atelier IA (onglet « Analyse & IA »). Le nom de l'établissement ou de la classe, lui, n'est <strong>jamais</strong> transmis à une IA, quels que soient vos réglages.
+          </p>
+        </div>
+        <div class="field">
+          <label for="nomEtab">Établissement / classe (optionnel)</label>
+          <input type="text" id="nomEtab" placeholder="ex : ULIS école Jean Moulin">
+        </div>
+        <button class="btn btn-primary" id="btnCreer">Créer mon fichier de suivi</button>
+      </div>
+      <div>
+        <h3 style="font-size:15px;margin-bottom:8px;">J'ai déjà un fichier : je l'ouvre</h3>
+        <div class="field">
+          <label for="fichierCoffre">Mon fichier .synapses, sur cet ordinateur</label>
+          <input type="file" id="fichierCoffre" accept=".synapses">
+        </div>
+        <div class="field">
+          <label for="mdpOuverture">Mot de passe de ce fichier</label>
+          <input type="password" id="mdpOuverture" placeholder="Mot de passe du fichier" autocomplete="current-password">
+        </div>
+        <button class="btn btn-outline" id="btnOuvrir">Ouvrir mon fichier</button>
+        <p class="hint" style="margin-top:10px;">
+          🔒 Ce fichier est lu directement depuis votre disque par le navigateur : il n'est jamais envoyé au site ni à un serveur.<br>
+          ⚠️ Ne le déposez jamais dans le dépôt GitHub du site — il deviendrait public dès la publication de la page, même protégé par un mot de passe.
+        </p>
+      </div>
+    </div>
+    <div class="status" id="statutOuverture"></div>
+  </section>
+
+  <!-- ============ Suivi individuel (élèves + grille d'analyse BARRY/S4C) ============ -->
+  <section class="card disabled-overlay" id="cardSuivi" style="padding:0;overflow:hidden;">
+    <div class="card-step-head">2. Noter mes observations, élève par élève</div>
+    <div id="suiviIndividuelApp"></div>
+  </section>
+
+  <!-- ============ Export / purge ============ -->
+  <section class="card disabled-overlay" id="cardExport">
+    <h2>3. Sauvegarder ou effacer mes données</h2>
+    <div class="grid2">
+      <div>
+        <h3 style="font-size:15px;margin-bottom:8px;">Sauvegarder mon fichier</h3>
+        <p class="hint" style="margin:0 0 10px;">À faire avant de fermer l'onglet, si je veux retrouver mon travail la prochaine fois.</p>
+        <div class="field"><label for="mdpExport">Mot de passe (à choisir si c'est un nouveau fichier)</label>
+          <input type="password" id="mdpExport" placeholder="Mot de passe du fichier" autocomplete="new-password">
+          <div class="force-mdp" id="forceMdpExport" aria-live="polite">
+            <div class="barre"><div class="barre-remplie" id="forceMdpBarre"></div></div>
+            <div class="label" id="forceMdpLabel">&nbsp;</div>
+            <div class="conseils" id="forceMdpConseils"></div>
+          </div>
+        </div>
+        <div class="field"><label for="nomFichierExport">Nom du fichier (l'extension .synapses est ajoutée automatiquement)</label>
+          <input type="text" id="nomFichierExport" placeholder="coffre"></div>
+        <button class="btn btn-primary" id="btnExporter">Sauvegarder mon fichier</button>
+        <p class="hint" style="margin-top:10px;">Le fichier est téléchargé dans votre dossier « Téléchargements » habituel — déplacez-le ensuite sur un support que vous seul maîtrisez (clé USB, disque local). Ne le déposez jamais dans le dépôt GitHub du site.</p>
+      </div>
+      <div>
+        <h3 style="font-size:15px;margin-bottom:8px;color:var(--danger);">Effacer mes données de cet ordinateur</h3>
+        <p class="hint">Efface tout ce qui est en mémoire de ce navigateur pour cette session. Sans effet sur un fichier déjà sauvegardé.</p>
+        <button class="btn btn-danger" id="btnPurger">Effacer les données de cet ordinateur</button>
+      </div>
+    </div>
+    <div class="status" id="statutExport"></div>
+  </section>
+</main>
+
+<script src="synapses-crypto.js?v=20260901d"></script>
+<script src="synapses-coffre.js?v=20260901d"></script>
+<script src="grille-analyse.js?v=20260901d"></script>
+<!-- Export PDF des fiches élève : bibliothèques tierces, exécutées entièrement
+     côté client (génération du PDF en mémoire, aucune donnée envoyée où que ce soit). -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="synapses-export-pdf.js?v=20260901d"></script>
+<script src="suivi-individuel.js?v=20260901d"></script>
+<script>
+/* =========================================================
+   SYNAPSES — AUTHOR MARKER
+   Project: Grand Planificateur pédagogique
+   Author: Cskrh13 / Vincent
+   Copyright: © 2026
+   Version: 0.9.0-test
+   Build: 2026-08-27
+   ========================================================= */
+
+const SYNAPSES_BUILD = {
+    project: "Synapses",
+    author: "Cskrh13",
+    year: 2026,
+    version: "0.9.0-test",
+    build: "2026-08-27"
+};
+
+(function(){
+  const coffre = new SynapsesCoffre.Coffre();
+
+  const $ = (id) => document.getElementById(id);
+
+  function setStatus(el, message, ok){
+    el.textContent = message;
+    el.className = 'status ' + (ok ? 'ok' : 'err');
+  }
+
+  function refreshLockState(){
+    const on = coffre.ouvert;
+    ['cardSuivi','cardExport'].forEach(id=>{
+      $(id).classList.toggle('disabled-overlay', !on);
+    });
+    // Construction DOM (jamais innerHTML) : le nom d'établissement est une
+    // donnée saisie par l'utilisateur (ou lue depuis un .synapses déchiffré),
+    // donc potentiellement non fiable — on ne l'insère jamais comme HTML.
+    const etatCoffre = $('etatCoffre');
+    etatCoffre.innerHTML = '';
+    const pill = document.createElement('span');
+    pill.className = on ? 'pill' : 'pill closed';
+    pill.textContent = on
+      ? 'Coffre ouvert' + (coffre.donnees.etablissement ? ' — ' + coffre.donnees.etablissement : '')
+      : 'Aucun coffre ouvert';
+    etatCoffre.appendChild(pill);
+  }
+
+  const suivi = new SynapsesSuiviIndividuel.SuiviIndividuel(coffre, {
+    // coffre.html vit dans fata-morgana/, les référentiels publics dans Programmation/data/ :
+    // il faut donc remonter d'un niveau (../) pour les atteindre.
+    urlReferentielGeneral: '../Programmation/data/grille-analyse-generale.json',
+    urlReferentielDisciplinaire: '../Programmation/data/competences.json'
+  });
+
+  async function ouvrirSuivi(){
+    await suivi.mount($('suiviIndividuelApp'));
+  }
+
+  function fermerSuivi(){
+    $('suiviIndividuelApp').innerHTML = '';
+  }
+
+  /* -------- Force du mot de passe du coffre -------- */
+  function evaluerForceMdp(mdp){
+    if (!mdp) return { score: 0, label: '', couleur: '#EAE8E0', largeur: '0%', conseils: '' };
+
+    let score = 0;
+    if (mdp.length >= 8) score++;
+    if (mdp.length >= 12) score++;
+    if (/[a-z]/.test(mdp) && /[A-Z]/.test(mdp)) score++;
+    if (/[0-9]/.test(mdp)) score++;
+    if (/[^A-Za-z0-9]/.test(mdp)) score++;
+
+    // Pénalité en cas de mot de passe trop court, quel que soit le reste.
+    if (mdp.length < 8) score = Math.min(score, 1);
+
+    const paliers = [
+      { seuil: 0, label: 'Très faible', couleur: '#B5502E', largeur: '15%' },
+      { seuil: 1, label: 'Faible',      couleur: '#C97A3A', largeur: '35%' },
+      { seuil: 2, label: 'Moyen',       couleur: '#B5871E', largeur: '55%' },
+      { seuil: 3, label: 'Bon',         couleur: '#6B9E3F', largeur: '75%' },
+      { seuil: 4, label: 'Fort',        couleur: '#2A7F72', largeur: '90%' },
+      { seuil: 5, label: 'Très fort',   couleur: '#1E6B5F', largeur: '100%' }
+    ];
+    const palier = paliers[Math.min(score, paliers.length - 1)];
+
+    const manques = [];
+    if (mdp.length < 12) manques.push('12 caractères ou plus');
+    if (!(/[a-z]/.test(mdp) && /[A-Z]/.test(mdp))) manques.push('majuscules et minuscules');
+    if (!/[0-9]/.test(mdp)) manques.push('un chiffre');
+    if (!/[^A-Za-z0-9]/.test(mdp)) manques.push('un caractère spécial');
+    const conseils = (score < 4 && manques.length) ? 'Pour renforcer : ' + manques.join(', ') + '.' : '';
+
+    return { score, label: palier.label, couleur: palier.couleur, largeur: palier.largeur, conseils };
+  }
+
+  function brancherForceMdp(inputId, barreId, labelId, conseilsId){
+    const input = $(inputId);
+    if (!input) return;
+    input.addEventListener('input', ()=>{
+      const r = evaluerForceMdp(input.value);
+      const barre = $(barreId), label = $(labelId), conseils = $(conseilsId);
+      barre.style.width = r.largeur;
+      barre.style.background = r.couleur;
+      label.textContent = input.value ? ('Force du mot de passe : ' + r.label) : '\u00A0';
+      conseils.textContent = r.conseils;
+    });
+  }
+  brancherForceMdp('mdpExport', 'forceMdpBarre', 'forceMdpLabel', 'forceMdpConseils');
+
+  $('btnCreer').addEventListener('click', async ()=>{
+    const dispositif = $('dispositif').value;
+    if (!dispositif) {
+      setStatus($('statutOuverture'), 'Précisez le dispositif d\'école inclusive avant de créer le coffre.', false);
+      $('dispositif').focus();
+      return;
+    }
+    coffre.creer($('nomEtab').value.trim(), dispositif);
+    setStatus($('statutOuverture'), 'Nouveau coffre créé en mémoire. Pensez à l\'enregistrer (§3) avant de fermer l\'onglet.', true);
+    refreshLockState();
+    await ouvrirSuivi();
+  });
+
+  // Impose l'extension .synapses au nom de fichier saisi pour l'export, quoi qu'on y tape
+  // (retire toute autre extension éventuelle, puis ajoute .synapses).
+  function nomFichierAvecExtensionSynapses(nom){
+    let n = (nom || '').trim();
+    if (!n) n = 'coffre';
+    n = n.replace(/\.[^./\\]*$/, ''); // retire une extension existante quelle qu'elle soit
+    return n + '.synapses';
+  }
+  const inputNomFichierExport = $('nomFichierExport');
+  inputNomFichierExport.addEventListener('blur', ()=>{
+    if (inputNomFichierExport.value.trim()) {
+      inputNomFichierExport.value = nomFichierAvecExtensionSynapses(inputNomFichierExport.value);
+    }
+  });
+
+  $('btnOuvrir').addEventListener('click', async ()=>{
+    const fichier = $('fichierCoffre').files[0];
+    const mdp = $('mdpOuverture').value;
+    if (!fichier) { setStatus($('statutOuverture'), 'Sélectionnez un fichier .synapses.', false); return; }
+    if (!mdp) { setStatus($('statutOuverture'), 'Saisissez le mot de passe du coffre.', false); return; }
+    try{
+      await coffre.ouvrir(fichier, mdp);
+      $('mdpOuverture').value = '';
+      // Le nom du fichier d'export est pré-rempli avec celui du fichier ouvert, pour
+      // qu'un "Enregistrer" ultérieur écrase naturellement le même fichier par défaut.
+      inputNomFichierExport.value = nomFichierAvecExtensionSynapses(fichier.name);
+      setStatus($('statutOuverture'), 'Coffre ouvert avec succès (' + coffre.listerEleves().length + ' élève(s)).', true);
+      refreshLockState();
+      await ouvrirSuivi();
+    }catch(e){
+      setStatus($('statutOuverture'), e.message, false);
+    }
+  });
+
+  $('btnExporter').addEventListener('click', async ()=>{
+    const mdp = $('mdpExport').value;
+    if (!mdp) { setStatus($('statutExport'), 'Choisissez un mot de passe pour chiffrer le coffre.', false); return; }
+    const force = evaluerForceMdp(mdp);
+    if (force.score <= 1) {
+      const continuer = confirm('Ce mot de passe est ' + force.label.toLowerCase() + '. Un mot de passe faible protège moins bien les données confidentielles du coffre. Continuer quand même ?');
+      if (!continuer) return;
+    }
+    try{
+      const nomFichier = nomFichierAvecExtensionSynapses(inputNomFichierExport.value);
+      inputNomFichierExport.value = nomFichier;
+      await coffre.telecharger(mdp, nomFichier);
+      setStatus($('statutExport'), 'Coffre chiffré et téléchargé sous « ' + nomFichier + ' ». Conservez-le sur un support sûr (clé USB).', true);
+    }catch(e){
+      setStatus($('statutExport'), e.message, false);
+    }
+  });
+
+  $('btnPurger').addEventListener('click', ()=>{
+    if (!confirm('Détruire toutes les données confidentielles en mémoire ? Cette action est irréversible pour la session en cours.')) return;
+    coffre.purger();
+    ['mdpExport','nomFichierExport'].forEach(id=>$(id).value='');
+    fermerSuivi();
+    setStatus($('statutExport'), 'Données confidentielles détruites de la mémoire du navigateur.', true);
+    refreshLockState();
+  });
+
+  // Sécurité supplémentaire : purge best-effort si l'onglet se ferme sans export.
+  window.addEventListener('beforeunload', ()=>{ coffre.purger(); });
+  // Filet de sécurité redondant : 'pagehide' se déclenche de façon plus
+  // fiable que 'beforeunload' sur mobile (Safari iOS notamment) et lors
+  // d'une mise en cache arrière (bfcache). Contrairement à
+  // 'visibilitychange', il ne se déclenche PAS à chaque changement d'onglet,
+  // donc il ne purge pas le coffre pendant une utilisation normale.
+  window.addEventListener('pagehide', ()=>{ coffre.purger(); });
+
+  refreshLockState();
+})();
+</script>
+<script>
+(function(){
+  var navDropdowns = Array.prototype.slice.call(document.querySelectorAll('.nav-dropdown'));
+  navDropdowns.forEach(function(dd){
+    dd.addEventListener('toggle', function(){
+      if(dd.open){
+        navDropdowns.forEach(function(other){
+          if(other !== dd) other.open = false;
+        });
+      }
+    });
+  });
+  document.addEventListener('click', function(e){
+    navDropdowns.forEach(function(dd){
+      if(dd.open && !dd.contains(e.target)) dd.open = false;
+    });
+  });
+})();
+</script>
+
+<footer class="synapses-footer">
+    <div>Synapses — Grand Planificateur pédagogique</div>
+    <div>© 2026 Cskrh13 / Vincent · v0.9.0-test · 27/08/2026</div>
+</footer>
+</body>
+</html>

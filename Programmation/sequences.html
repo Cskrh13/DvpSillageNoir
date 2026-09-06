@@ -1,0 +1,2707 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<!-- SYNAPSES-AUTHOR: Cskrh13 / Vincent | © 2026 -->
+<meta name="author" content="Cskrh13 / Vincent">
+<meta name="copyright" content="© 2026 Cskrh13 / Vincent — Synapses">
+<meta name="application-name" content="Synapses">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programmation — Séquences &amp; séances</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1E2A4A;
+  --navy-deep:#141d33;
+  --bg:#F6F5F1;
+  --panel:#FFFFFF;
+  --panel-raised:#FAF9F5;
+  --line:#DEDBD2;
+  --ink:#20242E;
+  --ink-soft:#5B5F6B;
+  --accent-sky:#2E5EAA;
+  --ring:#2E5EAA;
+  --lecture:#B5502E;
+  --ecriture:#2A7F72;
+  --oral:#6B4E8E;
+  --vocabulaire:#B5871E;
+  --grammaire:#1E2A4A;
+  --orthographe:#7A4A9E;
+  --ai:#6a4fc9;
+  --ai-soft:#eee9fb;
+  --radius:10px;
+  --radius-sm:6px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:'Inter',system-ui,sans-serif;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:'Fraunces',serif;font-weight:600;margin:0;letter-spacing:-0.01em;}
+a{color:inherit;}
+button{font-family:inherit;cursor:pointer;}
+.eyebrow{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--accent-sky);font-weight:500;
+}
+:focus-visible{outline:3px solid var(--ring);outline-offset:2px;}
+.chemin-data{
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);
+  background:var(--panel-raised);border:1px solid var(--line);border-radius:6px;
+  padding:4px 9px;display:inline-block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+}
+.field-hint{font-size:11.5px;color:var(--ink-soft);margin-top:4px;}
+
+/* ===== Header ===== */
+header.site-header{
+  background:var(--navy);color:#fff;position:sticky;top:0;z-index:50;
+  border-bottom:3px solid var(--accent-sky);
+}
+.header-top{
+  display:flex;align-items:center;justify-content:space-between;
+  max-width:1240px;margin:0 auto;padding:14px 24px;gap:20px;flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:#fff;}
+.brand-mark{
+  width:40px;height:40px;border-radius:8px;
+  background:linear-gradient(160deg,var(--accent-sky),#5486d6);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fraunces',serif;font-weight:700;font-size:18px;color:#fff;flex-shrink:0;
+}
+.brand-text{display:flex;flex-direction:column;line-height:1.15;}
+.brand-text .top{font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#B9C6E5;font-family:'IBM Plex Mono',monospace;}
+.brand-text .bottom{font-family:'Fraunces',serif;font-weight:600;font-size:17px;}
+.header-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;row-gap:8px;}
+.header-actions .btn,.header-actions .coffre-widget{flex-shrink:0;}
+.coffre-widget{display:flex;align-items:center;gap:8px;padding:4px 4px 4px 12px;border:1px solid rgba(255,255,255,.3);border-radius:20px;}
+.coffre-widget .badge-coffre{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#fff;white-space:nowrap;}
+.coffre-widget .badge-coffre.ouvert{color:#BFE3DA;}
+
+/* ===== Nav à menus déroulants (DA commune du site) ===== */
+nav.main-nav{display:flex;gap:6px;flex-wrap:wrap;row-gap:6px;align-items:center;}
+.nav-dropdown{position:relative;flex:0 0 auto;}
+.nav-dropdown>summary{height:36px;line-height:20px;list-style:none;color:#D9E0F2;font-size:14px;font-weight:500;padding:8px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;box-sizing:border-box;}
+.nav-dropdown>summary::-webkit-details-marker{display:none;}
+.nav-dropdown>summary::after{content:"⌄";font-size:11px;margin-left:7px;opacity:.75;}
+.nav-dropdown[open]>summary,.nav-dropdown>summary:hover{background:rgba(255,255,255,.09);color:#fff;}
+.nav-dropdown-menu{position:absolute;top:100%;left:0;margin-top:7px;min-width:250px;background:var(--navy);border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:7px;box-shadow:0 14px 30px rgba(0,0,0,.25);z-index:100;}
+.nav-dropdown-menu a,.nav-dropdown-menu button{
+  display:flex!important;align-items:center;gap:8px;width:100%;text-align:left;
+  color:#D9E0F2!important;font-size:13.5px!important;font-weight:500!important;
+  padding:9px 11px!important;border-radius:5px;margin:0!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+  font-family:'Inter',sans-serif!important;white-space:normal!important;
+}
+.nav-dropdown-menu a:hover,.nav-dropdown-menu button:hover{background:rgba(255,255,255,.09)!important;color:#fff!important;}
+.menu-separator{height:1px;background:rgba(255,255,255,.12);margin:6px 4px;}
+.menu-label{padding:5px 11px 3px;color:#9EADD0;font-family:'Inter',sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;}
+@media(max-width:760px){nav.main-nav{width:100%;}.nav-dropdown-menu{position:static;margin-top:4px;width:100%;}}
+.repeater-row.has-picker{grid-template-columns:1.3fr 1fr 1.6fr auto;}
+.repeater-row .eleve-picker{width:100%;font-family:'Inter',sans-serif;font-size:13px;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:#F4F7FC;color:var(--ink);}
+.eleve-tools{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;align-items:center;}
+.eleve-tools .repeater-add.coffre-action{color:var(--ok);}
+.eleve-tools .repeater-add.coffre-fix{color:#7A5A22;}
+.btn{
+  font-family:'Inter',sans-serif;font-size:13px;font-weight:600;
+  border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;
+  padding:9px 15px;border-radius:8px;transition:background .15s;white-space:nowrap;
+}
+.btn:hover{background:rgba(255,255,255,.1);}
+.btn.primary{background:var(--accent-sky);border-color:var(--accent-sky);}
+.btn.primary:hover{background:#3f6fc0;}
+.btn.on-panel{border-color:var(--line);color:var(--navy);background:#fff;}
+.btn.on-panel:hover{background:#F0EEE7;}
+.btn.on-panel.primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+.btn.on-panel.primary:hover{background:var(--navy-deep);}
+.btn.danger{color:#B5502E;border-color:#E3C9BE;background:#fff;}
+.btn.danger:hover{background:#FBEEE9;}
+.btn.small{padding:6px 11px;font-size:12px;}
+input[type="file"]{display:none;}
+
+/* ===== Shell ===== */
+.shell{max-width:1100px;margin:0 auto;padding:36px 24px 90px;}
+.view{display:none;}
+.view.open{display:block;}
+
+/* ---- Vue liste (répertoire des séquences) ---- */
+.list-head{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:22px;
+}
+.list-head h1{font-size:clamp(26px,3.6vw,36px);color:var(--navy);}
+.list-head p{color:var(--ink-soft);font-size:14px;margin-top:8px;max-width:520px;}
+
+.toolbar{
+  display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px;
+}
+.filter-chips{display:flex;gap:7px;flex-wrap:wrap;}
+.chip{
+  border:1px solid var(--line);background:#fff;color:var(--ink);font-size:12.5px;font-weight:500;
+  padding:6px 12px;border-radius:20px;
+}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+.seq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+.seq-brique{
+  text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px;position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s,border-color .15s;
+}
+.seq-brique::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--dcolor,var(--accent-sky));}
+.seq-brique:hover{transform:translateY(-2px);box-shadow:0 14px 28px -18px rgba(30,42,74,.35);border-color:#c7c2b3;}
+.seq-brique .sb-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding-left:10px;}
+.badge{
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:20px;
+  background:color-mix(in srgb, var(--dcolor,var(--accent-sky)) 14%, white);color:var(--dcolor,var(--accent-sky));white-space:nowrap;
+}
+.badge.plain{background:#EEECE3;color:var(--ink-soft);}
+.seq-brique h3{font-size:16.5px;line-height:1.35;color:var(--navy);margin-top:12px;padding-left:10px;}
+.seq-brique .sb-obj{font-size:12.5px;color:var(--ink-soft);margin-top:8px;padding-left:10px;line-height:1.55;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:38px;}
+.sb-mini-weeks{display:grid;grid-template-columns:repeat(36,1fr);gap:1.5px;margin:14px 10px 4px;}
+.sb-mini-weeks span{aspect-ratio:1;border-radius:1px;background:#EEECE3;}
+.sb-mini-weeks span.on{background:var(--dcolor,var(--accent-sky));}
+.sb-foot{display:flex;justify-content:space-between;align-items:center;padding:0 10px;margin-top:10px;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);}
+.sb-arrow{color:var(--accent-sky);font-weight:600;}
+
+.empty-state{
+  grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--ink-soft);
+  border:1px dashed var(--line);border-radius:var(--radius);background:var(--panel);
+}
+.empty-state h4{color:var(--navy);margin-bottom:8px;font-size:16px;}
+.empty-state .btn.primary.on-panel{margin-top:16px;}
+
+/* ---- Vue détail séquence ---- */
+.cp-back{
+  display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--accent-sky);
+  background:none;border:none;padding:0;margin-bottom:18px;
+}
+.cp-back:hover{text-decoration:underline;}
+.cp-head{border-bottom:1px solid var(--line);padding-bottom:24px;margin-bottom:26px;
+  display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+.cp-head h1{font-size:clamp(22px,3.2vw,32px);color:var(--navy);line-height:1.28;margin-top:10px;}
+.cp-head .drawer-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+.cp-head-actions{display:flex;gap:8px;flex-shrink:0;align-self:flex-start;flex-wrap:wrap;}
+
+.cp-block{margin-bottom:30px;}
+.cp-block h5{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--accent-sky);margin-bottom:12px;
+}
+.cp-block p.txt{font-size:14.5px;line-height:1.65;color:var(--ink);}
+.eleves-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+.eleves-table th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.05em;color:var(--ink-soft);padding:6px 8px;border-bottom:1px solid var(--line);}
+.eleves-table td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top;}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;}
+.period-row{display:grid;grid-template-columns:repeat(36,minmax(0,1fr));gap:3px;margin-bottom:6px;}
+.period-label{
+  grid-column:span var(--span);font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-soft);
+  text-align:center;padding-bottom:4px;border-bottom:2px solid var(--line);
+}
+.week-grid{display:grid;grid-template-columns:repeat(36,minmax(0,1fr));gap:3px;}
+.week-cell{
+  aspect-ratio:1/1.15;background:#EEECE3;border-radius:4px;display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--ink-soft);border:none;padding:0;cursor:pointer;
+}
+.week-cell:hover{background:#E4E1D6;}
+.week-cell.in-range{color:#fff;font-weight:700;}
+
+/* ---- Focus de progression autour de la séquence ---- */
+.focus-progression{
+  display:grid;
+  grid-template-columns:minmax(180px,1fr) minmax(280px,1.25fr) minmax(180px,1fr);
+  gap:14px;
+  align-items:stretch;
+}
+.focus-column{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.focus-label{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin-bottom:2px;
+}
+.focus-card{
+  display:block;
+  width:100%;
+  text-align:left;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:11px 12px;
+  color:var(--ink);
+  cursor:pointer;
+}
+.focus-card:hover{border-color:var(--accent-sky);background:#F8FAFC;}
+.focus-card strong{
+  display:block;
+  color:var(--navy);
+  font-family:'Fraunces',serif;
+  font-size:14px;
+  line-height:1.3;
+}
+.focus-card span{
+  display:block;
+  margin-top:4px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9.5px;
+  color:var(--ink-soft);
+}
+.focus-current{
+  background:#F4F7FC;
+  border:1px solid #C8D6E8;
+  border-radius:10px;
+  padding:16px;
+  position:relative;
+}
+.focus-current:before,.focus-current:after{
+  content:"";
+  position:absolute;
+  top:50%;
+  width:14px;
+  border-top:1px solid #B8C7DB;
+}
+.focus-current:before{left:-14px}.focus-current:after{right:-14px}
+.focus-current .kicker{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9.5px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--accent-sky);
+}
+.focus-current h3{
+  color:var(--navy);
+  font-size:21px;
+  line-height:1.25;
+  margin:5px 0 7px;
+}
+.focus-current .meta{
+  font-size:11px;
+  color:var(--ink-soft);
+}
+.focus-competences{
+  margin-top:12px;
+  padding-top:11px;
+  border-top:1px solid var(--line);
+}
+.focus-competences-title{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9.5px;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+}
+.focus-pill{
+  display:inline-block;
+  margin:5px 5px 0 0;
+  padding:5px 8px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:#fff;
+  color:var(--navy);
+  font-size:10.5px;
+}
+.focus-empty{
+  padding:12px;
+  border:1px dashed var(--line);
+  border-radius:8px;
+  background:#fff;
+  color:var(--ink-soft);
+  font-size:11.5px;
+}
+@media(max-width:760px){
+  .focus-progression{grid-template-columns:1fr;}
+  .focus-current:before,.focus-current:after{display:none;}
+}
+
+/* ---- Séances : sous-briques ---- */
+.seances-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+.seances-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.sea-brique{
+  text-align:left;background:var(--panel-raised);border:1px solid var(--line);border-radius:var(--radius-sm);
+  padding:16px;transition:box-shadow .15s,border-color .15s,transform .15s;position:relative;
+}
+.sea-brique:hover{border-color:#c7c2b3;box-shadow:0 10px 22px -16px rgba(30,42,74,.3);transform:translateY(-1px);}
+.sea-brique .num{
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--accent-sky);font-weight:600;
+}
+.sea-brique h4{font-size:14.5px;color:var(--navy);margin-top:6px;line-height:1.35;}
+.sea-brique .sea-meta{font-size:12px;color:var(--ink-soft);margin-top:8px;}
+.sea-brique .sea-obj{font-size:12.5px;color:var(--ink-soft);margin-top:8px;line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.add-sea-brique{
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;
+  border:1.5px dashed var(--line);border-radius:var(--radius-sm);background:transparent;color:var(--ink-soft);
+  min-height:120px;font-size:13px;font-weight:600;
+}
+.add-sea-brique:hover{border-color:var(--accent-sky);color:var(--accent-sky);background:#F4F7FC;}
+.add-sea-brique .plus{font-size:22px;line-height:1;font-family:'Fraunces',serif;}
+.seances-empty{font-size:13.5px;color:var(--ink-soft);padding:18px 0;grid-column:1/-1;}
+
+/* ===== Overlay + drawer (fiche séance) ===== */
+.drawer-overlay{
+  position:fixed;inset:0;background:rgba(20,29,51,.42);backdrop-filter:blur(1px);
+  opacity:0;pointer-events:none;transition:opacity .2s;z-index:100;
+}
+.drawer-overlay.open{opacity:1;pointer-events:auto;}
+.drawer{
+  position:fixed;top:0;right:0;height:100%;width:min(620px,100%);
+  background:#fff;box-shadow:-16px 0 40px rgba(0,0,0,.18);
+  transform:translateX(100%);transition:transform .25s ease;z-index:101;
+  display:flex;flex-direction:column;
+}
+.drawer.open{transform:translateX(0);}
+.drawer-head{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.drawer-close{background:#F0EEE7;border:none;width:32px;height:32px;border-radius:8px;font-size:16px;color:var(--ink-soft);flex-shrink:0;}
+.drawer-close:hover{background:#E4E1D6;}
+.drawer-body{padding:24px;overflow-y:auto;flex:1;}
+.drawer-body h2{font-size:21px;color:var(--navy);line-height:1.3;}
+.drawer-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.drawer-section{margin-top:24px;}
+.drawer-section h5{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--accent-sky);margin-bottom:10px;
+}
+.niveau-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;text-align:center;}
+.niveau-grid .nv{border:1px solid var(--line);border-radius:6px;padding:8px 4px;font-size:11.5px;font-weight:600;color:var(--ink-soft);}
+.niveau-grid .nv.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+.deroule-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.deroule-table th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+  letter-spacing:.04em;color:var(--ink-soft);padding:6px 7px;border-bottom:1px solid var(--line);}
+.deroule-table td{padding:8px 7px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.5;}
+.deroule-table td.phase{font-weight:600;color:var(--navy);white-space:nowrap;}
+.vigilance-box{background:#FBF3E9;border:1px solid #EAD9BC;border-radius:8px;padding:12px 14px;font-size:13px;color:#7A5A22;margin-top:6px;}
+
+.drawer-actions{display:flex;gap:8px;margin-top:26px;padding-top:18px;border-top:1px solid var(--line);flex-wrap:wrap;}
+
+/* ===== Modale formulaire ===== */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(20,29,51,.5);display:none;align-items:flex-start;justify-content:center;
+  z-index:110;padding:40px 16px;overflow-y:auto;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:#fff;border-radius:var(--radius);max-width:720px;width:100%;padding:0;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.4);margin-bottom:40px;
+}
+.modal-head{padding:22px 26px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;
+  position:sticky;top:0;background:#fff;border-radius:var(--radius) var(--radius) 0 0;}
+.modal-head h3{font-size:19px;color:var(--navy);}
+.modal-close{background:#F0EEE7;border:none;width:30px;height:30px;border-radius:8px;color:var(--ink-soft);}
+.modal-close:hover{background:#E4E1D6;}
+.modal-body{padding:22px 26px;}
+.modal-foot{padding:18px 26px 24px;display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--line);}
+
+.field{margin-bottom:16px;}
+.field label{
+  display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--ink-soft);margin-bottom:6px;
+}
+.field input[type="text"],.field input[type="number"],.field select,.field textarea{
+  width:100%;font-family:'Inter',sans-serif;font-size:14px;padding:9px 11px;
+  border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);
+}
+.field textarea{resize:vertical;min-height:60px;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent-sky);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.field-row.three{grid-template-columns:1fr 1fr 1fr;}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:0 0 16px;}
+legend{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-sky);padding:0 6px;}
+.checks-row{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;}
+.checks-row label{display:flex;align-items:center;gap:6px;font-family:'Inter',sans-serif;text-transform:none;letter-spacing:0;color:var(--ink);}
+
+.repeater-row{display:grid;grid-template-columns:1fr 2fr auto;gap:8px;margin-bottom:8px;align-items:center;}
+.repeater-add{font-size:12.5px;font-weight:600;color:var(--accent-sky);background:none;border:none;padding:2px 0;}
+.repeater-add:hover{text-decoration:underline;}
+.repeater-del{background:none;border:none;color:#B5502E;font-size:16px;padding:4px 6px;}
+
+.phase-card{border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:12px;background:var(--panel-raised);}
+.phase-card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;}
+.phase-card-head input{font-weight:600;}
+.phase-card .field-row.three{gap:10px;}
+.phase-del{background:none;border:none;color:#B5502E;font-size:12px;font-weight:600;}
+.phase-del:hover{text-decoration:underline;}
+.add-phase-btn{width:100%;padding:10px;border:1.5px dashed var(--line);border-radius:8px;background:none;color:var(--ink-soft);font-size:13px;font-weight:600;}
+.add-phase-btn:hover{border-color:var(--accent-sky);color:var(--accent-sky);}
+
+.toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(10px);
+  background:var(--navy);color:#fff;padding:11px 20px;border-radius:8px;font-size:13.5px;
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:200;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+footer{padding:30px 24px 20px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);}
+
+/* ===== Impression ===== */
+#print-area{display:none;}
+.print-doc{max-width:900px;margin:0 auto;}
+.print-doc h1{font-size:24px;color:var(--navy);}
+.print-doc .print-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-sky);margin-bottom:6px;}
+.print-doc .print-tags{margin:10px 0 18px;}
+.print-doc .print-tags span{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
+  padding:3px 8px;border-radius:20px;background:#EEECE3;color:var(--ink-soft);margin:0 6px 6px 0;}
+.print-doc h5{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent-sky);
+  margin:20px 0 8px;border-bottom:1px solid var(--line);padding-bottom:4px;}
+.print-doc p{font-size:13px;line-height:1.6;margin:0 0 4px;}
+.print-doc table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:4px;}
+.print-doc th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;color:var(--ink-soft);
+  padding:5px 6px;border-bottom:1px solid var(--ink);}
+.print-doc td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.5;}
+.print-seance-block{border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin:14px 0;page-break-inside:avoid;}
+.print-seance-block h4{font-size:14px;color:var(--navy);margin:0 0 6px;}
+.print-page-break{page-break-before:always;}
+
+@media print{
+  @page{size:A4;margin:14mm 13mm;}
+  body *{visibility:hidden;}
+  #print-area, #print-area *{visibility:visible;}
+  #print-area{display:block;position:absolute;left:0;top:0;width:100%;background:#fff;}
+  header.site-header, footer, .drawer-overlay, .modal-overlay, .toast{display:none !important;}
+  .print-doc{font-family:Arial,sans-serif;color:#20242E;max-width:none;}
+  .print-doc h1{font-family:Georgia,serif;color:#1E2A4A;font-size:24px;border-left:5px solid #2E5EAA;padding-left:10px;}
+  .print-doc h5{font-family:Arial,sans-serif;color:#2E5EAA;border-bottom:1px solid #DEDBD2;padding-bottom:4px;}
+  .print-seance-block{break-inside:avoid;page-break-inside:avoid;border-left:4px solid #B5502E;background:#FAF9F5;}
+  .print-seance-block table{font-size:9px;}
+  .print-seance-block th{background:#EEECE3;}
+}
+
+/* ---- Progression (remplace l'ancien Réseau de compétences) ---- */
+.btn.ai{background:var(--ai);border-color:var(--ai);color:#fff;}
+.btn.ai:hover{background:#5940b3;}
+.prog-selectors{
+  display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:end;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:22px;
+}
+.prog-selectors .field{margin-bottom:0;}
+.prog-saved{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;}
+.prog-saved-chip{
+  font-size:12.5px;font-weight:500;background:#fff;border:1px solid var(--line);border-radius:20px;
+  padding:7px 13px;color:var(--navy);
+}
+.prog-saved-chip:hover{background:#F0EEE7;}
+.prog-empty{
+  text-align:center;padding:56px 20px;color:var(--ink-soft);
+  border:1px dashed var(--line);border-radius:var(--radius);background:var(--panel);
+}
+.prog-empty h4{color:var(--navy);margin-bottom:8px;font-size:16px;}
+.notice{padding:12px 14px;border-radius:10px;background:#fff8e9;border:1px solid #edd7a1;color:#705a25;font-size:13px;line-height:1.55;margin-bottom:16px;}
+.ai-panel{border-left:5px solid var(--ai);background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-bottom:24px;}
+.ai-panel h4{font-size:15.5px;color:var(--navy);margin-bottom:12px;}
+.prompt-box{
+  font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.55;background:#151922;color:#eef2f8;
+  border-radius:10px;padding:14px;white-space:pre-wrap;max-height:360px;overflow:auto;margin-bottom:12px;
+}
+.ai-panel textarea{
+  width:100%;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:10px 12px;border:1px solid var(--line);
+  border-radius:8px;min-height:120px;resize:vertical;margin:10px 0;
+}
+.ai-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.ai-toolbar .help{font-size:12.5px;color:var(--ink-soft);}
+.ai-result{margin-top:12px;font-size:13px;}
+.ai-result.ok{color:#2A7F72;font-weight:600;}
+.ai-result.err{color:#B5502E;font-weight:600;}
+
+.prog-timeline{display:flex;flex-direction:column;gap:0;}
+.prog-step{
+  display:grid;grid-template-columns:44px 1fr;gap:16px;position:relative;padding-bottom:26px;
+}
+.prog-step:last-child{padding-bottom:0;}
+.prog-step .ps-dot-col{display:flex;flex-direction:column;align-items:center;}
+.prog-step .ps-dot{
+  width:32px;height:32px;border-radius:50%;background:var(--accent-sky);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:13px;flex-shrink:0;
+}
+.prog-step .ps-line{flex:1;width:2px;background:var(--line);margin-top:4px;}
+.prog-step:last-child .ps-line{display:none;}
+.prog-step .ps-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;}
+.prog-step .ps-card h4{font-size:15.5px;color:var(--navy);}
+.prog-step .ps-card .ps-desc{font-size:13.5px;color:var(--ink);margin-top:8px;line-height:1.6;}
+.prog-step .ps-meta-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;}
+.prog-step .ps-tag{
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:20px;
+  background:#EEECE3;color:var(--ink-soft);
+}
+.prog-step .ps-indic{margin-top:10px;font-size:12.5px;color:var(--ink-soft);}
+.prog-step .ps-indic strong{color:var(--navy);}
+.prereq-picker{display:flex;flex-direction:column;gap:8px;}
+.prereq-picker label{
+  display:flex;align-items:flex-start;gap:8px;font-size:13px;font-family:'Inter',sans-serif;text-transform:none;
+  letter-spacing:0;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--panel-raised);
+}
+.prereq-picker label span.pp-dom{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;color:var(--ink-soft);display:block;margin-top:2px;}
+.prereq-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}
+.prereq-chip{
+  display:inline-flex;align-items:center;gap:6px;font-size:12.5px;background:#EFEDE5;border:1px solid var(--line);
+  border-radius:20px;padding:6px 12px;
+}
+.prereq-chip .dot{width:8px;height:8px;border-radius:50%;background:var(--ccolor,var(--accent-sky));flex-shrink:0;}
+
+@media(max-width:640px){
+  .field-row,.field-row.three{grid-template-columns:1fr;}
+  .niveau-grid{grid-template-columns:repeat(5,1fr);font-size:10px;}
+  .repeater-row{grid-template-columns:1fr;}
+}
+
+.synapses-footer {
+    margin-top: 40px;
+    padding: 18px 24px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--line);
+}
+.synapses-footer div:first-child {
+    font-weight: 600;
+    letter-spacing: .04em;
+}
+
+/* ===== Nouvelle programmation annuelle ===== */
+.prog-editor{margin:22px 0}.prog-editor-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:14px}.prog-editor-head h2{margin:0;color:var(--navy);font-size:19px}.prog-editor-head p{margin:6px 0 0;color:var(--ink-soft);max-width:850px}.prog-title-input{width:100%;border:0;border-bottom:2px solid var(--line);background:transparent;color:var(--navy);font-family:Georgia,serif;font-size:27px;font-weight:700;padding:4px 0}.prog-bricks{display:flex;flex-direction:column;gap:12px}.prog-brick{display:grid;grid-template-columns:46px 1fr;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}.prog-brick-index{background:#eeeae0;display:flex;align-items:flex-start;justify-content:center;padding-top:18px;font:700 18px 'IBM Plex Mono',monospace;color:var(--navy)}.prog-brick-main{padding:16px}.prog-brick-top{display:flex;gap:10px;align-items:center}.prog-brick-top select{flex:1}.prog-brick-buttons{display:flex;gap:5px}.icon-btn{width:31px;height:31px;border:1px solid var(--line);background:#fff;border-radius:5px;cursor:pointer}.icon-btn.danger{color:#9a3d2e}.prog-official{font-size:11px;color:var(--ink-soft);margin:8px 0 12px}.prog-sequences{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}.prog-sequences>label{display:block;font:700 10px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px;color:var(--ink-soft)}.prog-seq-check{display:block;padding:5px 7px;background:#f7f5ef;margin:4px 0;border-radius:4px;font-size:12px}.periods-editor{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.period-editor{background:#fff;border:1px solid var(--line);border-radius:9px;min-height:270px;overflow:hidden}.period-editor>header{display:flex;gap:10px;align-items:center;padding:12px;background:#eeeae0;border-bottom:1px solid var(--line)}.period-number{font:700 16px 'IBM Plex Mono',monospace;color:var(--navy)}.period-editor h3{margin:0;font-size:15px}.period-count{font-size:10px;color:var(--ink-soft)}.period-body{padding:11px}.period-competence{display:flex;gap:8px;padding:7px;border:1px solid #ddd8cb;border-radius:5px;margin-bottom:6px}.period-competence>span{font:700 10px 'IBM Plex Mono',monospace}.period-competence strong{font-size:11px}.period-competence small{display:block;color:var(--ink-soft);margin-top:2px}.period-sequences{border-top:1px dashed var(--line);margin-top:10px;padding-top:9px}.period-sequences h4{font:700 10px 'IBM Plex Mono',monospace;text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px}.period-sequence{display:block;width:100%;text-align:left;border:1px solid #ddd8cb;background:#faf9f5;border-radius:5px;padding:7px;margin:5px 0;cursor:pointer}.period-sequence strong{display:block;font-size:11px}.period-sequence span{font-size:9px;color:var(--ink-soft)}.period-note{width:100%;min-height:60px;margin-top:10px;border:1px dashed var(--line);background:#faf9f5}.prog-empty{padding:18px;text-align:center;color:var(--ink-soft);border:1px dashed var(--line);border-radius:7px;background:#faf9f5}.prog-saved-label{font-size:12px;color:var(--ink-soft);align-self:center}.field-label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-top:16px}@media(max-width:1050px){.periods-editor{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.prog-editor-head{flex-direction:column}.prog-brick{grid-template-columns:34px 1fr}.periods-editor{grid-template-columns:1fr}}
+
+.program-table-panel{margin:18px 0 24px}.program-table-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap}.program-table-head h2{font-size:21px;color:var(--navy);margin:2px 0}.program-table-actions{display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap}.inline-field{margin:0;min-width:120px}.inline-field span{display:block;font:700 10px 'IBM Plex Mono',monospace;text-transform:uppercase;color:var(--ink-soft);margin-bottom:5px}.program-table-scroll{overflow:auto;margin-top:18px;border:1px solid var(--line);border-radius:8px;background:#fff}.program-table{width:100%;border-collapse:separate;border-spacing:0;min-width:1050px}.program-table th,.program-table td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);vertical-align:top}.program-table th{background:#eeeae0;padding:12px 10px;text-align:left;font-family:'Fraunces',serif;font-size:14px;color:var(--navy);position:sticky;top:0;z-index:2}.program-table th:first-child{width:190px;left:0;z-index:3}.program-table td:first-child{background:#faf9f5;position:sticky;left:0;z-index:1}.program-domain{padding:12px}.program-domain strong{display:block}.program-domain small{display:block;color:var(--ink-soft);margin-top:3px}.program-cell{padding:9px;min-height:135px}.program-seq-chip{display:block;width:100%;text-align:left;background:#faf9f5;border:1px solid var(--line);border-left:4px solid var(--accent-sky);border-radius:6px;padding:8px;margin-bottom:7px;cursor:grab}.program-seq-chip:active{cursor:grabbing}.program-seq-chip.dragging{opacity:.4}.program-cell.drag-over{outline:2px dashed var(--accent-sky);outline-offset:-4px;background:#eef4fc}.program-seq-chip strong{display:block;font-size:11.5px}.program-seq-chip span{display:block;font-size:9.5px;color:var(--ink-soft);margin-top:2px}.program-add{width:100%;border:1px dashed #bcb7aa;background:#fff;border-radius:5px;padding:7px;color:var(--ink-soft);font-size:11px}.program-add-wrap{position:relative}.program-add-btn{width:100%;border:1px dashed #bcb7aa;background:#fff;border-radius:5px;padding:7px;color:var(--ink-soft);font-size:11px;cursor:pointer;text-align:left}.program-add-btn:hover{border-color:var(--accent-sky);color:var(--accent-sky)}.program-add-menu{display:none;position:absolute;left:0;right:0;top:100%;margin-top:4px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 10px 24px -12px rgba(30,42,74,.35);padding:8px;z-index:30;min-width:200px}.program-add-menu.open{display:block}.program-add-menu select{width:100%;margin-bottom:8px;font-size:11.5px;padding:6px;border:1px solid var(--line);border-radius:6px}.program-add-menu button{display:block;width:100%;text-align:left;background:#faf9f5;border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-size:11.5px;margin-bottom:6px;cursor:pointer;color:var(--ink)}.program-add-menu button:last-child{margin-bottom:0}.program-add-menu button:hover{background:#F0EEE7;border-color:#c7c2b3}.program-add-menu .pam-label{display:block;font:700 9.5px 'IBM Plex Mono',monospace;text-transform:uppercase;color:var(--ink-soft);margin:8px 0 4px}.program-add-menu .pam-label:first-child{margin-top:0}.pam-text-row{display:flex;gap:6px}.pam-text-input{flex:1;font-size:11.5px;padding:6px 8px;border:1px solid var(--line);border-radius:6px}.pam-text-add{width:auto!important;flex-shrink:0;margin-bottom:0!important;white-space:nowrap}.program-seq-chip-draft{border-left-style:dashed;border-left-color:var(--ink-soft);background:#faf8f2}.program-empty-cell{color:#aaa;font-size:11px;text-align:center;padding:16px 5px}.program-cell select{width:100%;margin-top:6px}.program-remove{float:right;border:0;background:transparent;color:#9a3d2e;font-size:15px;cursor:pointer}.program-note{width:100%;min-height:52px;margin-top:7px;border:1px dashed var(--line);background:#faf9f5;padding:7px;font-size:11px}
+</style>
+<!-- Extraction de texte côté navigateur pour le fichier joint à l'atelier IA (PDF / Word) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="../fata-morgana/synapses-crypto.js"></script>
+<script src="../fata-morgana/synapses-coffre.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-top">
+    <a href="../index.html" class="brand">
+      <span class="brand-mark" aria-hidden="true">RÉ</span>
+      <span class="brand-text">
+        <span class="top">Synapses</span>
+        <span class="bottom">Ma programmation</span>
+      </span>
+    </a>
+    <nav class="main-nav" aria-label="Navigation principale">
+      <details class="nav-dropdown">
+        <summary>Préparer l'année</summary>
+        <div class="nav-dropdown-menu">
+          <a href="sequences.html" aria-current="page">📚 Ma programmation</a>
+          <a href="planning-affichage.html">🗓 Mon emploi du temps</a>
+          <a href="generateur-sequences-projet.html">🧩 Créer une séquence</a>
+        </div>
+      </details>
+      <details class="nav-dropdown">
+        <summary>Progression</summary>
+        <div class="nav-dropdown-menu">
+          <button type="button" id="btn-view-progression">📈 Voir ma progression annuelle</button>
+        </div>
+      </details>
+      <input type="file" id="file-import" accept="application/json,.json" multiple style="display:none">
+      <input type="file" id="folder-import" webkitdirectory directory multiple style="display:none">
+    </nav>
+    <div class="coffre-widget">
+      <span class="badge-coffre" id="coffre-status">Coffre fermé</span>
+      <button class="btn small" id="btn-coffre-toggle">Ouvrir le coffre</button>
+    </div>
+  </div>
+</header>
+
+<div class="modal-overlay" id="modal-coffre">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-head">
+      <h3>Ouvrir le coffre élèves</h3>
+      <button class="modal-close" data-close="modal-coffre">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Fichier .synapses — sur cet ordinateur</label>
+        <button type="button" class="btn on-panel" id="coffre-browse-btn" style="width:100%;text-align:left;">📁 Parcourir mon ordinateur…</button>
+        <input type="file" id="coffre-file" accept=".synapses" style="display:none;">
+        <div id="coffre-file-name" style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;">Aucun fichier sélectionné.</div>
+      </div>
+      <div class="field"><label>Mot de passe</label><input type="password" id="coffre-password" placeholder="Mot de passe du coffre"></div>
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:14px 0 0;line-height:1.6;">
+        🔒 Ce fichier est lu <strong>directement depuis votre disque</strong> par votre navigateur : il n'est jamais envoyé au site, ni à un serveur, ni sur GitHub.<br>
+        ⚠️ Ne placez jamais ce fichier dans le dépôt GitHub du site — sinon il devient public dès la publication de la page, chiffré ou non.
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn on-panel" data-close="modal-coffre">Annuler</button>
+      <button class="btn on-panel primary" id="btn-coffre-open-confirm">Ouvrir</button>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+
+  <!-- ===================== VUE 1 : RÉPERTOIRE DES SÉQUENCES ===================== -->
+  <section class="view open" id="view-list">
+    <div class="list-head">
+      <div>
+        <p class="eyebrow">Tableau 2 · Programmation annuelle</p>
+        <h1>Programmation · Séquences &amp; séances</h1>
+        <p>La progression annuelle définit l'enchaînement pédagogique des compétences. Cette page construit séparément la programmation : les séquences sont réparties par domaine et par période, sans modifier la progression.</p>
+      </div>
+    </div>
+
+    <section class="program-table-panel cp-block" id="program-table-panel">
+      <div class="program-table-head">
+        <div>
+          <p class="eyebrow">Tableau 2 · échelle annuelle</p>
+          <h2>Programmation par domaine et par période</h2>
+          <p class="field-hint">Les domaines sont construits exclusivement à partir de <strong>Programmation/data/competences.json</strong> pour le niveau sélectionné. Les séquences sont des fichiers locaux importés depuis votre ordinateur et sont classées selon la compétence référencée.</p>
+        </div>
+        <div class="program-table-actions">
+          <label class="field inline-field"><span>Niveau</span><select id="program-niveau"></select></label>
+          <button class="btn on-panel small" id="btn-program-save">Enregistrer</button>
+          <button class="btn on-panel small" id="btn-program-load">Charger</button>
+          <input type="file" id="program-load-file" accept="application/json,.json" style="display:none">
+          <button class="btn on-panel small" id="btn-program-json">Télécharger JSON</button>
+          <button class="btn on-panel small" id="btn-program-pdf">PDF</button>
+          <button class="btn on-panel small" id="btn-program-doc">DOC</button>
+          <button class="btn ai small" id="btn-program-ai">IA</button>
+        </div>
+      </div>
+      <div id="program-table-wrap"></div>
+      <input type="file" id="program-cell-import-file" accept="application/json,.json" multiple style="display:none">
+      <div class="program-ai-panel" id="program-ai-panel" style="display:none">
+        <h3>Atelier IA · construire la programmation</h3>
+        <p class="field-hint">L'IA propose uniquement une répartition de séquences existantes dans les périodes et domaines. Elle ne modifie pas la progression.</p>
+        <div class="prompt-box" id="program-prompt"></div>
+        <div class="ai-toolbar"><button class="btn ai small" id="btn-program-copy">Copier le prompt</button><span class="help">Collez le prompt dans votre IA puis récupérez uniquement le JSON.</span></div>
+        <textarea id="program-response" placeholder="Collez ici le JSON proposé…"></textarea>
+        <div class="ai-toolbar"><button class="btn on-panel primary" id="btn-program-import">Intégrer la proposition</button><button class="btn on-panel" id="btn-program-ai-close">Fermer</button></div>
+        <div class="ai-result" id="program-ai-result"></div>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn on-panel small" id="btn-load-local-sequences">Charger des séquences depuis l'ordinateur</button>
+        <input type="file" id="local-sequences-file" accept="application/json,.json" multiple style="display:none">
+        <button class="btn on-panel small" id="btn-load-local-folder">📁 Importer un dossier entier</button>
+        <input type="file" id="local-folder-input" webkitdirectory directory multiple style="display:none">
+      </div>
+      <div class="filter-chips" id="domain-filters"></div>
+      <div class="filter-chips" id="periode-filters"></div>
+    </div>
+
+    <div class="seq-grid" id="seq-grid"></div>
+  </section>
+
+  <!-- ===================== VUE 2 : DÉTAIL D'UNE SÉQUENCE ===================== -->
+  <section class="view" id="view-seq">
+    <button class="cp-back" id="cp-back">← Retour aux séquences</button>
+
+    <div class="cp-head">
+      <div>
+        <p class="eyebrow" id="seq-eyebrow"></p>
+        <h1 id="seq-title"></h1>
+        <div class="drawer-tags" id="seq-tags"></div>
+      </div>
+      <div class="cp-head-actions">
+        <button class="btn on-panel small" id="btn-print-seq">Télécharger le PDF</button>
+        <button class="btn on-panel small" id="btn-edit-seq">Modifier</button>
+        <button class="btn on-panel small" id="btn-download-seq">Télécharger le JSON</button>
+        <button class="btn danger small" id="btn-delete-seq">Supprimer</button>
+      </div>
+    </div>
+
+    <div class="cp-block">
+      <h5>Objectif commun</h5>
+      <p class="txt" id="seq-objectif"></p>
+    </div>
+
+    <div class="cp-block" id="seq-prerequis-block">
+      <h5>Prérequis</h5>
+      <p class="txt" id="seq-prerequis"></p>
+    </div>
+
+    <div class="cp-block" id="seq-refs-block">
+      <h5>Références théoriques</h5>
+      <p class="txt" id="seq-refs"></p>
+    </div>
+
+    <div class="cp-block" id="seq-focus-block">
+      <h5>Progression — focus sur cette séquence</h5>
+      <div class="focus-progression" id="seq-focus-progression"></div>
+      <p class="field-hint" style="margin-top:10px;">
+        Le réseau de progression reste volontairement local : séquence(s) précédente(s),
+        séquence sélectionnée et séquence(s) suivante(s). Les compétences officielles
+        restent celles du référentiel et ne sont pas modifiées par cette interface.
+      </p>
+    </div>
+
+    <div class="cp-block" id="seq-eleves-block">
+      <h5>Objectifs individuels</h5>
+      <table class="eleves-table">
+        <thead><tr><th style="width:32%;">Élève</th><th>Objectif individuel</th></tr></thead>
+        <tbody id="seq-eleves-body"></tbody>
+      </table>
+    </div>
+
+    <div class="cp-block">
+      <div class="panel">
+        <h5 style="margin-bottom:6px;">Positionnement — 36 semaines</h5>
+        <p style="font-size:12px;color:var(--ink-soft);margin:0 0 14px;">Cliquez sur une semaine de début puis une semaine de fin pour positionner la séquence. <button type="button" id="seq-week-clear" style="background:none;border:none;color:var(--accent-sky);font-weight:600;cursor:pointer;padding:0;">Effacer le positionnement</button></p>
+        <div class="period-row" id="periodRow"></div>
+        <div class="week-grid" id="seq-week-grid"></div>
+      </div>
+    </div>
+
+    <div class="cp-block">
+      <div class="seances-head">
+        <h5 style="margin:0;">Séances de cette séquence</h5>
+      </div>
+      <div class="seances-grid" id="seances-grid"></div>
+    </div>
+  </section>
+
+  <!-- ===================== VUE 3 : PROGRAMMATION ANNUELLE ===================== -->
+  <section class="view" id="view-progression">
+    <button class="cp-back" id="progression-back">← Retour à la programmation</button>
+    <div class="list-head">
+      <div>
+        <p class="eyebrow">Enchaînement pédagogique · progression annuelle</p>
+        <h1>Progression annuelle</h1>
+        <p>Construisez la progression des apprentissages à partir des compétences : chaque brique représente une étape de construction pédagogique. L'ordre est logique et non temporel. Les périodes et les séquences sont gérées séparément dans la programmation.</p>
+      </div>
+    </div>
+
+    <div class="prog-selectors">
+      <div class="field"><label for="prog-niveau">Niveau</label><select id="prog-niveau"></select></div>
+      <div class="field"><label for="prog-domaine">Domaine du référentiel</label><select id="prog-domaine"></select></div>
+      <button class="btn on-panel primary" id="btn-prog-new">Nouvelle progression</button>
+      <button class="btn ai" id="btn-prog-open-ai">Générer avec IA</button>
+      <button class="btn on-panel" id="btn-prog-load">Charger une progression</button>
+      <input type="file" id="prog-load-file" accept="application/json,.json" style="display:none;">
+    </div>
+
+    <div class="prog-saved" id="prog-saved"></div>
+
+    <div class="ai-panel" id="prog-ai-panel" style="display:none;">
+      <h4>Atelier IA — construire la progression</h4>
+      <div class="notice">L'IA propose ; vous relisez et validez. Le prompt construit uniquement la chaîne logique des compétences, leurs prérequis et leurs critères de maîtrise. La programmation par périodes est enregistrée séparément.</div>
+      <div class="field">
+        <label for="prog-fichier">Document de référence, facultatif</label>
+        <button type="button" class="btn on-panel small" id="prog-fichier-browse">Charger un PDF ou Word…</button>
+        <input type="file" id="prog-fichier" accept=".pdf,.doc,.docx" style="display:none;">
+        <div id="prog-fichier-info" class="field-hint">Aucun document joint.</div>
+      </div>
+      <div class="prompt-box" id="prog-prompt"></div>
+      <div class="ai-toolbar">
+        <button class="btn ai" id="btn-prog-copy">Copier le prompt</button>
+        <span class="help">Collez le prompt dans votre IA, puis récupérez uniquement le JSON.</span>
+      </div>
+      <label class="field-label">Réponse JSON de l'IA</label>
+      <textarea id="prog-response" placeholder="Collez ici le JSON généré par l'IA…"></textarea>
+      <div class="ai-toolbar">
+        <button class="btn on-panel primary" id="btn-prog-import">Intégrer la proposition</button>
+        <button class="btn on-panel" id="btn-prog-ai-close">Fermer</button>
+      </div>
+      <div class="ai-result" id="prog-ai-result"></div>
+    </div>
+
+    <div class="cp-head-actions" id="prog-actions" style="display:none;margin-bottom:18px;">
+      <button class="btn on-panel small" id="btn-prog-pdf">Télécharger le PDF</button>
+      <button class="btn on-panel small" id="btn-prog-doc">Télécharger le DOC</button>
+      <button class="btn on-panel small" id="btn-prog-json">Télécharger le JSON</button>
+      <button class="btn ai small" id="btn-prog-reopen-atelier">Atelier IA</button>
+      <button class="btn danger small" id="btn-prog-delete">Supprimer</button>
+    </div>
+
+    <div id="prog-content"></div>
+  </section>
+
+</div>
+
+<footer>Portail de consultation non institutionnel · Référentiel chargé depuis Programmation/data/competences.json · Séquences importées depuis votre ordinateur.</footer>
+
+<!-- ===== Drawer fiche séance (lecture) ===== -->
+<div class="drawer-overlay" id="sea-overlay"></div>
+<aside class="drawer" id="sea-drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div>
+      <p class="eyebrow" id="sea-drawer-eyebrow"></p>
+    </div>
+    <button class="drawer-close" id="sea-drawer-close" aria-label="Fermer">✕</button>
+  </div>
+  <div class="drawer-body" id="sea-drawer-body"></div>
+</aside>
+
+<!-- ===== Modale : Nouvelle / Modifier séquence ===== -->
+<div class="modal-overlay" id="modal-seq">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-seq-title">Nouvelle séquence</h3>
+      <button class="modal-close" data-close="modal-seq">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-seq">
+        <div class="field">
+          <label for="f-seq-titre">Intitulé de la séquence</label>
+          <input type="text" id="f-seq-titre" required placeholder="Ex. : Développer la fluence de lecture">
+        </div>
+        <div class="field-row three">
+          <div class="field">
+            <label for="f-seq-niveau">Niveau</label>
+            <select id="f-seq-niveau">
+              <option value="CP">CP</option>
+              <option value="CE1">CE1</option>
+              <option value="CE2">CE2</option>
+              <option value="CM1">CM1</option>
+              <option value="CM2">CM2</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-seq-domaine">Domaine (matière)</label>
+            <input type="text" id="f-seq-domaine" list="dl-matieres" placeholder="Ex. : Français">
+            <datalist id="dl-matieres"><option value="Français"></datalist>
+          </div>
+          <div class="field">
+            <label for="f-seq-classe">Classe</label>
+            <input type="text" id="f-seq-classe" placeholder="Ex. : CE1 A">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="f-seq-competence">Champ d'apprentissage ciblé</label>
+            <select id="f-seq-competence"></select>
+            <div class="field-hint" id="seq-chemin-preview"></div>
+          </div>
+          <div class="field">
+            <label for="f-seq-competences">Compétences travaillées</label>
+            <input type="text" id="f-seq-competences" placeholder="Séparées par des virgules">
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-seq-prerequis">Pré-requis (notes libres)</label>
+          <input type="text" id="f-seq-prerequis" placeholder="Séparés par des virgules — informations ponctuelles, non liées au référentiel">
+        </div>
+
+        <fieldset>
+          <legend>Onglet Prérequis — compétences antérieures</legend>
+          <p style="font-size:12.5px;color:var(--ink-soft);margin:-4px 0 10px;">Cochez la ou les compétences du référentiel qui doivent être acquises avant cette séquence. Ces liens construisent le réseau de compétences (navigation non linéaire).</p>
+          <div class="prereq-picker" id="seq-prereq-picker"></div>
+        </fieldset>
+
+        <div class="field-row three">
+          <div class="field">
+            <label for="f-seq-periode">Période</label>
+            <select id="f-seq-periode">
+              <option value="1">Période 1</option>
+              <option value="2">Période 2</option>
+              <option value="3">Période 3</option>
+              <option value="4">Période 4</option>
+              <option value="5">Période 5</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-seq-debut">Semaine de début</label>
+            <select id="f-seq-debut"></select>
+          </div>
+          <div class="field">
+            <label for="f-seq-fin">Semaine de fin</label>
+            <select id="f-seq-fin"></select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-seq-objectif">Objectif commun</label>
+          <textarea id="f-seq-objectif" placeholder="Ce que la séquence vise, formulé pour la classe"></textarea>
+        </div>
+
+        <fieldset>
+          <legend>Objectifs individuels</legend>
+          <div id="seq-eleves-repeater"></div>
+          <div class="eleve-tools">
+            <button type="button" class="repeater-add" id="add-seq-eleve">+ Ajouter un élève</button>
+            <button type="button" class="repeater-add coffre-action" id="load-seq-eleves-coffre">↺ Charger les élèves du coffre</button>
+            <button type="button" class="repeater-add coffre-fix" id="fix-seq-eleves-coffre">🔒 Fixer ces objectifs dans le coffre</button>
+          </div>
+        </fieldset>
+
+        <div class="field">
+          <label for="f-seq-refs">Références théoriques</label>
+          <textarea id="f-seq-refs" placeholder="Auteurs, ouvrages, ressources institutionnelles…"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn on-panel" data-close="modal-seq">Annuler</button>
+      <button class="btn on-panel primary" id="btn-save-seq">Enregistrer la séquence</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modale : Nouvelle / Modifier séance ===== -->
+<div class="modal-overlay" id="modal-sea">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-sea-title">Nouvelle séance</h3>
+      <button class="modal-close" data-close="modal-sea">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-sea">
+        <div class="field-row three">
+          <div class="field">
+            <label for="f-sea-numero">N° de séance</label>
+            <input type="text" id="f-sea-numero" placeholder="Ex. : 5.2">
+          </div>
+          <div class="field">
+            <label for="f-sea-type">Type</label>
+            <select id="f-sea-type">
+              <option>Diagnostique</option>
+              <option>Exploration</option>
+              <option>Références</option>
+              <option>Structuration</option>
+              <option>Systématisation</option>
+              <option>Approfondissement</option>
+              <option>Évaluation</option>
+              <option>Autre</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-sea-classe">Classe</label>
+            <input type="text" id="f-sea-classe" placeholder="Ex. : CM1 - CM2">
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-sea-titre">Titre de la séance</label>
+          <input type="text" id="f-sea-titre" placeholder="Ex. : Retrouver le sujet et l'action dans une phrase">
+        </div>
+
+        <div class="field">
+          <label for="f-sea-competence-cible">Compétence cible</label>
+          <input type="text" id="f-sea-competence-cible">
+        </div>
+        <div class="field">
+          <label for="f-sea-competences-periph">Compétences périphériques</label>
+          <input type="text" id="f-sea-competences-periph">
+        </div>
+        <div class="field">
+          <label for="f-sea-modalites">Modalités générales</label>
+          <input type="text" id="f-sea-modalites" placeholder="Ex. : Travail en groupe de 4">
+        </div>
+
+        <fieldset>
+          <legend>Niveaux concernés</legend>
+          <div class="checks-row">
+            <label><input type="checkbox" value="CP" class="f-sea-niveau"> CP</label>
+            <label><input type="checkbox" value="CE1" class="f-sea-niveau"> CE1</label>
+            <label><input type="checkbox" value="CE2" class="f-sea-niveau"> CE2</label>
+            <label><input type="checkbox" value="CM1" class="f-sea-niveau"> CM1</label>
+            <label><input type="checkbox" value="CM2" class="f-sea-niveau"> CM2</label>
+          </div>
+        </fieldset>
+
+        <div class="field">
+          <label for="f-sea-objectif">Objectif commun</label>
+          <textarea id="f-sea-objectif" placeholder="Je veux que les élèves soient capables de…"></textarea>
+        </div>
+
+        <fieldset>
+          <legend>Objectifs individuels</legend>
+          <div id="sea-eleves-repeater"></div>
+          <div class="eleve-tools">
+            <button type="button" class="repeater-add" id="add-sea-eleve">+ Ajouter un élève</button>
+            <button type="button" class="repeater-add coffre-action" id="load-sea-eleves-coffre">↺ Charger les élèves du coffre</button>
+            <button type="button" class="repeater-add coffre-fix" id="fix-sea-eleves-coffre">🔒 Fixer ces objectifs dans le coffre</button>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Problématique pour les élèves</legend>
+          <textarea id="f-sea-problematique" placeholder="Question ou défi posé aux élèves en amont de l'activité"></textarea>
+        </fieldset>
+
+        <fieldset>
+          <legend>Déroulé</legend>
+          <div id="sea-phases-repeater"></div>
+          <button type="button" class="add-phase-btn" id="add-sea-phase">＋ Ajouter une phase</button>
+        </fieldset>
+
+        <div class="field">
+          <label for="f-sea-vigilance">Points de vigilance</label>
+          <textarea id="f-sea-vigilance"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn on-panel" data-close="modal-sea">Annuler</button>
+      <button class="btn on-panel primary" id="btn-save-sea">Enregistrer la séance</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="print-area"></div>
+
+
+
+<script>
+/* =========================================================
+   SYNAPSES — AUTHOR MARKER
+   Project: Grand Planificateur pédagogique
+   Author: Cskrh13 / Vincent
+   Copyright: © 2026
+   Version: 0.9.0-test
+   Build: 2026-08-27
+   ========================================================= */
+
+const SYNAPSES_BUILD = {
+    project: "Synapses",
+    author: "Cskrh13",
+    year: 2026,
+    version: "0.9.0-test",
+    build: "2026-08-27"
+};
+
+"use strict";
+
+/* ============================================================
+   COFFRE ÉLÈVES — intégration en lecture/écriture (mémoire uniquement)
+   ============================================================ */
+let coffre = null;
+try{ coffre = new SynapsesCoffre.Coffre(); }catch(e){ coffre = null; }
+function coffreDisponible(){ return !!coffre; }
+function coffreOuvert(){ return !!(coffre && coffre.ouvert); }
+function eleveLabel(e){
+  // Volontairement limité à l'identifiant d'anonymat : le nom/prénom de
+  // l'élève ne doit jamais quitter le coffre chiffré pour se retrouver
+  // dans une séquence/séance (celles-ci sont enregistrées en clair dans
+  // localStorage). Seul le numéro d'anonymat est utilisé partout ailleurs.
+  return e.identifiantSynapses;
+}
+function updateCoffreWidget(){
+  const status = document.getElementById('coffre-status');
+  const btn = document.getElementById('btn-coffre-toggle');
+  if(!coffreDisponible()){ status.textContent = "Coffre indisponible"; btn.style.display = "none"; return; }
+  if(coffreOuvert()){
+    status.textContent = "Coffre ouvert · " + coffre.listerEleves().length + " élève(s)";
+    status.classList.add('ouvert');
+    btn.textContent = "Fermer le coffre";
+  } else {
+    status.textContent = "Coffre fermé";
+    status.classList.remove('ouvert');
+    btn.textContent = "Ouvrir le coffre";
+  }
+}
+if(document.getElementById('btn-coffre-toggle')){
+  document.getElementById('btn-coffre-toggle').addEventListener('click', ()=>{
+    if(coffreOuvert()){
+      if(confirm("Fermer le coffre et purger les données élèves de la mémoire de cet onglet ?")){
+        coffre.purger();
+        updateCoffreWidget();
+        toast("Coffre fermé, données purgées");
+      }
+    } else {
+      openModal('modal-coffre');
+    }
+  });
+  document.getElementById('coffre-browse-btn').addEventListener('click', ()=> document.getElementById('coffre-file').click());
+  document.getElementById('coffre-file').addEventListener('change', ()=>{
+    const f = document.getElementById('coffre-file').files[0];
+    document.getElementById('coffre-file-name').textContent = f ? ("Sélectionné : " + f.name) : "Aucun fichier sélectionné.";
+  });
+  document.getElementById('btn-coffre-open-confirm').addEventListener('click', async ()=>{
+    const file = document.getElementById('coffre-file').files[0];
+    const pwd = document.getElementById('coffre-password').value;
+    if(!file){ toast("Sélectionnez un fichier .synapses"); return; }
+    if(!pwd){ toast("Saisissez le mot de passe du coffre"); return; }
+    try{
+      await coffre.ouvrir(file, pwd);
+      closeModal('modal-coffre');
+      document.getElementById('coffre-password').value = "";
+      document.getElementById('coffre-file').value = "";
+      document.getElementById('coffre-file-name').textContent = "Aucun fichier sélectionné.";
+      updateCoffreWidget();
+      toast("Coffre ouvert : " + coffre.listerEleves().length + " élève(s)");
+    }catch(err){
+      toast(err.message);
+    }
+  });
+  window.addEventListener('beforeunload', ()=>{ if(coffre) coffre.purger(); });
+}
+
+
+/* ============================================================
+   DONNÉES — domaines, périodes, stockage local (JSON)
+   ============================================================ */
+const DOMAINES = {
+  lecture:     { nom:"Lecture",               couleur:"#B5502E" },
+  ecriture:    { nom:"Écriture",               couleur:"#2A7F72" },
+  oral:        { nom:"Oral",                   couleur:"#6B4E8E" },
+  vocabulaire: { nom:"Vocabulaire",            couleur:"#B5871E" },
+  orthographe: { nom:"Orthographe & grammaire",couleur:"#7A4A9E" }
+};
+/* Niveaux de classe gérés par l'application — structurent l'arborescence data/{niveau}/... */
+let NIVEAUX = ["TPS","PS","MS","GS","CP","CE1","CE2","CM1","CM2","6e"];
+const MATIERE_DEFAUT = "Français";
+
+/* Référentiel de compétences — chargé dynamiquement depuis competences.json
+   (le même référentiel public que cartographie-competences.html, jamais recopié
+   ni redéfini en dur ici). Une séquence pointe vers UNE compétence "cible"
+   (competence_id). Une même compétence peut être la cible de plusieurs
+   séquences/séances. Une séquence peut aussi lister des compétences
+   "antérieures" (pré-requis), ce qui construit un réseau plutôt qu'une
+   progression strictement linéaire. */
+let COMPETENCES = [];
+let COMPETENCE_DOMAINES = [];
+const PALETTE_DOMAINES = ["#B5502E","#2A7F72","#6B4E8E","#B5871E","#7A4A9E","#2E5EAA","#B23A5C","#3F8C4B","#8C5E2A","#4C6E91"];
+function colorForDomaine(domaineId){
+  if(!domaineId) return PALETTE_DOMAINES[0];
+  let hash = 0;
+  const s = String(domaineId);
+  for(let i=0;i<s.length;i++) hash = (hash*31 + s.charCodeAt(i)) >>> 0;
+  return PALETTE_DOMAINES[hash % PALETTE_DOMAINES.length];
+}
+function getDomaineNom(domaineId){
+  const d = COMPETENCE_DOMAINES.find(x=>x.id===domaineId);
+  return (d && d.nom) || domaineId || "Compétence";
+}
+function getCompetence(id){ return COMPETENCES.find(c=>c.id===id); }
+/* Essaie plusieurs chemins relatifs, car sequences.html peut être ouvert
+   depuis Programmation/ ou depuis la racine du dépôt selon le contexte. */
+async function chargerReferentielCompetences(){
+  const candidats = [
+    "data/competences.json",
+    "Programmation/data/competences.json",
+    "../Programmation/data/competences.json",
+    "../data/competences.json"
+  ];
+  for(const chemin of candidats){
+    try{
+      const r = await fetch(chemin, {cache:"no-store"});
+      if(!r.ok) continue;
+      const data = await r.json();
+      COMPETENCES = Array.isArray(data.competences) ? data.competences : [];
+      COMPETENCE_DOMAINES = Array.isArray(data.domaines) ? data.domaines : [];
+      const ordreDefaut=["TPS","PS","MS","GS","CP","CE1","CE2","CM1","CM2","6e"];
+      const niveauxTrouves=[...new Set(COMPETENCES.map(c=>c.niveau).filter(Boolean))];
+      NIVEAUX=[...ordreDefaut.filter(n=>niveauxTrouves.includes(n)), ...niveauxTrouves.filter(n=>!ordreDefaut.includes(n)).sort((a,b)=>a.localeCompare(b,'fr'))];
+      return true;
+    }catch(e){ /* on tente le chemin suivant */ }
+  }
+  console.warn("competences.json introuvable : le référentiel de compétences reste vide.");
+  toast("Référentiel de compétences introuvable (competences.json).");
+  return false;
+}
+
+/* ------------------------------------------------------------
+   Arborescence de stockage : data/{niveau}/{matiere}/{champ}/…
+   Toute séquence (et par héritage ses séances) est rattachée à :
+     - un niveau      (CP, CE1, CE2, CM1 ou CM2)
+     - un domaine     (matière, ex. "Français")
+     - un champ       (champ d'apprentissage : lecture, ecriture, oral, vocabulaire, orthographe…)
+   Cette fonction calcule le chemin de dossier correspondant, utilisé pour
+   nommer les fichiers JSON exportés (data/CP/francais/lecture/…).
+   ------------------------------------------------------------ */
+function seqNiveau(seq){ return (seq && seq.niveau) || NIVEAUX[0]; }
+function seqMatiere(seq){ return (seq && seq.matiere) || MATIERE_DEFAUT; }
+function seqChamp(seq){ return (seq && (seq.competence_id || seq.domaine_id || seq.domaine)) || "lecture"; }
+function seqChemin(seq){
+  return `data/${seqNiveau(seq)}/${slug(seqMatiere(seq))}/${seqChamp(seq)}`;
+}
+function updateSeqCheminPreview(){
+  const niveau = document.getElementById('f-seq-niveau').value || NIVEAUX[0];
+  const matiere = document.getElementById('f-seq-domaine').value.trim() || MATIERE_DEFAUT;
+  const champ = document.getElementById('f-seq-competence').value || "lecture";
+  const el = document.getElementById('seq-chemin-preview');
+  if(el) el.textContent = `Sera enregistré dans : data/${niveau}/${slug(matiere)}/${champ}/…`;
+}
+
+const PERIODES = [
+  {n:1,label:"Période 1",span:7},
+  {n:2,label:"Période 2",span:7},
+  {n:3,label:"Période 3",span:7},
+  {n:4,label:"Période 4",span:8},
+  {n:5,label:"Période 5",span:7}
+];
+const PHASES_DEFAUT = ["Présentation","Activité","Restitution","Institutionnalisation","Métacognition"];
+/* Les 7 séances-types (8 fiches, la 5 étant scindée en 5.1 / 5.2) */
+const SEANCES_TYPES = [
+  {numero:"1", type:"Diagnostique"},
+  {numero:"2", type:"Exploration"},
+  {numero:"3", type:"Références"},
+  {numero:"4", type:"Structuration"},
+  {numero:"5.1", type:"Systématisation"},
+  {numero:"5.2", type:"Systématisation"},
+  {numero:"6", type:"Approfondissement"},
+  {numero:"7", type:"Évaluation"}
+];
+function genererSeancesParDefaut(sequenceId, classe, seq){
+  const niveauxParDefaut = seq && seq.niveau ? [seq.niveau] : [];
+  return SEANCES_TYPES.map(st=>({
+    id: uid("sea"), sequence_id: sequenceId, numero: st.numero, type: st.type,
+    titre:"", classe: classe||"", competence_cible:"", competences_peripheriques:"",
+    modalites_generales:"", niveaux: niveauxParDefaut, objectif_commun:"", objectifs_individuels:[],
+    problematique:"", deroule: PHASES_DEFAUT.map(p=>({phase:p,temps:"",modalite_materiel:"",deroulement:"",analyse_tache:"",amenagement:"",posture:""})),
+    vigilance:""
+  }));
+}
+
+const STORE_SEQ = "planif_sequences";
+const STORE_SEA = "planif_seances";
+
+function loadSequences(){ try{ return JSON.parse(localStorage.getItem(STORE_SEQ)) || []; }catch(e){ return []; } }
+function saveSequences(list){ localStorage.setItem(STORE_SEQ, JSON.stringify(list)); }
+function loadSeances(){ try{ return JSON.parse(localStorage.getItem(STORE_SEA)) || []; }catch(e){ return []; } }
+function saveSeances(list){ localStorage.setItem(STORE_SEA, JSON.stringify(list)); }
+
+const state = {
+  sequences: loadSequences(),
+  seances: loadSeances(),
+  activeDomains: null, // null = aucun filtre choisi -> toutes les compétences/domaines sont affichés
+  activePeriode: null,
+  currentSeqId: null,
+  editingSeqId: null,
+  editingSeaId: null
+};
+
+function uid(prefix){ return prefix + "_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,7); }
+
+/* Nettoyage : retire la séquence de démonstration ("Développer la fluence de lecture")
+   auto-créée par une ancienne version de l'outil au tout premier lancement, si elle
+   traine encore dans les données déjà enregistrées. */
+function purgerSequenceDemo(){
+  const estDemo = s => s && s.titre==="Développer la fluence de lecture" && s.chemin==="data/CE1/francais/lecture" && s.objectif_commun==="Lire un texte connu à voix haute avec fluidité, pour mieux le comprendre.";
+  const demo = state.sequences.filter(estDemo);
+  if(!demo.length) return;
+  const demoIds = new Set(demo.map(s=>s.id));
+  state.sequences = state.sequences.filter(s=>!demoIds.has(s.id));
+  state.seances = state.seances.filter(sea=>!demoIds.has(sea.sequence_id));
+  saveSequences(state.sequences); saveSeances(state.seances);
+}
+purgerSequenceDemo();
+
+/* ============================================================
+   UTILITAIRES UI
+   ============================================================ */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('[data-close]').forEach(btn=>{
+  btn.addEventListener('click', ()=> closeModal(btn.getAttribute('data-close')));
+});
+document.querySelectorAll('.modal-overlay').forEach(ov=>{
+  ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('open'); });
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
+    closeSeaDrawer();
+  }
+});
+
+function weekSelectOptions(){
+  let html = "";
+  for(let i=1;i<=36;i++) html += `<option value="${i}">Semaine ${i}</option>`;
+  return html;
+}
+document.getElementById('f-seq-debut').innerHTML = weekSelectOptions();
+document.getElementById('f-seq-fin').innerHTML = weekSelectOptions();
+
+function periodRowHTML(){
+  return PERIODES.map(p=>`<div class="period-label" style="--span:${p.span}">${p.label}</div>`).join('');
+}
+document.getElementById('periodRow').innerHTML = periodRowHTML();
+
+/* ============================================================
+   VUE 1 — RÉPERTOIRE DES SÉQUENCES
+   ============================================================ */
+function renderFilters(){
+  const domWrap = document.getElementById('domain-filters');
+  domWrap.innerHTML = "";
+  // Domaines + sous-domaines réellement présents dans le référentiel (competences.json),
+  // tous niveaux confondus, plutôt que les 5 grands domaines figés.
+  const domainesDisponibles = domainesDuNiveau(null);
+  if(state.activeDomains===null){
+    state.activeDomains = new Set(domainesDisponibles.map(d=>d.id));
+  } else {
+    // toute compétence nouvellement apparue (référentiel chargé après coup, import…) reste visible par défaut
+    domainesDisponibles.forEach(d=>{ if(!state.activeDomains.has(d.id)) state.activeDomains.add(d.id); });
+  }
+  if(!domainesDisponibles.length){
+    domWrap.innerHTML = `<span style="font-size:12px;color:var(--ink-soft);">Référentiel de compétences en cours de chargement…</span>`;
+  }
+  domainesDisponibles.forEach(d=>{
+    const c = document.createElement('button');
+    c.className = "chip"; c.textContent = d.nom;
+    c.title = d.discipline || "";
+    c.setAttribute('aria-pressed', state.activeDomains.has(d.id));
+    c.addEventListener('click', ()=>{
+      if(state.activeDomains.has(d.id)) state.activeDomains.delete(d.id); else state.activeDomains.add(d.id);
+      renderFilters(); renderSeqGrid();
+    });
+    domWrap.appendChild(c);
+  });
+
+  const perWrap = document.getElementById('periode-filters');
+  perWrap.innerHTML = "";
+  const allChip = document.createElement('button');
+  allChip.className = "chip"; allChip.textContent = "Toutes périodes";
+  allChip.setAttribute('aria-pressed', state.activePeriode===null);
+  allChip.addEventListener('click', ()=>{ state.activePeriode=null; renderFilters(); renderSeqGrid(); });
+  perWrap.appendChild(allChip);
+  PERIODES.forEach(p=>{
+    const c = document.createElement('button');
+    c.className = "chip"; c.textContent = "P"+p.n;
+    c.setAttribute('aria-pressed', state.activePeriode===p.n);
+    c.addEventListener('click', ()=>{ state.activePeriode = state.activePeriode===p.n?null:p.n; renderFilters(); renderSeqGrid(); });
+    perWrap.appendChild(c);
+  });
+}
+
+function miniWeeksHTML(seq){
+  let html = "";
+  for(let w=1; w<=36; w++){
+    const on = w>=seq.semaine_debut && w<=seq.semaine_fin;
+    html += `<span class="${on?'on':''}"></span>`;
+  }
+  return html;
+}
+
+function assignedPeriodForSequence(seqId){
+  if(typeof programmations==='undefined') return null;
+  const niveau=state.sequences.find(s=>s.id===seqId)?.niveau;
+  const p=programmeForLevel(niveau);
+  const a=p?.affectations?.find(x=>x.sequence_id===seqId);
+  return a?Number(a.periode):null;
+}
+
+function renderSeqGrid(){
+  const grid = document.getElementById('seq-grid');
+  grid.innerHTML = "";
+  const list = state.sequences.filter(s=>{
+    if(state.activeDomains && !state.activeDomains.has(sequenceDomainId(s))) return false;
+    if(state.activePeriode!==null && assignedPeriodForSequence(s.id)!==state.activePeriode) return false;
+    return true;
+  });
+
+  if(!list.length){
+    grid.innerHTML = `<div class="empty-state">
+      <h4>Aucune séquence pour ces filtres</h4>
+      <p>Importez des séquences depuis votre ordinateur, ou ajustez les filtres ci-dessus.</p>
+      <button class="btn on-panel primary" id="empty-new-seq">📂 Importer</button>
+    </div>`;
+    document.getElementById('empty-new-seq').addEventListener('click', ()=> document.getElementById('file-import').click());
+    return;
+  }
+
+  list.forEach(seq=>{
+    const domInfo = sequenceDomainInfo(seq);
+    const dom = {nom: domInfo.nom, couleur: colorForDomaine(domInfo.id)};
+    const nbSeances = state.seances.filter(x=>x.sequence_id===seq.id).length;
+    const card = document.createElement('button');
+    card.className = "seq-brique";
+    card.style.setProperty('--dcolor', dom.couleur);
+    card.innerHTML = `
+      <div class="sb-top">
+        <span class="badge">${dom.nom}</span>
+        <span class="badge plain">${escapeHTML(seqNiveau(seq))}</span>
+        <span class="badge plain">${assignedPeriodForSequence(seq.id)?"P"+assignedPeriodForSequence(seq.id):"Non programmée"}</span>
+      </div>
+      <h3>${escapeHTML(seq.titre)}</h3>
+      <div class="sb-obj">${escapeHTML(seq.objectif_commun||"")}</div>
+      <div class="sb-mini-weeks">${miniWeeksHTML(seq)}</div>
+      <div class="sb-foot">
+        <span>${(seq.semaine_debut&&seq.semaine_fin)?`S${seq.semaine_debut}–S${seq.semaine_fin} · `:""}${nbSeances} séance${nbSeances>1?'s':''}</span>
+        <span class="sb-arrow">Ouvrir →</span>
+      </div>
+    `;
+    card.addEventListener('click', ()=> openSeqDetail(seq.id));
+    grid.appendChild(card);
+  });
+}
+
+function escapeHTML(str){
+  const d = document.createElement('div'); d.textContent = str==null?"":String(str); return d.innerHTML;
+}
+
+/* ============================================================
+   VUE 2 — DÉTAIL D'UNE SÉQUENCE
+   ============================================================ */
+/* ============================================================
+   FICHE SÉQUENCE — rendu complet (titre, tags, objectif, prérequis,
+   références, focus progression, objectifs individuels,
+   positionnement 36 semaines, séances)
+   ============================================================ */
+let seqWeekPickStart = null; // premier clic en attente du second, pour définir une plage
+
+function renderSeqDetail(){
+  const seq = state.sequences.find(s=>s.id===state.currentSeqId);
+  if(!seq){ backToList(); return; }
+  seqWeekPickStart = null;
+
+  const dom = sequenceDomainInfo(seq);
+  const niveau = seqNiveau(seq);
+  const matiere = seq.matiere || MATIERE_DEFAUT;
+  const periode = assignedPeriodForSequence(seq.id) || seq.periode || null;
+
+  document.getElementById('seq-eyebrow').textContent = [
+    niveau, matiere, dom.nom,
+    periode ? `Période ${periode}` : null,
+    (seq.semaine_debut && seq.semaine_fin) ? `Semaines ${seq.semaine_debut}–${seq.semaine_fin}` : null
+  ].filter(Boolean).join(' · ');
+
+  document.getElementById('seq-title').textContent = seq.titre || "Séquence sans titre";
+
+  const tags = [niveau, matiere, dom.nom, seq.classe].filter(Boolean);
+  document.getElementById('seq-tags').innerHTML =
+    tags.map(t=>`<span class="badge plain">${escapeHTML(t)}</span>`).join('') +
+    (seq.brouillon ? `<span class="badge plain" style="color:#9a3d2e;">📝 Brouillon</span>` : "") +
+    `<span class="badge plain" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;">${escapeHTML(seqChemin(seq))}/</span>`;
+
+  document.getElementById('seq-objectif').textContent = seq.objectif_commun || "—";
+
+  const prereqBlock = document.getElementById('seq-prerequis-block');
+  const prereqText = Array.isArray(seq.prerequis) ? seq.prerequis.filter(Boolean).join(' · ') : (seq.prerequis || '');
+  if(prereqText){ prereqBlock.style.display=''; document.getElementById('seq-prerequis').textContent = prereqText; }
+  else prereqBlock.style.display = 'none';
+
+  const refsBlock = document.getElementById('seq-refs-block');
+  if(seq.references_theoriques){ refsBlock.style.display=''; document.getElementById('seq-refs').textContent = seq.references_theoriques; }
+  else refsBlock.style.display = 'none';
+
+  const focusWrap = document.getElementById('seq-focus-progression');
+  const {previous, next} = getProgressionNeighbors(seq);
+  if(previous.length || next.length){
+    focusWrap.innerHTML = [
+      ...previous.map(s=>focusSequenceCard(s,'← Séquence précédente')),
+      `<div class="focus-card" style="background:#eef4fc;border-color:var(--accent-sky);"><strong>${escapeHTML(seq.titre||"Cette séquence")}</strong><span>Séquence actuelle</span></div>`,
+      ...next.map(s=>focusSequenceCard(s,'Séquence suivante →'))
+    ].join('');
+    focusWrap.querySelectorAll('[data-focus-seq]').forEach(btn=>btn.addEventListener('click', ()=> openSeqDetail(btn.dataset.focusSeq)));
+  } else {
+    focusWrap.innerHTML = `<p style="font-size:13px;color:var(--ink-soft);margin:0;">Aucune séquence précédente ou suivante n'est reliée à celle-ci pour l'instant.</p>`;
+  }
+
+  const elevesBlock = document.getElementById('seq-eleves-block');
+  const eleves = (seq.objectifs_individuels||[]).filter(e=>e.nom||e.objectif);
+  if(eleves.length){
+    elevesBlock.style.display = '';
+    document.getElementById('seq-eleves-body').innerHTML = eleves.map(e=>`<tr><td>${escapeHTML(e.nom)}</td><td>${escapeHTML(e.objectif)}</td></tr>`).join('');
+  } else elevesBlock.style.display = 'none';
+
+  renderSeqWeekGrid(seq, dom.couleur);
+  renderSeancesGrid(seq);
+}
+
+function renderSeqWeekGrid(seq, couleur){
+  couleur = couleur || sequenceDomainInfo(seq).couleur || colorForDomaine(sequenceDomainId(seq));
+  const grid = document.getElementById('seq-week-grid');
+  grid.innerHTML = "";
+  for(let w=1; w<=36; w++){
+    const cell = document.createElement('button');
+    cell.type = "button";
+    cell.className = "week-cell";
+    cell.textContent = w;
+    cell.title = "Semaine " + w;
+    const inRange = seq.semaine_debut && seq.semaine_fin && w>=seq.semaine_debut && w<=seq.semaine_fin;
+    if(inRange){ cell.classList.add('in-range'); cell.style.background = couleur; }
+    if(seqWeekPickStart===w) cell.style.outline = "2px solid " + couleur;
+    cell.addEventListener('click', ()=>{
+      if(seqWeekPickStart===null){
+        seqWeekPickStart = w;
+        renderSeqWeekGrid(seq, couleur);
+        return;
+      }
+      let debut = seqWeekPickStart, fin = w;
+      if(fin<debut){ const t=debut; debut=fin; fin=t; }
+      seq.semaine_debut = debut; seq.semaine_fin = fin;
+      seqWeekPickStart = null;
+      saveSequences(state.sequences);
+      renderSeqDetail();
+    });
+    grid.appendChild(cell);
+  }
+}
+document.getElementById('seq-week-clear')?.addEventListener('click', ()=>{
+  const seq = state.sequences.find(s=>s.id===state.currentSeqId);
+  if(!seq) return;
+  delete seq.semaine_debut; delete seq.semaine_fin;
+  seqWeekPickStart = null;
+  saveSequences(state.sequences);
+  renderSeqDetail();
+});
+
+function openSeqDetail(seqId){
+  state.currentSeqId = seqId;
+  document.getElementById('view-list').classList.remove('open');
+  document.getElementById('view-seq').classList.add('open');
+  renderSeqDetail();
+  window.scrollTo({top:0});
+}
+function backToList(){
+  document.getElementById('view-seq').classList.remove('open');
+  document.getElementById('view-list').classList.add('open');
+  state.currentSeqId = null;
+  renderSeqGrid();
+}
+document.getElementById('cp-back').addEventListener('click', backToList);
+
+/* ============================================================
+   VUE 3 — RÉSEAU DE COMPÉTENCES
+   ============================================================ */
+/* ============================================================
+   VUE 3 — PROGRESSION (remplace l'ancien Réseau de compétences)
+   Ordre logique des apprentissages qui mènent à une compétence,
+   pour un couple (niveau, domaine) donné. Générée au choix à la
+   main ou via l'atelier IA gratuit (copier/coller de prompt,
+   sans clé API), sur le modèle du générateur de séquences.
+   ============================================================ */
+const STORE_PROG = "planif_progressions_v2";
+function loadProgressions(){ try{ return JSON.parse(localStorage.getItem(STORE_PROG)) || []; }catch(e){ return []; } }
+function saveProgressions(list){ localStorage.setItem(STORE_PROG, JSON.stringify(list)); }
+let progressions = loadProgressions();
+let currentProgressionId = null;
+let progFichierTexte = "", progFichierNom = "";
+
+function domainesDuNiveau(niveau){
+  const map=new Map();
+  (COMPETENCES||[]).filter(c=>!niveau || c.niveau===niveau).forEach(c=>{
+    const id=c.domaine_id||c.domaineId||c.domaine;
+    if(!id)return;
+    const nom=c.domaine||c.domaine_nom||c.domaineId||id;
+    const discipline=c.discipline||c.matiere||'Autre';
+    if(!map.has(id)) map.set(id,{id,nom,discipline});
+  });
+  // Une séquence-projet (plusieurs domaines/compétences à la fois) ne correspond à aucun
+  // domaine unique du référentiel : sans ceci, elle resterait invisible dans les filtres.
+  state.sequences.filter(s=>!niveau||seqNiveau(s)===niveau).forEach(s=>{
+    const d=sequenceDomainInfo(s);
+    if(d.id && !map.has(d.id)) map.set(d.id,d);
+  });
+  return [...map.values()].sort((a,b)=>(a.discipline||'').localeCompare(b.discipline||'','fr') || a.nom.localeCompare(b.nom,'fr'));
+}
+function progressionDomaines(niveau=document.getElementById('prog-niveau')?.value){
+  return domainesDuNiveau(niveau);
+}
+function fillProgressionSelectors(){
+  const n=document.getElementById('prog-niveau');
+  const currentN=n.value||NIVEAUX[0];
+  n.innerHTML=NIVEAUX.map(x=>`<option value="${escapeHTML(x)}">${escapeHTML(x)}</option>`).join('');
+  n.value=NIVEAUX.includes(currentN)?currentN:NIVEAUX[0];
+  const d=document.getElementById('prog-domaine');
+  const currentD=d.value;
+  d.innerHTML=progressionDomaines(n.value).map(x=>`<option value="${escapeHTML(x.id)}">${escapeHTML(x.discipline)} · ${escapeHTML(x.nom)}</option>`).join('');
+  if([...d.options].some(o=>o.value===currentD)) d.value=currentD;
+}
+function getProgDomaineNom(id){ const x=progressionDomaines().find(d=>d.id===id); return x?.nom||id||''; }
+function findProgression(niveau,domaine_id){ return progressions.find(p=>p.niveau===niveau&&p.domaine_id===domaine_id); }
+function progressionCompetences(p){ return Array.isArray(p.competences)?p.competences:[]; }
+function seqForId(id){ return state.sequences.find(s=>s.id===id); }
+function competenceById(id){ return typeof getCompetence==='function' ? getCompetence(id) : null; }
+function competenceLabel(id, fallback=''){ const c=competenceById(id); return c?.intitule||fallback||id||'Compétence'; }
+function newProgression(niveau,domaineId){
+  const id=uid('prog');
+  return {version:'3.0',id,niveau,domaine_id:domaineId,titre:`Progression annuelle ${niveau} · ${getProgDomaineNom(domaineId)}`,
+    principe:'Enchaînement pédagogique non temporel des compétences.',
+    competences:[]};
+}
+function renderProgSaved(){
+  const w=document.getElementById('prog-saved');
+  if(!progressions.length){w.innerHTML='';return;}
+  w.innerHTML='<span class="prog-saved-label">Progressions enregistrées :</span>'+progressions.map(p=>`<button class="prog-saved-chip" data-open-prog="${escapeHTML(p.id)}">${escapeHTML(p.niveau)} · ${escapeHTML(getProgDomaineNom(p.domaine_id))}</button>`).join('');
+  w.querySelectorAll('[data-open-prog]').forEach(b=>b.onclick=()=>{const p=progressions.find(x=>x.id===b.dataset.openProg);if(p){document.getElementById('prog-niveau').value=p.niveau;document.getElementById('prog-domaine').value=p.domaine_id;openProgressionResult(p);}});
+}
+function openProgression(){
+  document.getElementById('view-list').classList.remove('open');document.getElementById('view-seq').classList.remove('open');document.getElementById('view-progression').classList.add('open');
+  fillProgressionSelectors();renderProgSaved();document.getElementById('prog-ai-panel').style.display='none';document.getElementById('prog-actions').style.display='none';document.getElementById('prog-content').innerHTML='';currentProgressionId=null;window.scrollTo({top:0});
+}
+function closeProgression(){document.getElementById('view-progression').classList.remove('open');document.getElementById('view-list').classList.add('open');renderSeqGrid();if(document.getElementById('program-niveau'))renderProgrammingTable(document.getElementById('program-niveau').value);}
+document.getElementById('btn-view-progression').addEventListener('click',openProgression);
+document.getElementById('progression-back').addEventListener('click',closeProgression);
+
+document.getElementById('btn-prog-open-ai').addEventListener('click',()=>{document.getElementById('prog-ai-panel').style.display='';updateProgPrompt();});
+document.getElementById('btn-prog-new').addEventListener('click',()=>{
+  const n=document.getElementById('prog-niveau').value,d=document.getElementById('prog-domaine').value;
+  let p=findProgression(n,d); if(!p){p=newProgression(n,d);progressions.push(p);saveProgressions(progressions);renderProgSaved();}
+  openProgressionResult(p);openProgEditor();
+});
+
+document.getElementById('btn-prog-load').addEventListener('click',()=>document.getElementById('prog-load-file').click());
+document.getElementById('prog-load-file').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const raw=JSON.parse(r.result);const incoming=Array.isArray(raw)?raw:(Array.isArray(raw.progressions)?raw.progressions:[raw]);let count=0;incoming.forEach(x=>{const p=normalizeProgression(x);if(p){const i=progressions.findIndex(q=>q.niveau===p.niveau&&q.domaine_id===p.domaine_id);if(i>=0)progressions[i]=p;else progressions.push(p);count++;}});saveProgressions(progressions);renderProgSaved();if(incoming[0]){document.getElementById('prog-niveau').value=normalizeProgression(incoming[0]).niveau;document.getElementById('prog-domaine').value=normalizeProgression(incoming[0]).domaine_id;openProgressionResult(normalizeProgression(incoming[0]));}toast(count+' programmation(s) chargée(s)');}catch(err){alert('JSON invalide : '+err.message);}};r.readAsText(f);e.target.value='';});
+
+function normalizeProgression(x){
+  if(!x||typeof x!=='object'||!x.niveau||!x.domaine_id)return null;
+  const p={...x,id:x.id||uid('prog'),version:'3.0',titre:x.titre||`Progression annuelle ${x.niveau} · ${getProgDomaineNom(x.domaine_id)}`,principe:'Enchaînement pédagogique non temporel des compétences.',competences:Array.isArray(x.competences)?x.competences:[]};
+  p.competences=p.competences.map((c,i)=>({...c,id:c.id||uid('brick'),ordre:i+1,competence_id:c.competence_id||'',titre:c.titre||((c.competence_id&&competenceLabel(c.competence_id))||''),description:c.description||'',prerequis_ids:Array.isArray(c.prerequis_ids)?c.prerequis_ids:[],indicateurs_maitrise:c.indicateurs_maitrise||'',}));
+  delete p.periodes;
+  return p;
+}
+function normalizeProgressionInPlace(p){
+  if(!p)return p;
+  p.version='3.0';
+  p.competences=Array.isArray(p.competences)?p.competences:[];
+  p.competences.forEach((c,i)=>{c.id=c.id||uid('brick');c.ordre=i+1;c.competence_id=c.competence_id||'';c.titre=c.titre||((c.competence_id&&competenceLabel(c.competence_id))||'');c.description=c.description||'';c.prerequis_ids=Array.isArray(c.prerequis_ids)?c.prerequis_ids:[];c.indicateurs_maitrise=c.indicateurs_maitrise||'';});
+  delete p.periodes;
+  return p;
+}
+function saveCurrentProgression(){const p=progressions.find(x=>x.id===currentProgressionId);if(p)saveProgressions(progressions);}
+function openProgressionResult(raw){const p=normalizeProgression(raw);if(!p)return;const idx=progressions.findIndex(x=>x.id===p.id);if(idx>=0)progressions[idx]=p;else progressions.push(p);currentProgressionId=p.id;saveProgressions(progressions);document.getElementById('prog-actions').style.display='';renderProgressionContent(p);renderProgSaved();}
+function competenceOptions(selected=''){return progressionCompetenceCatalogue().map(c=>`<option value="${escapeHTML(c.id)}" ${c.id===selected?'selected':''}>${escapeHTML(c.niveau?c.niveau+' · ':'')}${escapeHTML(c.intitule||c.id)}</option>`).join('');}
+function progressionCompetenceCatalogue(){
+  if(!Array.isArray(COMPETENCES)||!COMPETENCES.length)return [];
+  const niveau=document.getElementById('prog-niveau')?.value;
+  const domaine=document.getElementById('prog-domaine')?.value;
+  return COMPETENCES.filter(c=>c.niveau===niveau && (!domaine || c.domaine_id===domaine));
+}
+function seqOptionsForCompetence(c,selectedIds=[]){
+  const p=progressions.find(x=>x.id===currentProgressionId); const niveau=p?.niveau||document.getElementById('prog-niveau').value;
+  return state.sequences.filter(s=>seqNiveau(s)===niveau && (s.competence_id===c.id || (s.competences_mobilisees||[]).includes(c.id) || s.domaine===p?.domaine_id)).map(s=>`<label class="prog-seq-check"><input type="checkbox" data-seq-for="${escapeHTML(c.id)}" value="${escapeHTML(s.id)}" ${selectedIds.includes(s.id)?'checked':''}> ${escapeHTML(s.titre)}</label>`).join('');
+}
+function openProgEditor(){document.getElementById('prog-edit-zone')?.scrollIntoView({behavior:'smooth',block:'start'});}
+function addCompetenceBrick(){
+  const p=progressions.find(x=>x.id===currentProgressionId);if(!p)return;
+  p.competences.push({id:uid('brick'),ordre:p.competences.length+1,competence_id:'',titre:'',description:'',prerequis_ids:[],indicateurs_maitrise:'',sequence_ids:[]});
+  saveCurrentProgression();renderProgressionContent(p);
+}
+function removeCompetenceBrick(id){const p=progressions.find(x=>x.id===currentProgressionId);if(!p)return;p.competences=p.competences.filter(c=>c.id!==id);p.competences.forEach((c,i)=>c.ordre=i+1);saveCurrentProgression();renderProgressionContent(p);}
+function moveBrick(id,dir){const p=progressions.find(x=>x.id===currentProgressionId);if(!p)return;const i=p.competences.findIndex(c=>c.id===id),j=i+dir;if(i<0||j<0||j>=p.competences.length)return;[p.competences[i],p.competences[j]]=[p.competences[j],p.competences[i]];p.competences.forEach((c,k)=>c.ordre=k+1);saveCurrentProgression();renderProgressionContent(p);}
+function renderProgressionContent(raw){
+  let p=progressions.find(x=>x.id===currentProgressionId);
+  if(!p){p=normalizeProgression(raw);if(!p)return;const idx=progressions.findIndex(x=>x.id===p.id);if(idx>=0)progressions[idx]=p;else progressions.push(p);currentProgressionId=p.id;}
+  p=normalizeProgressionInPlace(p);
+  const wrap=document.getElementById('prog-content');if(!wrap)return;
+  wrap.innerHTML=`
+    <div class="prog-hero cp-block"><p class="eyebrow">${escapeHTML(p.niveau)} · ${escapeHTML(getProgDomaineNom(p.domaine_id))}</p><input class="prog-title-input" id="prog-title" value="${escapeAttr(p.titre)}"><p class="field-hint">La chaîne ci-dessous décrit la construction des apprentissages. Elle ne porte ni période, ni semaine, ni séquence.</p></div>
+    <div id="prog-edit-zone" class="prog-editor">
+      <div class="prog-editor-head"><div><h2>1. Enchaînement pédagogique des compétences</h2><p>Chaque brique correspond à une compétence du référentiel. L'ordre exprime les dépendances et la construction des apprentissages. Il ne s'agit pas d'un calendrier.</p></div><button class="btn on-panel primary" id="btn-add-brick">＋ Ajouter une brique compétence</button></div>
+      <div class="prog-bricks" id="prog-bricks">${p.competences.length?p.competences.map((c,i)=>brickHTML(p,c,i)).join(''):`<div class="prog-empty">Aucune compétence dans cette progression. Ajoutez une brique ou utilisez l'atelier IA.</div>`}</div>
+    </div>`;
+  document.getElementById('prog-title').onchange=e=>{p.titre=e.target.value;saveCurrentProgression();};
+  document.getElementById('btn-add-brick').onclick=addCompetenceBrick;
+  wrap.querySelectorAll('[data-remove-brick]').forEach(b=>b.onclick=()=>removeCompetenceBrick(b.dataset.removeBrick));
+  wrap.querySelectorAll('[data-move-brick]').forEach(b=>b.onclick=()=>moveBrick(b.dataset.moveBrick,Number(b.dataset.dir)));
+  wrap.querySelectorAll('[data-brick-select]').forEach(sel=>sel.onchange=()=>{const c=p.competences.find(x=>x.id===sel.dataset.brickSelect);if(c){c.competence_id=sel.value;c.titre=competenceLabel(sel.value);saveCurrentProgression();renderProgressionContent(p);}});
+  wrap.querySelectorAll('[data-brick-field]').forEach(el=>el.onchange=()=>{const c=p.competences.find(x=>x.id===el.dataset.brickField);if(c){c[el.dataset.field]=el.value;saveCurrentProgression();}});
+}
+function brickHTML(p,c,i){
+  const selected=c.competence_id||'';
+  return `<article class="prog-brick" data-brick="${escapeHTML(c.id)}"><div class="prog-brick-index">${i+1}</div><div class="prog-brick-main">
+    <div class="prog-brick-top"><select data-brick-select="${escapeHTML(c.id)}"><option value="">Choisir une compétence officielle…</option>${competenceOptions(selected)}</select><div class="prog-brick-buttons"><button class="icon-btn" title="Monter" data-move-brick="${escapeHTML(c.id)}" data-dir="-1">↑</button><button class="icon-btn" title="Descendre" data-move-brick="${escapeHTML(c.id)}" data-dir="1">↓</button><button class="icon-btn danger" title="Supprimer" data-remove-brick="${escapeHTML(c.id)}">×</button></div></div>
+    <div class="prog-official">${selected?`<strong>Compétence officielle :</strong> ${escapeHTML(competenceLabel(selected))}`:'Aucune compétence sélectionnée.'}</div>
+    <div class="field-row two"><div class="field"><label>Libellé de travail</label><input data-brick-field="${escapeHTML(c.id)}" data-field="titre" value="${escapeAttr(c.titre||'')}"></div><div class="field"><label>Indicateur de maîtrise</label><input data-brick-field="${escapeHTML(c.id)}" data-field="indicateurs_maitrise" value="${escapeAttr(c.indicateurs_maitrise||'')}"></div></div>
+    <div class="field"><label>Description pédagogique</label><textarea data-brick-field="${escapeHTML(c.id)}" data-field="description">${escapeHTML(c.description||'')}</textarea></div>
+  </div></article>`;
+}
+
+function progressionSchemaPrompt(){
+ return {version:'3.0',type:'progression_annuelle',niveau:'CE1',domaine_id:'lecture',titre:'Progression annuelle',principe:'Enchaînement pédagogique non temporel des compétences',competences:[{id:'brique_1',ordre:1,competence_id:'ID_COMPETENCE_OFFICIELLE',titre:'Libellé de travail',description:'Ce qui est construit à cette étape.',prerequis_ids:[],indicateurs_maitrise:'Critère observable.'}]};
+}
+function buildProgressionPrompt(niveau,domaine){
+ const catalogue=progressionCompetenceCatalogue(niveau,domaine).map(c=>({id:c.id,niveau:c.niveau,intitule:c.intitule,domaine_id:c.domaine_id,objectifs:c.objectifs||[],prerequis_competences:c.prerequis_competences||[]}));
+ const fichier=progFichierTexte?`\nDOCUMENT DE REFERENCE :\n${progFichierTexte}`:'';
+ return `Tu es un conseiller pédagogique expert de l'école française. Construis une PROGRESSION ANNUELLE au sens pédagogique : une organisation logique et progressive des apprentissages, fondée sur les compétences et leurs prérequis, et NON un calendrier.\n\nPRINCIPE : chaque brique représente une compétence. L'ordre des briques exprime la construction des apprentissages : ce qui doit être construit avant ce qui vient ensuite. Ne mets aucune période, semaine, date ou séquence dans la progression. La PROGRAMMATION (périodes + séquences) est un objet séparé et sera construite dans Tableau 2.\n\nNIVEAU : ${niveau}\nDOMAINE : ${domaine}\n\nREFERENTIEL OFFICIEL DISPONIBLE :\n${JSON.stringify(catalogue,null,2)}\n${fichier}\n\nCONSIGNES :\n- utilise uniquement les competence_id présents dans le référentiel ;\n- respecte les prérequis explicites lorsque cela est pertinent ;\n- ordonne les compétences selon une logique de construction des apprentissages, pas selon la durée ou le nombre de semaines ;\n- une compétence peut être reprise ou mobilisée plus tard dans des situations différentes, mais ne crée pas de fausse nouvelle compétence ;\n- renseigne pour chaque brique un libellé de travail, une description pédagogique, les prérequis et un indicateur de maîtrise ;\n- ne crée aucune séquence et n'attribue aucune période ;\n- retourne UNIQUEMENT le JSON correspondant exactement à ce schéma :\n${JSON.stringify(progressionSchemaPrompt(),null,2)}`;
+}
+function updateProgPrompt(){document.getElementById('prog-prompt').textContent=buildProgressionPrompt(document.getElementById('prog-niveau').value,document.getElementById('prog-domaine').value);}
+document.getElementById('btn-prog-reopen-atelier').onclick=()=>{document.getElementById('prog-ai-panel').style.display='';updateProgPrompt();};
+document.getElementById('btn-prog-ai-close').onclick=()=>document.getElementById('prog-ai-panel').style.display='none';
+document.getElementById('btn-prog-copy').onclick=async()=>{await navigator.clipboard.writeText(document.getElementById('prog-prompt').textContent);toast('Prompt copié');};
+document.getElementById('prog-niveau').addEventListener('change',()=>{fillProgressionSelectors();updateProgPrompt();});document.getElementById('prog-domaine').addEventListener('change',updateProgPrompt);
+document.getElementById('btn-prog-import').onclick=()=>{try{const raw=JSON.parse(document.getElementById('prog-response').value);const p=normalizeProgression(raw);if(!p)throw new Error('Le JSON doit contenir niveau et domaine_id.');openProgressionResult(p);document.getElementById('prog-ai-result').textContent='Proposition intégrée. Vérifiez puis modifiez les briques de la progression.';document.getElementById('prog-ai-panel').style.display='none';}catch(e){document.getElementById('prog-ai-result').textContent='Erreur : '+e.message;}};
+
+document.getElementById('prog-fichier-browse').onclick=()=>document.getElementById('prog-fichier').click();
+document.getElementById('prog-fichier').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;document.getElementById('prog-fichier-info').textContent='Lecture de '+f.name+'…';try{let t='';if(f.name.toLowerCase().endsWith('.pdf'))t=await extraireTextePDF(f);else if(f.name.toLowerCase().endsWith('.docx'))t=await extraireTexteDocx(f);else throw new Error('Utilisez PDF ou DOCX.');progFichierTexte=t.trim().slice(0,20000);progFichierNom=f.name;document.getElementById('prog-fichier-info').textContent=f.name+' chargé.';updateProgPrompt();}catch(err){document.getElementById('prog-fichier-info').textContent=err.message;}});
+
+function printProgression(id){
+ const p=progressions.find(x=>x.id===id);if(!p)return;
+ const html=`<!doctype html><html><head><meta charset="utf-8"><title>${escapeHTML(p.titre)}</title><style>@page{size:A4 landscape;margin:12mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#202b39;font-size:10pt;margin:0}h1{font-size:22pt;margin:0 0 5mm}h2{font-size:15pt;border-bottom:2px solid #777;padding-bottom:2mm;margin-top:8mm}.eyebrow{font-size:9pt;text-transform:uppercase;letter-spacing:.08em;color:#777}.meta{color:#555}.chain{display:grid;grid-template-columns:repeat(4,1fr);gap:4mm}.brick{border:1px solid #bbb;border-radius:5px;padding:4mm;break-inside:avoid}.brick .n{font-weight:bold;font-size:13pt}.brick h3{margin:2mm 0;font-size:11pt}.small{font-size:8.5pt;color:#555}.footer{margin-top:8mm;color:#777;font-size:8pt}</style></head><body><p class="eyebrow">Synapses · Progression annuelle</p><h1>${escapeHTML(p.titre)}</h1><div class="meta">${escapeHTML(p.niveau)} · ${escapeHTML(getProgDomaineNom(p.domaine_id))}</div><h2>Enchaînement pédagogique des compétences</h2><div class="chain">${p.competences.map((c,i)=>`<div class="brick"><div class="n">${i+1}</div><h3>${escapeHTML(competenceLabel(c.competence_id,c.titre))}</h3><p>${escapeHTML(c.description||'')}</p><div class="small">Prérequis : ${escapeHTML((c.prerequis_ids||[]).map(id=>competenceLabel(id,id)).join(', ')||'aucun')}</div><div class="small">Maîtrise : ${escapeHTML(c.indicateurs_maitrise||'—')}</div></div>`).join('')}</div><div class="footer">Document de travail pédagogique — progression non temporelle — A4 paysage</div></body></html>`;
+ const w=window.open('','_blank');if(!w){alert('Autorisez les fenêtres surgissantes pour imprimer.');return;}w.document.write(html);w.document.close();w.focus();setTimeout(()=>w.print(),300);
+}
+
+function downloadDocProgression(id){
+ const p=progressions.find(x=>x.id===id);if(!p)return;
+ const body=`<html><head><meta charset="utf-8"><style>@page{size:landscape}body{font-family:Arial;color:#202b39}h1{font-size:22pt}table{width:100%;border-collapse:collapse}td,th{border:1px solid #aaa;padding:7px;vertical-align:top}th{background:#eee}.small{font-size:9pt;color:#555}</style></head><body><h1>${escapeHTML(p.titre)}</h1><p>${escapeHTML(p.niveau)} · ${escapeHTML(getProgDomaineNom(p.domaine_id))}</p><h2>Enchaînement pédagogique des compétences</h2><table><tr><th>Ordre</th><th>Compétence</th><th>Libellé de travail</th><th>Description</th><th>Prérequis</th><th>Indicateur de maîtrise</th></tr>${p.competences.map((c,i)=>`<tr><td>${i+1}</td><td><b>${escapeHTML(competenceLabel(c.competence_id))}</b></td><td>${escapeHTML(c.titre||'')}</td><td>${escapeHTML(c.description||'')}</td><td>${escapeHTML((c.prerequis_ids||[]).map(id=>competenceLabel(id,id)).join(', ')||'—')}</td><td>${escapeHTML(c.indicateurs_maitrise||'—')}</td></tr>`).join('')}</table></body></html>`;
+ const blob=new Blob([body],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=slug(p.titre||'progression-annuelle')+'.doc';a.click();URL.revokeObjectURL(a.href);
+}
+document.getElementById('btn-prog-pdf').onclick=()=>printProgression(currentProgressionId);
+document.getElementById('btn-prog-doc').onclick=()=>downloadDocProgression(currentProgressionId);
+document.getElementById('btn-prog-json').onclick=()=>{const p=progressions.find(x=>x.id===currentProgressionId);if(p)downloadJSON(slug(p.titre||'programmation'),p);};
+document.getElementById('btn-prog-delete').onclick=()=>{if(!confirm('Supprimer cette programmation ?'))return;progressions=progressions.filter(p=>p.id!==currentProgressionId);saveProgressions(progressions);currentProgressionId=null;document.getElementById('prog-actions').style.display='none';document.getElementById('prog-content').innerHTML='';renderProgSaved();};
+function sequenceById(id){ return state.sequences.find(s=>s.id===id); }
+function sequenceRelationIds(seq, type){
+  // Le lien entre séquences (précédente/suivante) est volontairement local et manuel :
+  // il n'est renseigné que si la séquence porte explicitement ces champs (édition future).
+  if(!seq) return [];
+  const key = type==="previous" ? "sequences_precedentes" : "sequences_suivantes";
+  return Array.isArray(seq[key]) ? seq[key] : [];
+}
+function getProgressionNeighbors(seq){
+  const previous=sequenceRelationIds(seq,"previous").map(sequenceById).filter(Boolean);
+  const next=sequenceRelationIds(seq,"next").map(sequenceById).filter(Boolean);
+  state.sequences.forEach(other=>{if(other.id===seq.id)return;if(!previous.some(x=>x.id===other.id)&&sequenceRelationIds(other,"next").includes(seq.id))previous.push(other);if(!next.some(x=>x.id===other.id)&&sequenceRelationIds(other,"previous").includes(seq.id))next.push(other);});
+  return {previous:[...new Map(previous.map(x=>[x.id,x])).values()],next:[...new Map(next.map(x=>[x.id,x])).values()]};
+}
+function focusSequenceCard(seq,relation){const dom=sequenceDomainInfo(seq);return `<button class="focus-card" data-focus-seq="${escapeAttr(seq.id)}"><strong>${escapeHTML(seq.titre||"Séquence sans titre")}</strong><span>${escapeHTML(seqNiveau(seq))} · ${escapeHTML(dom.nom||"")}${seq.periode?` · P${escapeHTML(seq.periode)}`:""}</span>${relation?`<span>${escapeHTML(relation)}</span>`:""}</button>`;}
+function competencePillsForSequence(seq){const ids=[seq.competence_id,...(Array.isArray(seq.competences_mobilisees)?seq.competences_mobilisees:[])].filter(Boolean);const unique=[...new Set(ids)];return unique.length?unique.map(id=>`<span class="focus-pill">${escapeHTML(competenceLabel(id,id))}</span>`).join(""):`<span class="focus-pill">Aucune compétence explicitement associée</span>`;}
+
+function renderSeancesGrid(seq){
+  const grid = document.getElementById('seances-grid');
+  grid.innerHTML = "";
+  const seances = state.seances.filter(x=>x.sequence_id===seq.id);
+
+  seances.forEach(sea=>{
+    const card = document.createElement('button');
+    card.className = "sea-brique";
+    card.innerHTML = `
+      <span class="num">Séance ${escapeHTML(sea.numero||"")} ${sea.type? "· "+escapeHTML(sea.type):""}</span>
+      <h4>${escapeHTML(sea.titre||"Sans titre")}</h4>
+      <div class="sea-obj">${escapeHTML(sea.objectif_commun||"")}</div>
+      <div class="sea-meta">${sea.classe? escapeHTML(sea.classe):""}</div>
+    `;
+    card.addEventListener('click', ()=> openSeaDrawer(sea.id));
+    grid.appendChild(card);
+  });
+
+  const addCard = document.createElement('button');
+  addCard.className = "add-sea-brique";
+  addCard.innerHTML = `<span class="plus">＋</span><span>Ajouter une séance</span>`;
+  addCard.addEventListener('click', ()=> openSeaForm(null, seq.id));
+  grid.appendChild(addCard);
+
+  if(!seances.length){
+    // keep the add-card visible; nothing else needed
+  }
+}
+
+/* ---- Actions séquence ---- */
+document.getElementById('btn-edit-seq').addEventListener('click', ()=> openSeqForm(state.currentSeqId));
+document.getElementById('btn-delete-seq').addEventListener('click', ()=>{
+  if(!confirm("Supprimer cette séquence et toutes ses séances ?")) return;
+  state.sequences = state.sequences.filter(s=>s.id!==state.currentSeqId);
+  state.seances = state.seances.filter(x=>x.sequence_id!==state.currentSeqId);
+  saveSequences(state.sequences); saveSeances(state.seances);
+  toast("Séquence supprimée");
+  backToList();
+});
+document.getElementById('btn-download-seq').addEventListener('click', ()=>{
+  const seq = state.sequences.find(s=>s.id===state.currentSeqId);
+  const seances = state.seances.filter(x=>x.sequence_id===seq.id);
+  downloadJSON(seqChemin(seq) + "/" + (slug(seq.titre)||seq.id), { ...seq, seances });
+});
+document.getElementById('btn-print-seq').addEventListener('click', ()=> printSequence(state.currentSeqId));
+
+/* ============================================================
+   FORMULAIRE SÉQUENCE (repeater objectifs individuels)
+   ============================================================ */
+function seqEleveRowHTML(identifiant="", nom="", objectif=""){
+  const withPicker = coffreOuvert();
+  const pickerHTML = withPicker ? `
+    <select class="eleve-picker">
+      <option value="">— Saisie libre —</option>
+      ${coffre.listerEleves().map(e=>`<option value="${escapeAttr(e.identifiantSynapses)}" ${e.identifiantSynapses===identifiant?'selected':''}>${escapeHTML(eleveLabel(e))}</option>`).join('')}
+    </select>` : '';
+  return `<div class="repeater-row eleve-row ${withPicker?'has-picker':''}">
+    ${pickerHTML}
+    <input type="text" class="seq-eleve-nom" placeholder="Identifiant d'anonymat" value="${escapeAttr(nom)}" data-identifiant="${escapeAttr(identifiant)}">
+    <input type="text" class="seq-eleve-objectif" placeholder="Objectif individuel" value="${escapeAttr(objectif)}">
+    <button type="button" class="repeater-del">✕</button>
+  </div>`;
+}
+function escapeAttr(s){ return (s==null?"":String(s)).replace(/"/g,'&quot;'); }
+
+function attachEleveRowEvents(row){
+  row.querySelector('.repeater-del').addEventListener('click', ()=> row.remove());
+  const picker = row.querySelector('.eleve-picker');
+  if(picker){
+    picker.addEventListener('change', ()=>{
+      const nomInput = row.querySelector('.seq-eleve-nom');
+      if(picker.value){
+        const e = coffre.listerEleves().find(x=>x.identifiantSynapses===picker.value);
+        nomInput.value = e ? eleveLabel(e) : picker.value;
+        nomInput.dataset.identifiant = picker.value;
+      } else {
+        nomInput.dataset.identifiant = "";
+      }
+    });
+  }
+}
+
+function chargerElevesCoffreDans(addRowFn, wrapId){
+  if(!coffreOuvert()){ toast("Ouvrez le coffre pour charger ses élèves"); return; }
+  const existants = [...document.querySelectorAll('#'+wrapId+' .seq-eleve-nom')].map(i=>i.dataset.identifiant).filter(Boolean);
+  let n = 0;
+  coffre.listerEleves().forEach(e=>{
+    if(!existants.includes(e.identifiantSynapses)){ addRowFn(e.identifiantSynapses, eleveLabel(e), ""); n++; }
+  });
+  toast(n? n+" élève(s) chargé(s) depuis le coffre" : "Tous les élèves du coffre sont déjà listés");
+}
+
+function fixerObjectifsDansCoffre(wrapId, contexteLabel){
+  if(!coffreOuvert()){ toast("Ouvrez le coffre pour y fixer des objectifs"); return; }
+  let n = 0;
+  document.querySelectorAll('#'+wrapId+' .eleve-row').forEach(row=>{
+    const nomInput = row.querySelector('.seq-eleve-nom');
+    const identifiant = nomInput.dataset.identifiant;
+    const objectif = row.querySelector('.seq-eleve-objectif').value.trim();
+    if(identifiant && objectif){
+      coffre.ajouterObjectif(identifiant, { libelle: objectif, contexte: contexteLabel, statut:'actif' });
+      n++;
+    }
+  });
+  toast(n? n+" objectif(s) fixé(s) dans le coffre — pensez à réexporter le .synapses" : "Aucune ligne reliée à un élève du coffre avec un objectif rempli");
+}
+
+function addSeqEleveRow(identifiant, nom, objectif){
+  const wrap = document.getElementById('seq-eleves-repeater');
+  const div = document.createElement('div');
+  div.innerHTML = seqEleveRowHTML(identifiant, nom, objectif);
+  const row = div.firstElementChild;
+  attachEleveRowEvents(row);
+  wrap.appendChild(row);
+}
+document.getElementById('add-seq-eleve').addEventListener('click', ()=> addSeqEleveRow("","",""));
+document.getElementById('load-seq-eleves-coffre').addEventListener('click', ()=> chargerElevesCoffreDans(addSeqEleveRow,'seq-eleves-repeater'));
+document.getElementById('fix-seq-eleves-coffre').addEventListener('click', ()=> fixerObjectifsDansCoffre('seq-eleves-repeater', "Séquence : " + document.getElementById('f-seq-titre').value.trim()));
+
+function competenceLabel(c){
+  const nom = getDomaineNom(c.domaine_id);
+  const intitule = c.intitule || (Array.isArray(c.objectifs) && c.objectifs[0]) || "";
+  const court = intitule.length>46 ? intitule.slice(0,46)+'…' : intitule;
+  const prefixe = c.niveau ? `${c.niveau} · ${nom}` : nom;
+  return court ? `${prefixe} — ${court}` : prefixe;
+}
+function fillCompetenceSelect(selected){
+  const sel = document.getElementById('f-seq-competence');
+  if(!COMPETENCES.length){
+    sel.innerHTML = `<option value="">Référentiel de compétences non chargé</option>`;
+    return;
+  }
+  sel.innerHTML = COMPETENCES.map(c=>`<option value="${c.id}">${escapeHTML(competenceLabel(c))}</option>`).join('');
+  sel.value = selected || (COMPETENCES[0] && COMPETENCES[0].id) || "";
+}
+function fillPrereqPicker(currentCompetenceId, checkedIds){
+  const wrap = document.getElementById('seq-prereq-picker');
+  const others = COMPETENCES.filter(c=>c.id!==currentCompetenceId);
+  if(!others.length){ wrap.innerHTML = `<span style="font-size:12.5px;color:var(--ink-soft);">Aucune autre compétence dans le référentiel.</span>`; return; }
+  wrap.innerHTML = others.map(c=>{
+    const nom = c.niveau ? `${c.niveau} · ${getDomaineNom(c.domaine_id)}` : getDomaineNom(c.domaine_id);
+    const intitule = c.intitule || (Array.isArray(c.objectifs) && c.objectifs[0]) || "";
+    return `
+    <label>
+      <input type="checkbox" class="seq-prereq-comp" value="${c.id}" ${checkedIds&&checkedIds.includes(c.id)?'checked':''}>
+      <span>${escapeHTML(nom)}<span class="pp-dom">${escapeHTML(intitule)}</span></span>
+    </label>`;
+  }).join('');
+}
+document.getElementById('f-seq-competence').addEventListener('change', (e)=>{
+  const checked = [...document.querySelectorAll('.seq-prereq-comp:checked')].map(cb=>cb.value);
+  fillPrereqPicker(e.target.value, checked);
+  updateSeqCheminPreview();
+});
+document.getElementById('f-seq-niveau').addEventListener('change', updateSeqCheminPreview);
+document.getElementById('f-seq-domaine').addEventListener('input', updateSeqCheminPreview);
+
+function openSeqForm(seqId){
+  state.editingSeqId = seqId;
+  const seq = seqId ? state.sequences.find(s=>s.id===seqId) : null;
+  document.getElementById('modal-seq-title').textContent = seq ? "Modifier la séquence" : "Nouvelle séquence";
+  document.getElementById('f-seq-titre').value = seq? seq.titre : "";
+  const compId = seq ? (seq.competence_id || seq.domaine || (COMPETENCES[0]&&COMPETENCES[0].id)) : (COMPETENCES[0]&&COMPETENCES[0].id);
+  fillCompetenceSelect(compId);
+  fillPrereqPicker(compId, seq ? (seq.prerequis_competences||[]) : []);
+  document.getElementById('f-seq-niveau').value = seq? (seq.niveau||NIVEAUX[0]) : NIVEAUX[0];
+  document.getElementById('f-seq-domaine').value = seq? (seq.matiere||MATIERE_DEFAUT) : MATIERE_DEFAUT;
+  document.getElementById('f-seq-classe').value = seq? (seq.classe||"") : "";
+  document.getElementById('f-seq-competences').value = seq? (seq.competences||"") : "";
+  document.getElementById('f-seq-prerequis').value = seq? (Array.isArray(seq.prerequis)? seq.prerequis.join(", ") : (seq.prerequis||"")) : "";
+  document.getElementById('f-seq-periode').value = seq? seq.periode : "1";
+  document.getElementById('f-seq-debut').value = seq? seq.semaine_debut : "1";
+  document.getElementById('f-seq-fin').value = seq? seq.semaine_fin : "4";
+  document.getElementById('f-seq-objectif').value = seq? (seq.objectif_commun||"") : "";
+  document.getElementById('f-seq-refs').value = seq? (seq.references_theoriques||"") : "";
+
+  document.getElementById('seq-eleves-repeater').innerHTML = "";
+  const eleves = seq && seq.objectifs_individuels && seq.objectifs_individuels.length ? seq.objectifs_individuels : [{identifiant:"",nom:"",objectif:""}];
+  eleves.forEach(e=> addSeqEleveRow(e.identifiant||"", e.nom, e.objectif));
+
+  updateSeqCheminPreview();
+  openModal('modal-seq');
+}
+
+document.getElementById('btn-save-seq').addEventListener('click', ()=>{
+  const titre = document.getElementById('f-seq-titre').value.trim();
+  if(!titre){ toast("Merci d'indiquer un intitulé"); document.getElementById('f-seq-titre').focus(); return; }
+  let debut = parseInt(document.getElementById('f-seq-debut').value,10);
+  let fin = parseInt(document.getElementById('f-seq-fin').value,10);
+  if(fin<debut){ const t=debut; debut=fin; fin=t; }
+
+  const eleves = [...document.querySelectorAll('#seq-eleves-repeater .repeater-row')].map(row=>({
+    identifiant: row.querySelector('.seq-eleve-nom').dataset.identifiant || "",
+    nom: row.querySelector('.seq-eleve-nom').value.trim(),
+    objectif: row.querySelector('.seq-eleve-objectif').value.trim()
+  })).filter(e=>e.nom||e.objectif);
+
+  const prerequis = document.getElementById('f-seq-prerequis').value.split(",").map(s=>s.trim()).filter(Boolean);
+  const competenceId = document.getElementById('f-seq-competence').value;
+  const prerequisCompetences = [...document.querySelectorAll('.seq-prereq-comp:checked')].map(cb=>cb.value);
+
+  const niveau = document.getElementById('f-seq-niveau').value || NIVEAUX[0];
+  const matiere = document.getElementById('f-seq-domaine').value.trim() || MATIERE_DEFAUT;
+
+  const data = {
+    titre,
+    niveau,
+    matiere,
+    competence_id: competenceId,
+    domaine: competenceId, // = champ d'apprentissage (lecture, ecriture, oral, vocabulaire, orthographe…)
+    classe: document.getElementById('f-seq-classe').value.trim(),
+    competences: document.getElementById('f-seq-competences').value.trim(),
+    prerequis,
+    prerequis_competences: prerequisCompetences,
+    periode: parseInt(document.getElementById('f-seq-periode').value,10),
+    semaine_debut: debut,
+    semaine_fin: fin,
+    objectif_commun: document.getElementById('f-seq-objectif').value.trim(),
+    objectifs_individuels: eleves,
+    references_theoriques: document.getElementById('f-seq-refs').value.trim()
+  };
+  data.chemin = seqChemin(data); // ex. "data/CE1/francais/lecture" — dossier cible dans l'arborescence
+
+  let isNew = false;
+  if(state.editingSeqId){
+    const idx = state.sequences.findIndex(s=>s.id===state.editingSeqId);
+    state.sequences[idx] = { ...state.sequences[idx], ...data };
+  } else {
+    isNew = true;
+    const id = uid("seq");
+    state.sequences.push({ id, ...data });
+    state.currentSeqId = id;
+  }
+  saveSequences(state.sequences);
+  if(document.getElementById('program-niveau')) renderProgrammingTable(document.getElementById('program-niveau').value);
+
+  if(isNew){
+    // Confort : on pré-crée par défaut les 7 séances-types (8 fiches, 5.1/5.2), vides et prêtes à compléter.
+    state.seances.push(...genererSeancesParDefaut(state.currentSeqId, data.classe, data));
+    saveSeances(state.seances);
+  }
+
+  closeModal('modal-seq');
+  toast(isNew? "Séquence créée avec ses 7 séances-types" : "Séquence enregistrée");
+
+  if(document.getElementById('view-seq').classList.contains('open')){
+    renderSeqDetail();
+  } else {
+    renderSeqGrid();
+  }
+});
+
+/* ============================================================
+   FORMULAIRE SÉANCE (repeaters : objectifs individuels + phases)
+   ============================================================ */
+function addSeaEleveRow(identifiant, nom, objectif){
+  const wrap = document.getElementById('sea-eleves-repeater');
+  const div = document.createElement('div');
+  div.innerHTML = seqEleveRowHTML(identifiant, nom, objectif);
+  const row = div.firstElementChild;
+  attachEleveRowEvents(row);
+  wrap.appendChild(row);
+}
+document.getElementById('add-sea-eleve').addEventListener('click', ()=> addSeaEleveRow("","",""));
+document.getElementById('load-sea-eleves-coffre').addEventListener('click', ()=> chargerElevesCoffreDans(addSeaEleveRow,'sea-eleves-repeater'));
+document.getElementById('fix-sea-eleves-coffre').addEventListener('click', ()=> fixerObjectifsDansCoffre('sea-eleves-repeater', "Séance " + document.getElementById('f-sea-numero').value.trim()));
+
+function phaseCardHTML(p={}){
+  return `<div class="phase-card">
+    <div class="phase-card-head">
+      <input type="text" class="phase-nom" placeholder="Nom de la phase" value="${escapeAttr(p.phase||"")}" style="flex:1;">
+      <button type="button" class="phase-del">Supprimer</button>
+    </div>
+    <div class="field-row three">
+      <div class="field"><label>Temps</label><input type="text" class="phase-temps" placeholder="Ex. : 10 min" value="${escapeAttr(p.temps||"")}"></div>
+      <div class="field"><label>Modalité &amp; matériel</label><input type="text" class="phase-modalite" value="${escapeAttr(p.modalite_materiel||"")}"></div>
+      <div class="field"><label>Aménagement</label><input type="text" class="phase-amenagement" value="${escapeAttr(p.amenagement||"")}"></div>
+    </div>
+    <div class="field"><label>Déroulement</label><textarea class="phase-deroulement">${escapeHTML(p.deroulement||"")}</textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Analyse de la tâche</label><textarea class="phase-analyse">${escapeHTML(p.analyse_tache||"")}</textarea></div>
+      <div class="field"><label>Posture de l'enseignant</label><textarea class="phase-posture">${escapeHTML(p.posture||"")}</textarea></div>
+    </div>
+  </div>`;
+}
+function addSeaPhase(p){
+  const wrap = document.getElementById('sea-phases-repeater');
+  const div = document.createElement('div');
+  div.innerHTML = phaseCardHTML(p);
+  const card = div.firstElementChild;
+  card.querySelector('.phase-del').addEventListener('click', ()=> card.remove());
+  wrap.appendChild(card);
+}
+document.getElementById('add-sea-phase').addEventListener('click', ()=> addSeaPhase({}));
+
+function openSeaForm(seaId, sequenceId){
+  state.editingSeaId = seaId;
+  const sea = seaId ? state.seances.find(s=>s.id===seaId) : null;
+  document.getElementById('modal-sea-title').textContent = sea ? "Modifier la séance" : "Nouvelle séance";
+
+  const seq = state.sequences.find(s=>s.id===(sea? sea.sequence_id : sequenceId));
+  document.getElementById('form-sea').dataset.sequenceId = seq ? seq.id : sequenceId;
+
+  const nextNum = sea ? sea.numero : String(state.seances.filter(x=>x.sequence_id===(seq?seq.id:sequenceId)).length + 1);
+  document.getElementById('f-sea-numero').value = nextNum || "";
+  document.getElementById('f-sea-type').value = sea? (sea.type||"Exploration") : "Exploration";
+  document.getElementById('f-sea-classe').value = sea? (sea.classe||(seq?seq.classe:"")||"") : ((seq&&seq.classe)||"");
+  document.getElementById('f-sea-titre').value = sea? (sea.titre||"") : "";
+  document.getElementById('f-sea-competence-cible').value = sea? (sea.competence_cible||"") : "";
+  document.getElementById('f-sea-competences-periph').value = sea? (sea.competences_peripheriques||"") : "";
+  document.getElementById('f-sea-modalites').value = sea? (sea.modalites_generales||"") : "";
+  document.getElementById('f-sea-objectif').value = sea? (sea.objectif_commun||"") : "";
+  document.getElementById('f-sea-problematique').value = sea? (sea.problematique||"") : "";
+  document.getElementById('f-sea-vigilance').value = sea? (sea.vigilance||"") : "";
+
+  document.querySelectorAll('.f-sea-niveau').forEach(cb=>{
+    cb.checked = sea && sea.niveaux ? sea.niveaux.includes(cb.value) : false;
+  });
+
+  document.getElementById('sea-eleves-repeater').innerHTML = "";
+  const eleves = sea && sea.objectifs_individuels && sea.objectifs_individuels.length ? sea.objectifs_individuels : [{identifiant:"",nom:"",objectif:""}];
+  eleves.forEach(e=> addSeaEleveRow(e.identifiant||"", e.nom, e.objectif));
+
+  document.getElementById('sea-phases-repeater').innerHTML = "";
+  const phases = sea && sea.deroule && sea.deroule.length ? sea.deroule : PHASES_DEFAUT.map(p=>({phase:p}));
+  phases.forEach(p=> addSeaPhase(p));
+
+  openModal('modal-sea');
+}
+
+document.getElementById('btn-save-sea').addEventListener('click', ()=>{
+  const sequenceId = document.getElementById('form-sea').dataset.sequenceId;
+  const niveaux = [...document.querySelectorAll('.f-sea-niveau:checked')].map(cb=>cb.value);
+  const eleves = [...document.querySelectorAll('#sea-eleves-repeater .repeater-row')].map(row=>({
+    identifiant: row.querySelector('.seq-eleve-nom').dataset.identifiant || "",
+    nom: row.querySelector('.seq-eleve-nom').value.trim(),
+    objectif: row.querySelector('.seq-eleve-objectif').value.trim()
+  })).filter(e=>e.nom||e.objectif);
+  const deroule = [...document.querySelectorAll('#sea-phases-repeater .phase-card')].map(card=>({
+    phase: card.querySelector('.phase-nom').value.trim(),
+    temps: card.querySelector('.phase-temps').value.trim(),
+    modalite_materiel: card.querySelector('.phase-modalite').value.trim(),
+    deroulement: card.querySelector('.phase-deroulement').value.trim(),
+    analyse_tache: card.querySelector('.phase-analyse').value.trim(),
+    amenagement: card.querySelector('.phase-amenagement').value.trim(),
+    posture: card.querySelector('.phase-posture').value.trim()
+  })).filter(p=>p.phase||p.deroulement);
+
+  const data = {
+    sequence_id: sequenceId,
+    numero: document.getElementById('f-sea-numero').value.trim(),
+    type: document.getElementById('f-sea-type').value,
+    classe: document.getElementById('f-sea-classe').value.trim(),
+    titre: document.getElementById('f-sea-titre').value.trim(),
+    competence_cible: document.getElementById('f-sea-competence-cible').value.trim(),
+    competences_peripheriques: document.getElementById('f-sea-competences-periph').value.trim(),
+    modalites_generales: document.getElementById('f-sea-modalites').value.trim(),
+    niveaux,
+    objectif_commun: document.getElementById('f-sea-objectif').value.trim(),
+    objectifs_individuels: eleves,
+    problematique: document.getElementById('f-sea-problematique').value.trim(),
+    deroule,
+    vigilance: document.getElementById('f-sea-vigilance').value.trim()
+  };
+
+  if(state.editingSeaId){
+    const idx = state.seances.findIndex(s=>s.id===state.editingSeaId);
+    state.seances[idx] = { ...state.seances[idx], ...data };
+  } else {
+    state.seances.push({ id: uid("sea"), ...data });
+  }
+  saveSeances(state.seances);
+  closeModal('modal-sea');
+  toast("Séance enregistrée");
+
+  const seq = state.sequences.find(s=>s.id===sequenceId);
+  if(seq) renderSeancesGrid(seq);
+});
+
+/* ============================================================
+   DRAWER — FICHE SÉANCE (lecture)
+   ============================================================ */
+function openSeaDrawer(seaId){
+  const sea = state.seances.find(s=>s.id===seaId);
+  if(!sea) return;
+  const seq = state.sequences.find(s=>s.id===sea.sequence_id);
+  const dom = seq ? sequenceDomainInfo(seq) : {nom:""};
+
+  document.getElementById('sea-drawer-eyebrow').textContent = `${seq? seqNiveau(seq)+" · "+seqMatiere(seq)+" · " : ""}${dom.nom||""} · Séance ${sea.numero||""} ${sea.type? "· "+sea.type:""}`;
+
+  const niveauxHTML = ["CP","CE1","CE2","CM1","CM2"].map(n=>
+    `<div class="nv ${sea.niveaux&&sea.niveaux.includes(n)?'active':''}">${n}</div>`
+  ).join('');
+
+  const elevesHTML = (sea.objectifs_individuels||[]).filter(e=>e.nom).map(e=>
+    `<tr><td>${escapeHTML(e.nom)}</td><td>${escapeHTML(e.objectif)}</td></tr>`
+  ).join('');
+
+  const derouleHTML = (sea.deroule||[]).map(p=>`
+    <tr>
+      <td class="phase">${escapeHTML(p.phase)}${p.temps? " ("+escapeHTML(p.temps)+")":""}</td>
+      <td>${escapeHTML(p.modalite_materiel)}</td>
+      <td>${escapeHTML(p.deroulement)}</td>
+      <td>${escapeHTML(p.analyse_tache)}</td>
+      <td>${escapeHTML(p.amenagement)}</td>
+      <td>${escapeHTML(p.posture)}</td>
+    </tr>`).join('');
+
+  document.getElementById('sea-drawer-body').innerHTML = `
+    <h2>${escapeHTML(sea.titre||"Séance sans titre")}</h2>
+    <div class="drawer-tags">
+      ${sea.classe? `<span class="badge plain">${escapeHTML(sea.classe)}</span>`:""}
+      ${sea.competence_cible? `<span class="badge plain">${escapeHTML(sea.competence_cible)}</span>`:""}
+      ${seq? `<span class="chemin-data">${escapeHTML(seqChemin(seq))}/seances/</span>`:""}
+    </div>
+
+    ${sea.niveaux && sea.niveaux.length ? `<div class="drawer-section"><h5>Niveaux</h5><div class="niveau-grid">${niveauxHTML}</div></div>`:""}
+
+    ${sea.competences_peripheriques? `<div class="drawer-section"><h5>Compétences périphériques</h5><p>${escapeHTML(sea.competences_peripheriques)}</p></div>`:""}
+    ${sea.modalites_generales? `<div class="drawer-section"><h5>Modalités générales</h5><p>${escapeHTML(sea.modalites_generales)}</p></div>`:""}
+
+    <div class="drawer-section"><h5>Objectif commun</h5><p>${escapeHTML(sea.objectif_commun)||"—"}</p></div>
+
+    ${elevesHTML? `<div class="drawer-section"><h5>Objectifs individuels</h5>
+      <table class="eleves-table"><thead><tr><th style="width:32%;">Élève</th><th>Objectif</th></tr></thead>
+      <tbody>${elevesHTML}</tbody></table></div>`:""}
+
+    ${sea.problematique? `<div class="drawer-section"><h5>Problématique pour les élèves</h5><p>${escapeHTML(sea.problematique)}</p></div>`:""}
+
+    ${derouleHTML? `<div class="drawer-section"><h5>Déroulé</h5>
+      <table class="deroule-table">
+        <thead><tr><th>Phase</th><th>Modalité &amp; matériel</th><th>Déroulement</th><th>Analyse de la tâche</th><th>Aménagement</th><th>Posture</th></tr></thead>
+        <tbody>${derouleHTML}</tbody>
+      </table></div>`:""}
+
+    ${sea.vigilance? `<div class="drawer-section"><h5>Points de vigilance</h5><div class="vigilance-box">${escapeHTML(sea.vigilance)}</div></div>`:""}
+
+    <div class="drawer-actions">
+      <button class="btn on-panel small" id="drawer-print-sea">Télécharger le PDF</button>
+      <button class="btn on-panel small" id="drawer-edit-sea">Modifier</button>
+      <button class="btn on-panel small" id="drawer-download-sea">Télécharger le JSON</button>
+      <button class="btn danger small" id="drawer-delete-sea">Supprimer</button>
+    </div>
+  `;
+
+  document.getElementById('drawer-print-sea').addEventListener('click', ()=> printSeance(sea.id));
+  document.getElementById('drawer-edit-sea').addEventListener('click', ()=>{
+    closeSeaDrawer();
+    openSeaForm(sea.id, sea.sequence_id);
+  });
+  document.getElementById('drawer-download-sea').addEventListener('click', ()=>{
+    const dossier = seq ? seqChemin(seq) + "/seances" : "data/seances";
+    downloadJSON(dossier + "/" + (sea.numero? "seance-"+slug(sea.numero) : sea.id) + "-" + (slug(sea.titre)||sea.id), sea);
+  });
+  document.getElementById('drawer-delete-sea').addEventListener('click', ()=>{
+    if(!confirm("Supprimer cette séance ?")) return;
+    state.seances = state.seances.filter(s=>s.id!==sea.id);
+    saveSeances(state.seances);
+    closeSeaDrawer();
+    const seq = state.sequences.find(s=>s.id===sea.sequence_id);
+    if(seq) renderSeancesGrid(seq);
+    toast("Séance supprimée");
+  });
+
+  document.getElementById('sea-overlay').classList.add('open');
+  document.getElementById('sea-drawer').classList.add('open');
+  document.getElementById('sea-drawer').setAttribute('aria-hidden','false');
+}
+function closeSeaDrawer(){
+  document.getElementById('sea-overlay').classList.remove('open');
+  document.getElementById('sea-drawer').classList.remove('open');
+  document.getElementById('sea-drawer').setAttribute('aria-hidden','true');
+}
+document.getElementById('sea-drawer-close').addEventListener('click', closeSeaDrawer);
+document.getElementById('sea-overlay').addEventListener('click', closeSeaDrawer);
+
+/* ============================================================
+   IMPRESSION
+   ============================================================ */
+function derouleTableHTML(deroule){
+  const rows = (deroule||[]).filter(p=>p.phase||p.deroulement).map(p=>`
+    <tr>
+      <td><strong>${escapeHTML(p.phase)}</strong>${p.temps? " ("+escapeHTML(p.temps)+")":""}</td>
+      <td>${escapeHTML(p.modalite_materiel)}</td>
+      <td>${escapeHTML(p.deroulement)}</td>
+      <td>${escapeHTML(p.analyse_tache)}</td>
+      <td>${escapeHTML(p.amenagement)}</td>
+      <td>${escapeHTML(p.posture)}</td>
+    </tr>`).join('');
+  if(!rows) return "";
+  return `<table>
+    <thead><tr><th>Phase</th><th>Modalité &amp; matériel</th><th>Déroulement</th><th>Analyse de la tâche</th><th>Aménagement</th><th>Posture</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+function eleveTableHTML(eleves){
+  const rows = (eleves||[]).filter(e=>e.nom).map(e=>`<tr><td style="width:30%;"><strong>${escapeHTML(e.nom)}</strong></td><td>${escapeHTML(e.objectif)}</td></tr>`).join('');
+  if(!rows) return "";
+  return `<table><tbody>${rows}</tbody></table>`;
+}
+function seanceBlockHTML(sea, withHeader){
+  withHeader = withHeader !== false;
+  return `<div class="print-seance-block">
+    ${withHeader? `<h4>Séance ${escapeHTML(sea.numero||"")} ${sea.type? "— "+escapeHTML(sea.type):""}${sea.titre? " · "+escapeHTML(sea.titre):""}</h4>`:""}
+    ${sea.classe? `<p><em>${escapeHTML(sea.classe)}</em></p>`:""}
+    ${sea.competence_cible? `<p><strong>Compétence cible :</strong> ${escapeHTML(sea.competence_cible)}</p>`:""}
+    ${sea.competences_peripheriques? `<p><strong>Compétences périphériques :</strong> ${escapeHTML(sea.competences_peripheriques)}</p>`:""}
+    ${sea.modalites_generales? `<p><strong>Modalités générales :</strong> ${escapeHTML(sea.modalites_generales)}</p>`:""}
+    ${sea.niveaux && sea.niveaux.length? `<p><strong>Niveaux :</strong> ${sea.niveaux.map(escapeHTML).join(', ')}</p>`:""}
+    ${sea.objectif_commun? `<p><strong>Objectif commun :</strong> ${escapeHTML(sea.objectif_commun)}</p>`:""}
+    ${eleveTableHTML(sea.objectifs_individuels)}
+    ${sea.problematique? `<p><strong>Problématique pour les élèves :</strong> ${escapeHTML(sea.problematique)}</p>`:""}
+    ${derouleTableHTML(sea.deroule)}
+    ${sea.vigilance? `<p><strong>Points de vigilance :</strong> ${escapeHTML(sea.vigilance)}</p>`:""}
+  </div>`;
+}
+
+function launchPrint(html, title){
+  const area = document.getElementById('print-area');
+  area.innerHTML = `<div class="print-doc">${html}</div>`;
+  const prevTitle = document.title;
+  document.title = title || document.title;
+  window.print();
+  document.title = prevTitle;
+}
+
+function printSequence(seqId){
+  const seq = state.sequences.find(s=>s.id===seqId);
+  if(!seq) return;
+  const dom = sequenceDomainInfo(seq);
+  const seances = state.seances.filter(x=>x.sequence_id===seqId);
+  const html = `
+    <p class="print-eyebrow">${escapeHTML(seq.niveau||"")} · ${escapeHTML(seq.matiere||MATIERE_DEFAUT)} · ${escapeHTML(dom.nom)} · Période ${seq.periode} · Semaines ${seq.semaine_debut}–${seq.semaine_fin}</p>
+    <h1>${escapeHTML(seq.titre)}</h1>
+    <div class="print-tags">
+      ${seq.classe? `<span>${escapeHTML(seq.classe)}</span>`:""}
+      ${seq.competences? `<span>${escapeHTML(seq.competences)}</span>`:""}
+      <span>${escapeHTML(seqChemin(seq))}/</span>
+    </div>
+    <h5>Objectif commun</h5><p>${escapeHTML(seq.objectif_commun)||"—"}</p>
+    ${seq.prerequis && seq.prerequis.length? `<h5>Pré-requis</h5><p>${seq.prerequis.map(escapeHTML).join(' · ')}</p>`:""}
+    ${eleveTableHTML(seq.objectifs_individuels)? `<h5>Objectifs individuels</h5>${eleveTableHTML(seq.objectifs_individuels)}`:""}
+    ${seq.references_theoriques? `<h5>Références théoriques</h5><p>${escapeHTML(seq.references_theoriques)}</p>`:""}
+    <h5>Séances</h5>
+    ${seances.map(seanceBlockHTML).join('')}
+  `;
+  launchPrint(html, "Séquence — " + seq.titre);
+}
+
+function printSeance(seaId){
+  const sea = state.seances.find(s=>s.id===seaId);
+  if(!sea) return;
+  const seq = state.sequences.find(s=>s.id===sea.sequence_id);
+  const html = `
+    ${seq? `<p class="print-eyebrow">${escapeHTML(seq.titre)}</p>`:""}
+    <h1>Séance ${escapeHTML(sea.numero||"")} ${sea.type? "— "+escapeHTML(sea.type):""}${sea.titre? " · "+escapeHTML(sea.titre):""}</h1>
+    ${seanceBlockHTML(sea, false)}
+  `;
+  launchPrint(html, "Séance — " + (sea.titre||sea.numero));
+}
+
+
+/* ============================================================
+   TABLEAU 2 — PROGRAMMATION ANNUELLE, INDEPENDANTE DE LA PROGRESSION
+   ============================================================ */
+const STORE_PROGRAMMATION='synapses_programmation_v1';
+function loadProgrammations(){try{return JSON.parse(localStorage.getItem(STORE_PROGRAMMATION))||[];}catch(e){return [];}}
+function saveProgrammations(list){localStorage.setItem(STORE_PROGRAMMATION,JSON.stringify(list));}
+let programmations=loadProgrammations();
+function programmeForLevel(niveau){return programmations.find(p=>p.niveau===niveau);}
+function sequenceCompetenceId(seq){
+  return seq?.competence_id || seq?.competence_cible_id || seq?.competenceId || '';
+}
+function sequenceDomainInfo(seq){
+  const cid=sequenceCompetenceId(seq);
+  const c=cid ? getCompetence(cid) : null;
+  const id=c?.domaine_id || c?.domaineId || seq?.domaine_id || seq?.domaine || seq?.champ_apprentissage || seq?.champ || 'autre';
+  const nom=c?.domaine || c?.domaine_nom || (COMPETENCE_DOMAINES.find(d=>d.id===id)?.nom) || seq?.domaine_nom || seq?.domaine || id;
+  const discipline=c?.discipline || c?.matiere || (COMPETENCE_DOMAINES.find(d=>d.id===id)?.discipline) || seq?.discipline || seq?.matiere || 'Autre';
+  return {id,nom,discipline};
+}
+function sequenceDomainId(seq){return sequenceDomainInfo(seq).id;}
+function programmeDomaines(niveau){
+  const base=domainesDuNiveau(niveau);
+  const map=new Map(base.map(d=>[d.id,d]));
+  state.sequences.filter(s=>!niveau||s.niveau===niveau).forEach(s=>{const d=sequenceDomainInfo(s);if(d.id && !map.has(d.id))map.set(d.id,d);});
+  return [...map.values()].sort((a,b)=>(a.discipline||'').localeCompare(b.discipline||'','fr') || a.nom.localeCompare(b.nom,'fr'));
+}
+function newProgrammation(niveau){
+  return {version:'1.0',type:'programmation_annuelle',id:uid('planning'),niveau,affectations:[],notes:{}};
+}
+function ensureProgrammation(niveau){
+  let p=programmeForLevel(niveau);
+  if(p)return p;
+  p=newProgrammation(niveau);
+  // Première migration douce : utiliser la période/domaine déjà présents dans les séquences,
+  // sans les considérer ensuite comme source de vérité.
+  state.sequences.filter(s=>s.niveau===niveau).forEach(s=>{
+    const per=Math.max(1,Math.min(5,Number(s.periode)||1));
+    p.affectations.push({sequence_id:s.id,periode:per,domaine_id:sequenceDomainId(s)});
+  });
+  programmations.push(p);saveProgrammations(programmations);return p;
+}
+function fillProgrammeNiveaux(){const sel=document.getElementById('program-niveau');if(!sel)return;const current=sel.value||NIVEAUX[0];sel.innerHTML=NIVEAUX.map(n=>`<option value="${escapeAttr(n)}">${escapeHTML(n)}</option>`).join('');sel.value=NIVEAUX.includes(current)?current:NIVEAUX[0];}
+function programmeSequencesForCell(p,niveau,domainId,period){
+  const ids=p.affectations.filter(a=>a.domaine_id===domainId&&Number(a.periode)===Number(period)).map(a=>a.sequence_id);
+  return ids.map(id=>state.sequences.find(s=>s.id===id)).filter(s=>s&&s.niveau===niveau);
+}
+function programmePrompt(niveau){
+  const p=programmeForLevel(niveau)||newProgrammation(niveau);
+  const progressionResume=progressions.filter(x=>x.niveau===niveau).map(x=>({domaine_id:x.domaine_id,titre:x.titre,competences:x.competences.map(c=>({ordre:c.ordre,competence_id:c.competence_id,titre:c.titre}))}));
+  const seqs=state.sequences.filter(s=>s.niveau===niveau).map(s=>({id:s.id,titre:s.titre,domaine:sequenceDomainId(s),domaine_nom:sequenceDomainInfo(s).nom,discipline:sequenceDomainInfo(s).discipline,competence_id:sequenceCompetenceId(s),competence_officielle:competenceLabel(sequenceCompetenceId(s)),objectif_commun:s.objectif_commun||'',periode_existante:s.periode||null}));
+  return `Tu es conseiller pédagogique expert de l'école primaire française. Construis le TABLEAU 2 DE PROGRAMMATION ANNUELLE pour le niveau ${niveau}.\n\nDISTINCTION OBLIGATOIRE : la PROGRESSION est l'enchaînement logique non temporel des compétences ; la PROGRAMMATION est sa traduction organisationnelle dans l'année. Tu ne modifies jamais la progression. Tu répartis uniquement des SEQUENCES EXISTANTES dans 5 périodes et dans leur domaine.\n\nUne séquence doit rester dans son domaine. Ne crée aucune séquence et n'invente aucun identifiant. Une séquence peut être placée dans une seule cellule principale. Cherche une répartition équilibrée, cohérente avec les compétences travaillées, les prérequis et les objectifs.\n\nPROGRESSIONS DISPONIBLES :\n${JSON.stringify(progressionResume,null,2)}\n\nSEQUENCES EXISTANTES :\n${JSON.stringify(seqs,null,2)}\n\nRetourne uniquement :\n${JSON.stringify({version:'1.0',type:'programmation_annuelle',niveau,affectations:[{sequence_id:'ID_SEQUENCE_EXISTANTE',periode:1,domaine_id:'ID_DOMAINE'}],notes:{'1':{'domaine_id':'Note de programmation'}}},null,2)}`;
+}
+function renderProgrammingTable(niveau){
+  const wrap=document.getElementById('program-table-wrap');if(!wrap)return;
+  const p=ensureProgrammation(niveau);const domaines=programmeDomaines(niveau);const seqs=state.sequences.filter(s=>s.niveau===niveau);
+  wrap.innerHTML=`<div class="program-table-scroll"><table class="program-table"><thead><tr><th>Domaine</th>${[1,2,3,4,5].map(n=>`<th>Période ${n}</th>`).join('')}</tr></thead><tbody>${domaines.map(d=>`<tr><td><div class="program-domain"><span class="eyebrow" style="font-size:9px;display:block;margin-bottom:3px;">${escapeHTML(d.discipline||'')}</span><strong>${escapeHTML(d.nom)}</strong><small>${seqs.filter(s=>sequenceDomainId(s)===d.id).length} séquence(s) disponibles</small></div></td>${[1,2,3,4,5].map(per=>programCellHTML(p,niveau,d,per)).join('')}</tr>`).join('')}</tbody></table></div>`;
+  wrap.querySelectorAll('[data-program-add]').forEach(sel=>sel.onchange=()=>{const seqId=sel.value;if(!seqId)return;const d=sel.dataset.domain,per=Number(sel.dataset.period);p.affectations=p.affectations.filter(a=>a.sequence_id!==seqId);p.affectations.push({sequence_id:seqId,periode:per,domaine_id:d});saveProgrammations(programmations);renderProgrammingTable(niveau);renderSeqGrid();});
+  wrap.querySelectorAll('[data-program-remove]').forEach(btn=>btn.onclick=()=>{p.affectations=p.affectations.filter(a=>a.sequence_id!==btn.dataset.programRemove);saveProgrammations(programmations);renderProgrammingTable(niveau);});
+  wrap.querySelectorAll('.program-add-menu').forEach(menu=>menu.onclick=(ev)=>ev.stopPropagation());
+  wrap.querySelectorAll('[data-program-toggle]').forEach(btn=>btn.onclick=(ev)=>{
+    ev.stopPropagation();
+    const key=btn.dataset.programToggle;
+    const menu=document.getElementById('pam-'+key);
+    const wasOpen=menu.classList.contains('open');
+    wrap.querySelectorAll('.program-add-menu.open').forEach(m=>m.classList.remove('open'));
+    if(!wasOpen) menu.classList.add('open');
+  });
+  wrap.querySelectorAll('.pam-import').forEach(btn=>btn.onclick=(ev)=>{
+    ev.stopPropagation();
+    const input=document.getElementById('program-cell-import-file');
+    input.dataset.targetDomain=btn.dataset.programImportDomain;
+    input.dataset.targetPeriod=btn.dataset.programImportPeriod;
+    input.dataset.targetNiveau=niveau;
+    input.click();
+  });
+  wrap.querySelectorAll('.pam-generate').forEach(btn=>btn.onclick=(ev)=>{
+    ev.stopPropagation();
+    window.open('generateur-sequences-projet.html','_blank');
+  });
+  wrap.querySelectorAll('.pam-text-add').forEach(btn=>{
+    const submit=(ev)=>{
+      ev.stopPropagation();
+      const input=btn.parentElement.querySelector('.pam-text-input');
+      const titre=(input.value||'').trim();
+      if(!titre){ input.focus(); return; }
+      const domaine_id=btn.dataset.programTextDomain, periode=Number(btn.dataset.programTextPeriod);
+      const seq={ id:uid('seq-txt'), titre, niveau, domaine_id, brouillon:true, objectif_commun:'' };
+      state.sequences.push(seq);
+      saveSequences(state.sequences);
+      p.affectations=p.affectations.filter(a=>a.sequence_id!==seq.id);
+      p.affectations.push({sequence_id:seq.id,periode,domaine_id});
+      saveProgrammations(programmations);
+      renderFilters(); renderSeqGrid(); renderProgrammingTable(niveau);
+    };
+    btn.onclick=submit;
+    btn.parentElement.querySelector('.pam-text-input').addEventListener('keydown',ev=>{ if(ev.key==='Enter') submit(ev); });
+  });
+  wrap.querySelectorAll('[data-drag-seq]').forEach(chip=>{
+    chip.addEventListener('dragstart',ev=>{
+      ev.dataTransfer.setData('text/plain',chip.dataset.dragSeq);
+      ev.dataTransfer.effectAllowed='move';
+      chip.classList.add('dragging');
+    });
+    chip.addEventListener('dragend',()=>chip.classList.remove('dragging'));
+  });
+  wrap.querySelectorAll('.program-cell').forEach(cell=>{
+    cell.addEventListener('dragover',ev=>{ ev.preventDefault(); ev.dataTransfer.dropEffect='move'; cell.classList.add('drag-over'); });
+    cell.addEventListener('dragleave',()=>cell.classList.remove('drag-over'));
+    cell.addEventListener('drop',ev=>{
+      ev.preventDefault();
+      cell.classList.remove('drag-over');
+      const seqId=ev.dataTransfer.getData('text/plain');
+      if(!seqId)return;
+      const domaine_id=cell.dataset.cellDomain, periode=Number(cell.dataset.cellPeriod);
+      p.affectations=p.affectations.filter(a=>a.sequence_id!==seqId);
+      p.affectations.push({sequence_id:seqId,periode,domaine_id});
+      saveProgrammations(programmations);
+      renderProgrammingTable(niveau);
+    });
+  });
+}
+function programCellHTML(p,niveau,d,per){
+  const cellSeqs=programmeSequencesForCell(p,niveau,d.id,per);const used=new Set(p.affectations.map(a=>a.sequence_id));
+  const candidates=state.sequences.filter(s=>s.niveau===niveau&&sequenceDomainId(s)===d.id&&!used.has(s.id));
+  const cellKey=`${escapeAttr(d.id)}__${per}`;
+  return `<td><div class="program-cell" data-cell-domain="${escapeAttr(d.id)}" data-cell-period="${per}">${cellSeqs.length?cellSeqs.map(s=>`<button class="program-seq-chip${s.brouillon?' program-seq-chip-draft':''}" draggable="true" data-drag-seq="${escapeAttr(s.id)}" data-program-remove="${escapeAttr(s.id)}"><span class="program-remove">×</span><strong>${escapeHTML(s.titre)}</strong><span>${s.brouillon?'📝 Brouillon — à compléter':(s.competence_id?competenceLabel(s.competence_id):'Séquence')}</span></button>`).join(''):'<div class="program-empty-cell">Aucune séquence</div>'}<div class="program-add-wrap"><button type="button" class="program-add-btn" data-program-toggle="${cellKey}">＋ Ajouter une séquence…</button><div class="program-add-menu" id="pam-${cellKey}" data-domain="${escapeAttr(d.id)}" data-period="${per}">${candidates.length?`<span class="pam-label">Séquences déjà chargées</span><select class="program-add" data-program-add data-domain="${escapeAttr(d.id)}" data-period="${per}"><option value="">Choisir…</option>${candidates.map(s=>`<option value="${escapeAttr(s.id)}">${escapeHTML(s.titre)}</option>`).join('')}</select>`:''}<button type="button" class="pam-import" data-program-import-domain="${escapeAttr(d.id)}" data-program-import-period="${per}">📂 Importer depuis l'ordinateur…</button><button type="button" class="pam-generate">🧩 Ouvrir le générateur de séquences</button><span class="pam-label">Ou juste un texte, à compléter plus tard</span><div class="pam-text-row"><input type="text" class="pam-text-input" placeholder="Intitulé de la séquence…"><button type="button" class="pam-text-add" data-program-text-domain="${escapeAttr(d.id)}" data-program-text-period="${per}">Ajouter</button></div></div></div></div></td>`;
+}
+function printProgramming(niveau){
+ const p=ensureProgrammation(niveau),domaines=programmeDomaines(niveau),html=`<!doctype html><html><head><meta charset="utf-8"><style>@page{size:A4 landscape;margin:10mm}body{font-family:Arial;color:#202b39;font-size:9pt}h1{font-size:20pt}table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border:1px solid #aaa;padding:6px;vertical-align:top}th{background:#eee}.domain{font-weight:bold}.seq{padding:4px;margin:3px 0;background:#f1f1f1;border-radius:3px}.meta{color:#666}</style></head><body><h1>Programmation annuelle — ${escapeHTML(niveau)}</h1><p class="meta">Tableau 2 · programmation par domaine et par période</p><table><tr><th>Domaine</th>${[1,2,3,4,5].map(n=>`<th>Période ${n}</th>`).join('')}</tr>${domaines.map(d=>`<tr><td class="domain">${escapeHTML(d.nom)}</td>${[1,2,3,4,5].map(per=>`<td>${programmeSequencesForCell(p,niveau,d.id,per).map(s=>`<div class="seq">${escapeHTML(s.titre)}</div>`).join('')||'—'}</td>`).join('')}</tr>`).join('')}</table></body></html>`;
+ const w=window.open('','_blank');if(!w){alert('Autorisez les fenêtres surgissantes pour imprimer.');return;}w.document.write(html);w.document.close();w.focus();setTimeout(()=>w.print(),300);
+}
+function downloadDocProgramming(niveau){
+ const p=ensureProgrammation(niveau),domaines=programmeDomaines(niveau),body=`<html><head><meta charset="utf-8"><style>@page{size:landscape}body{font-family:Arial;color:#202b39}table{width:100%;border-collapse:collapse}th,td{border:1px solid #aaa;padding:7px;vertical-align:top}th{background:#eee}</style></head><body><h1>Programmation annuelle — ${escapeHTML(niveau)}</h1><p>Tableau 2 · programmation par domaine et par période</p><table><tr><th>Domaine</th>${[1,2,3,4,5].map(n=>`<th>Période ${n}</th>`).join('')}</tr>${domaines.map(d=>`<tr><td><b>${escapeHTML(d.nom)}</b></td>${[1,2,3,4,5].map(per=>`<td>${programmeSequencesForCell(p,niveau,d.id,per).map(s=>`<p>${escapeHTML(s.titre)}</p>`).join('')||'—'}</td>`).join('')}</tr>`).join('')}</table></body></html>`;
+ const blob=new Blob([body],{type:'application/msword'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=slug('programmation-'+niveau)+'.doc';a.click();URL.revokeObjectURL(a.href);
+}
+function mergeLocalSequenceData(data){
+  const imported=[];
+  const addSeq=(raw)=>{
+    if(!raw || typeof raw!=='object' || !raw.id || !raw.titre)return;
+    const embedded=Array.isArray(raw.seances)?raw.seances:[];
+    const seq={...raw}; delete seq.seances;
+    // Les séquences-projets (générateur, mode "projet") portent une "classe" plutôt qu'un
+    // "niveau", et n'ont pas de competence_id unique : sans ce champ, la séquence reste
+    // invisible dans le répertoire (filtres par niveau/domaine) même si elle est bien
+    // enregistrée. On normalise ici pour qu'elle s'affiche comme n'importe quelle autre.
+    if(!seq.niveau && seq.classe) seq.niveau = seq.classe;
+    const embeddedNormalisees = embedded.map(sea=>{
+      if(!sea || typeof sea!=='object') return sea;
+      const s={...sea};
+      if(!s.objectif_commun && s.objectif) s.objectif_commun = s.objectif;
+      return s;
+    });
+    const idx=state.sequences.findIndex(x=>x.id===seq.id);
+    if(idx>=0) state.sequences[idx]=seq; else state.sequences.push(seq);
+    embeddedNormalisees.forEach(sea=>{ if(sea && sea.id){ const j=state.seances.findIndex(x=>x.id===sea.id); if(j>=0)state.seances[j]=sea; else state.seances.push(sea); }});
+    imported.push(seq);
+  };
+  if(Array.isArray(data?.sequences)) data.sequences.forEach(addSeq);
+  else if(data?.id && data?.titre) addSeq(data);
+  if(Array.isArray(data?.seances) && !data?.id) data.seances.forEach(sea=>{if(sea?.id){const j=state.seances.findIndex(x=>x.id===sea.id);if(j>=0)state.seances[j]=sea;else state.seances.push(sea);}});
+  return imported;
+}
+function attachLocalSequenceLoader(){
+  const btns=[document.getElementById('btn-program-load-sequences'),document.getElementById('btn-load-local-sequences')].filter(Boolean);
+  const input=document.getElementById('program-sequences-file')||document.getElementById('local-sequences-file');
+  if(btns.length && input){
+    btns.forEach(btn=>btn.onclick=()=>input.click());
+    input.addEventListener('change',e=>{ importJSONFiles(e.target.files); input.value=''; });
+  }
+  const folderBtn = document.getElementById('btn-load-local-folder');
+  const folderInput = document.getElementById('local-folder-input');
+  if(folderBtn && folderInput){
+    folderBtn.onclick = ()=> folderInput.click();
+    folderInput.addEventListener('change', e=>{ importJSONFiles(e.target.files); folderInput.value=''; });
+  }
+}
+
+function initProgrammingUI(){
+ fillProgrammeNiveaux();const sel=document.getElementById('program-niveau');if(!sel)return;
+ renderProgrammingTable(sel.value);
+ sel.addEventListener('change',()=>renderProgrammingTable(sel.value));
+ document.addEventListener('click',()=>{document.querySelectorAll('.program-add-menu.open').forEach(m=>m.classList.remove('open'));});
+ const cellImportInput=document.getElementById('program-cell-import-file');
+ if(cellImportInput){
+   cellImportInput.addEventListener('change',e=>{
+     const files=[...e.target.files].filter(f=>/\.json$/i.test(f.name));
+     const domaine_id=cellImportInput.dataset.targetDomain, periode=Number(cellImportInput.dataset.targetPeriod), cibleNiveau=cellImportInput.dataset.targetNiveau;
+     if(!files.length){ toast("Aucun fichier .json trouvé dans la sélection."); e.target.value=''; return; }
+     let done=0, placees=0, horsNiveau=0;
+     files.forEach(file=>{
+       const r=new FileReader();
+       r.onload=()=>{
+         try{
+           const data=JSON.parse(r.result);
+           mergeLocalSequenceData(data).forEach(seq=>{
+             if(seq.niveau!==cibleNiveau){ horsNiveau++; return; }
+             const p=ensureProgrammation(cibleNiveau);
+             p.affectations=p.affectations.filter(a=>a.sequence_id!==seq.id);
+             p.affectations.push({sequence_id:seq.id,periode,domaine_id});
+             placees++;
+           });
+         }catch(err){ console.warn('Fichier ignoré (JSON invalide) :', file.name, err); }
+         done++;
+         if(done===files.length){
+           saveSequences(state.sequences); saveSeances(state.seances); saveProgrammations(programmations);
+           renderFilters(); renderSeqGrid();
+           if(document.getElementById('program-niveau')) renderProgrammingTable(document.getElementById('program-niveau').value);
+           toast(`${placees} séquence(s) importée(s) et placée(s)`+(horsNiveau?`, ${horsNiveau} ignorée(s) (niveau différent de ${cibleNiveau})`:'')+'.');
+         }
+       };
+       r.readAsText(file);
+     });
+     e.target.value='';
+   });
+ }
+ document.getElementById('btn-program-save').onclick=()=>{ensureProgrammation(sel.value);saveProgrammations(programmations);toast('Programmation enregistrée');};
+ document.getElementById('btn-program-json').onclick=()=>{const p=ensureProgrammation(sel.value);downloadJSON('programmation-annuelle-'+slug(sel.value),p);};
+ document.getElementById('btn-program-pdf').onclick=()=>printProgramming(sel.value);
+ document.getElementById('btn-program-doc').onclick=()=>downloadDocProgramming(sel.value);
+ document.getElementById('btn-program-load').onclick=()=>document.getElementById('program-load-file').click();
+ document.getElementById('program-load-file').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const raw=JSON.parse(r.result);const arr=Array.isArray(raw)?raw:[raw];arr.forEach(x=>{if(!x.niveau)throw new Error('Une programmation doit contenir un niveau.');const n={...x,id:x.id||uid('planning'),version:'1.0',type:'programmation_annuelle',affectations:Array.isArray(x.affectations)?x.affectations:[],notes:x.notes||{}};const i=programmations.findIndex(p=>p.niveau===n.niveau);if(i>=0)programmations[i]=n;else programmations.push(n);});saveProgrammations(programmations);sel.value=arr[0].niveau;renderProgrammingTable(sel.value);toast('Programmation chargée');}catch(err){alert('JSON invalide : '+err.message);}};r.readAsText(f);e.target.value='';});
+ const ai=document.getElementById('program-ai-panel');document.getElementById('btn-program-ai').onclick=()=>{ai.style.display='';document.getElementById('program-prompt').textContent=programmePrompt(sel.value);};
+ document.getElementById('btn-program-copy').onclick=async()=>{await navigator.clipboard.writeText(document.getElementById('program-prompt').textContent);toast('Prompt copié');};
+ document.getElementById('btn-program-ai-close').onclick=()=>ai.style.display='none';
+ document.getElementById('btn-program-import').onclick=()=>{try{const raw=JSON.parse(document.getElementById('program-response').value);if(raw.niveau!==sel.value)throw new Error('Le niveau de la proposition ne correspond pas au niveau sélectionné.');const p=ensureProgrammation(sel.value);p.affectations=Array.isArray(raw.affectations)?raw.affectations.filter(a=>state.sequences.some(s=>s.id===a.sequence_id&&s.niveau===sel.value)).map(a=>({sequence_id:a.sequence_id,periode:Math.max(1,Math.min(5,Number(a.periode)||1)),domaine_id:a.domaine_id||sequenceDomainId(state.sequences.find(s=>s.id===a.sequence_id))})):[];p.notes=raw.notes||{};saveProgrammations(programmations);renderProgrammingTable(sel.value);ai.style.display='none';toast('Proposition intégrée');}catch(e){document.getElementById('program-ai-result').textContent='Erreur : '+e.message;}};
+}
+
+/* ============================================================
+   EXPORT / IMPORT JSON
+   ============================================================ */
+function slug(str){
+  return (str||"").toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,50);
+}
+function downloadJSON(pathSansExtension, data){
+  // pathSansExtension peut contenir des "/" (ex. "data/CE1/francais/lecture/ma-sequence") :
+  // les navigateurs à base de Chromium recréent alors l'arborescence de sous-dossiers
+  // sous le dossier de téléchargements, ce qui reproduit fidèlement data/{niveau}/{matiere}/{champ}/…
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = pathSansExtension + ".json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+document.getElementById('btn-export-all')?.addEventListener('click', ()=>{
+  downloadJSON("programmation-complete", { sequences: state.sequences, seances: state.seances });
+});
+
+/* Import générique : un ou plusieurs fichiers .json (bouton "Importer"),
+   ou un dossier entier avec sous-dossiers (bouton "Importer un dossier").
+   Chaque fichier peut contenir un lot {sequences:[...],seances:[...]},
+   une séquence unique (avec ses séances imbriquées), ou une séance seule.
+   La fusion se fait par id (mergeLocalSequenceData) : un id déjà connu est
+   mis à jour, un id nouveau est ajouté — rien n'est jamais écrasé en bloc. */
+function importJSONFiles(fileList){
+  const files = [...fileList].filter(f=>/\.json$/i.test(f.name));
+  if(!files.length){ toast("Aucun fichier .json trouvé dans la sélection."); return; }
+  let done = 0, importedSeq = 0, ignores = 0;
+  files.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const data = JSON.parse(reader.result);
+        importedSeq += mergeLocalSequenceData(data).length;
+      }catch(err){
+        ignores++;
+        console.warn("Fichier ignoré (JSON invalide) :", file.webkitRelativePath || file.name, err);
+      }
+      done++;
+      if(done === files.length){
+        saveSequences(state.sequences); saveSeances(state.seances);
+        renderFilters(); renderSeqGrid();
+        if(document.getElementById('program-niveau')) renderProgrammingTable(document.getElementById('program-niveau').value);
+        toast(`Import terminé : ${importedSeq} séquence(s) chargée(s)` + (ignores ? `, ${ignores} fichier(s) ignoré(s)` : "") + ".");
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+document.getElementById('btn-import-all')?.addEventListener('click', ()=> document.getElementById('file-import').click());
+document.getElementById('file-import').addEventListener('change', e=>{
+  importJSONFiles(e.target.files);
+  e.target.value = "";
+});
+document.getElementById('btn-import-folder')?.addEventListener('click', ()=> document.getElementById('folder-import').click());
+document.getElementById('folder-import').addEventListener('change', e=>{
+  importJSONFiles(e.target.files);
+  e.target.value = "";
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+
+/* ============================================================
+   NAVIGATION CROISÉE DEPUIS cartographie-competences.html
+   Paramètres :
+   - ?competence=ID : ouvre la première séquence explicitement
+     associée à cette compétence (sans inventer de lien)
+   - ?sequence=ID : ouvre directement la séquence
+   - ?sequence=ID&seance=ID : ouvre la séquence puis la séance
+   ============================================================ */
+function openFromCartographyURL(){
+  const params = new URLSearchParams(window.location.search);
+  const requestedCompetence = params.get("competence");
+  const requestedSequence = params.get("sequence");
+  const requestedSeance = params.get("seance");
+
+  // Priorité à la séance : elle détermine aussi sa séquence.
+  if(requestedSeance){
+    const sea = state.seances.find(s => s.id === requestedSeance);
+    const sequenceId = requestedSequence || sea?.sequence_id;
+
+    if(sequenceId && state.sequences.some(s => s.id === sequenceId)){
+      openSeqDetail(sequenceId);
+      requestAnimationFrame(() => {
+        const currentSea = state.seances.find(s => s.id === requestedSeance);
+        if(currentSea && currentSea.sequence_id === sequenceId){
+          openSeaDrawer(requestedSeance);
+        }else{
+          toast("La séance demandée est introuvable dans cette séquence.");
+        }
+      });
+      return;
+    }
+    toast("La séance demandée est introuvable.");
+    return;
+  }
+
+  if(requestedSequence){
+    if(state.sequences.some(s => s.id === requestedSequence)){
+      openSeqDetail(requestedSequence);
+    }else{
+      toast("La séquence demandée est introuvable.");
+    }
+    return;
+  }
+
+  if(requestedCompetence){
+    // Lien uniquement si competence_id est explicitement déclaré.
+    const linked = state.sequences.find(s => s.competence_id === requestedCompetence);
+    if(linked){
+      openSeqDetail(linked.id);
+    }else{
+      toast("Aucune séquence n'est encore explicitement associée à cette compétence.");
+    }
+  }
+}
+
+
+renderFilters();
+renderSeqGrid();
+initProgrammingUI();
+attachLocalSequenceLoader();
+updateCoffreWidget();
+
+/* Le référentiel de compétences est chargé une fois, au démarrage. */
+chargerReferentielCompetences().then(()=>{
+  if(document.getElementById('view-progression').classList.contains('open')) fillProgressionSelectors();
+  if(document.getElementById('program-niveau')){fillProgrammeNiveaux();renderProgrammingTable(document.getElementById('program-niveau').value);}
+  renderFilters();
+  renderSeqGrid();
+  openFromCartographyURL();
+});
+</script>
+<script>
+(function(){
+  var navDropdowns = Array.prototype.slice.call(document.querySelectorAll('.nav-dropdown'));
+  navDropdowns.forEach(function(dd){
+    dd.addEventListener('toggle', function(){
+      if(dd.open){
+        navDropdowns.forEach(function(other){
+          if(other !== dd) other.open = false;
+        });
+      }
+    });
+  });
+  document.addEventListener('click', function(e){
+    navDropdowns.forEach(function(dd){
+      if(dd.open && !dd.contains(e.target)) dd.open = false;
+    });
+  });
+})();
+</script>
+
+<footer class="synapses-footer">
+    <div>Synapses — Grand Planificateur pédagogique</div>
+    <div>© 2026 Cskrh13 / Vincent · v0.9.0-test · 27/08/2026</div>
+</footer>
+</body>
+</html>
