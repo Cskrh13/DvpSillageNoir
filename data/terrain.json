@@ -91,6 +91,50 @@
       "height": 2,
       "cover": 0.65
     },
+    "falaises": {
+      "name": "Falaises",
+      "color": "#3f4a52",
+      "move": 0.0,
+      "blocks": true,
+      "blocksView": true,
+      "damage": 0,
+      "category": "impassable",
+      "height": 2,
+      "cover": 0.65
+    },
+    "sableHerbe": {
+      "name": "Rive herbeuse",
+      "color": "#5a6a3a",
+      "move": 1.0,
+      "blocks": false,
+      "blocksView": false,
+      "damage": 0,
+      "category": "normal",
+      "height": 0,
+      "cover": 0.0
+    },
+    "frontiereTerreHerbe": {
+      "name": "Lisière terre/herbe",
+      "color": "#4a4228",
+      "move": 1.0,
+      "blocks": false,
+      "blocksView": false,
+      "damage": 0,
+      "category": "normal",
+      "height": 0,
+      "cover": 0.0
+    },
+    "frontierePierre": {
+      "name": "Abords rocheux",
+      "color": "#4a4638",
+      "move": 1.0,
+      "blocks": false,
+      "blocksView": false,
+      "damage": 0,
+      "category": "normal",
+      "height": 0,
+      "cover": 0.05
+    },
     "murs": {
       "name": "Murs",
       "color": "#2a2a2a",
